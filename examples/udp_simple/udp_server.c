@@ -95,7 +95,7 @@ void udp_server(void)
       exit(1);
     }
 
-#ifdef CONFIG_EXAMPLES_UDP_BROADCAST
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_BROADCAST
   optval = 1;
   ret = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(int));
   if (ret < 0)
@@ -108,7 +108,7 @@ void udp_server(void)
   /* Bind the socket to a local address */
 
   server.sin6_family     = AF_INET6;
-  server.sin6_port       = HTONS(CONFIG_EXAMPLES_UDP_SERVER_PORTNO);
+  server.sin6_port       = HTONS(CONFIG_EXAMPLES_UDP_SIMPLE_SERVER_PORTNO);
   memset(&server.sin6_addr, 0, sizeof(struct in6_addr));
 
   addrlen                = sizeof(struct sockaddr_in6);

@@ -78,7 +78,7 @@ static int create_socket(void)
   /* Bind the UDP socket to a IPv6 port */
 
   addr.sin6_family     = AF_INET6;
-  addr.sin6_port       = HTONS(CONFIG_EXAMPLES_UDP_CLIENT_PORTNO);
+  addr.sin6_port       = HTONS(CONFIG_EXAMPLES_UDP_SIMPLE_CLIENT_PORTNO);
   memset(addr.sin6_addr.s6_addr, 0, sizeof(struct in6_addr));
   addrlen              = sizeof(struct sockaddr_in6);
 
@@ -118,7 +118,7 @@ void udp_client(void)
 
   //Copy the server configuration
   server.sin6_family            = AF_INET6;
-  server.sin6_port              = HTONS(CONFIG_EXAMPLES_UDP_SERVER_PORTNO);
+  server.sin6_port              = HTONS(CONFIG_EXAMPLES_UDP_SIMPLE_SERVER_PORTNO);
   memcpy(server.sin6_addr.s6_addr16, g_udpserver_ipv6, 8 * sizeof(uint16_t));
   addrlen                       = sizeof(struct sockaddr_in6);
 

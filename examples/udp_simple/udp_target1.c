@@ -50,7 +50,7 @@
 
 #if defined(CONFIG_BUILD_KERNEL)
 int main(int argc, FAR char *argv[])
-#elif defined(CONFIG_EXAMPLES_UDP_TARGET2)
+#elif defined(CONFIG_EXAMPLES_UDP_SIMPLE_TARGET2)
 int udp1_main(int argc, char *argv[])
 #else
 int udp_main(int argc, char *argv[])
@@ -60,7 +60,7 @@ int udp_main(int argc, char *argv[])
 
   udp_cmdline(argc, argv);
 
-#ifdef CONFIG_EXAMPLES_UDP_NETINIT
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_NETINIT
   /* Initialize the network */
 
   (void)udp_netinit();
@@ -68,7 +68,7 @@ int udp_main(int argc, char *argv[])
 
   /* Run the server or client, depending upon how we are configured */
 
-#ifdef CONFIG_EXAMPLES_UDP_SERVER1
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_SERVER1
   udp_server();
 #else
   udp_client();

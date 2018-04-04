@@ -58,7 +58,7 @@ int udp2_main(int argc, char *argv[])
 
   udp_cmdline(argc, argv);
 
-#ifdef CONFIG_EXAMPLES_UDP_NETINIT
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_NETINIT
   /* Initialize the network */
 
   (void)udp_netinit();
@@ -66,7 +66,7 @@ int udp2_main(int argc, char *argv[])
 
   /* Run the server or client, depending upon how target1 was configured */
 
-#ifdef CONFIG_EXAMPLES_UDP_SERVER1
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_SERVER1
   udp_client();
 #else
   udp_server();

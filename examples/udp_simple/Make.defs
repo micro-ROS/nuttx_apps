@@ -34,6 +34,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_UDP),y)
-CONFIGURED_APPS += examples/udp
+ifeq ($(CONFIG_EXAMPLES_UDP_SIMPLE),y)
+CONFIGURED_APPS += examples/udp_simple
 endif

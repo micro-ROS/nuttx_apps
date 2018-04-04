@@ -60,7 +60,7 @@ int main(int argc, char **argv, char **envp)
 
   /* Run the server or client, depending upon how target1 was configured */
 
-#ifdef CONFIG_EXAMPLES_UDP_SERVER1
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_SERVER1
   udp_client();
 #else
   udp_server();

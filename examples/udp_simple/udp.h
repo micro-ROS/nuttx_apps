@@ -33,14 +33,14 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_UDP_UDP_H
-#define __EXAMPLES_UDP_UDP_H
+#ifndef __EXAMPLES_UDP_UDP_SIMPLE_H
+#define __EXAMPLES_UDP_UDP_SIMPLE_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#ifdef EXAMPLES_UDP_HOST
+#ifdef EXAMPLES_UDP_SIMPLE_HOST
 #else
 # include <debug.h>
 #endif
@@ -51,7 +51,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifdef EXAMPLES_UDP_HOST
+#ifdef EXAMPLES_UDP_SIMPLE_HOST
    /* HTONS/L macros are unique to uIP-based networks */
 
 #  ifdef CONFIG_ENDIAN_BIG
@@ -75,7 +75,7 @@
 #  define FAR
 #endif
 
-#ifdef CONFIG_EXAMPLES_UDP_IPv6
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_IPv6
 #  define AF_INETX AF_INET6
 #  define PF_INETX PF_INET6
 #else
@@ -83,12 +83,12 @@
 #  define PF_INETX PF_INET
 #endif
 
-#ifndef CONFIG_EXAMPLES_UDP_SERVER_PORTNO
-#  define CONFIG_EXAMPLES_UDP_SERVER_PORTNO 5471
+#ifndef CONFIG_EXAMPLES_UDP_SIMPLE_SERVER_PORTNO
+#  define CONFIG_EXAMPLES_UDP_SIMPLE_SERVER_PORTNO 5471
 #endif
 
-#ifndef CONFIG_EXAMPLES_UDP_CLIENT_PORTNO
-#  define CONFIG_EXAMPLES_UDP_CLIENT_PORTNO 5472
+#ifndef CONFIG_EXAMPLES_UDP_SIMPLE_CLIENT_PORTNO
+#  define CONFIG_EXAMPLES_UDP_SIMPLE_CLIENT_PORTNO 5472
 #endif
 
 #define ASCIISIZE  (0x7f - 0x20)
@@ -98,7 +98,7 @@
  * Public Data
  ****************************************************************************/
 
-#ifdef CONFIG_EXAMPLES_UDP_IPv6
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_IPv6
 uint16_t g_udpserver_ipv6[8];
 #else
 uint32_t g_udpserver_ipv4;
@@ -108,7 +108,7 @@ uint32_t g_udpserver_ipv4;
  * Public Function Prototypes
  ****************************************************************************/
 
-#ifdef CONFIG_EXAMPLES_UDP_NETINIT
+#ifdef CONFIG_EXAMPLES_UDP_SIMPLE_NETINIT
 int udp_netinit(void);
 #endif
 

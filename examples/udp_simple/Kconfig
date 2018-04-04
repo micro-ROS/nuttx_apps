@@ -12,30 +12,30 @@ config EXAMPLES_UDP_SIMPLE
 
 if EXAMPLES_UDP_SIMPLE
 
-config EXAMPLES_UDP_SERVER1
+config EXAMPLES_UDP_SIMPLE_SERVER1
 	bool "Target1 is the server"
 	default n
 	---help---
 		By default Target1 is the client and the host PC is the server
 
-config EXAMPLES_UDP_PROGNAME1
+config EXAMPLES_UDP_SIMPLE_PROGNAME1
 	string "Target1 program name"
-	default "udpserver" if EXAMPLES_UDP_SERVER1
-	default "udpclient" if !EXAMPLES_UDP_SERVER1
+	default "udpserver" if EXAMPLES_UDP_SIMPLE_SERVER1
+	default "udpclient" if !EXAMPLES_UDP_SIMPLE_SERVER1
 	depends on BUILD_KERNEL
 	---help---
 		This is the name of the Target1 program that will be use when the
 		NSH ELF program is installed.
 
-config EXAMPLES_UDP_PRIORITY1
+config EXAMPLES_UDP_SIMPLE_PRIORITY1
 	int "Target1 task priority"
 	default 100
 
-config EXAMPLES_UDP_STACKSIZE1
+config EXAMPLES_UDP_SIMPLE_STACKSIZE1
 	int "Target1 stack size"
 	default 2048
 
-config EXAMPLES_UDP_TARGET2
+config EXAMPLES_UDP_SIMPLE_TARGET2
 	bool "Second endpoint is a target"
 	default n
 	---help---
@@ -45,32 +45,32 @@ config EXAMPLES_UDP_TARGET2
 		can use two target boards to run the test with no host PC
 		involvement.
 
-if EXAMPLES_UDP_TARGET2
+if EXAMPLES_UDP_SIMPLE_TARGET2
 
-config EXAMPLES_UDP_PROGNAME2
+config EXAMPLES_UDP_SIMPLE_PROGNAME2
 	string "Target2 program name"
-	default "udpserver" if !EXAMPLES_UDP_SERVER2
-	default "udpclient" if EXAMPLES_UDP_SERVER2
+	default "udpserver" if !EXAMPLES_UDP_SIMPLE_SERVER2
+	default "udpclient" if EXAMPLES_UDP_SIMPLE_SERVER2
 	depends on BUILD_KERNEL
 	---help---
 		This is the name of the Target2 program that will be use when the
 		NSH ELF program is installed.
 
-config EXAMPLES_UDP_PRIORITY2
+config EXAMPLES_UDP_SIMPLE_PRIORITY2
 	int "Target2 task priority"
 	default 100
 
-config EXAMPLES_UDP_STACKSIZE2
+config EXAMPLES_UDP_SIMPLE_STACKSIZE2
 	int "Target2 stack size"
 	default 2048
 
-endif # EXAMPLES_UDP_TARGET2
+endif # EXAMPLES_UDP_SIMPLE_TARGET2
 
-config EXAMPLES_UDP_DEVNAME
+config EXAMPLES_UDP_SIMPLE_DEVNAME
 	string "Network device"
-	default "eth0"
+	default "wpan0"
 
-config EXAMPLES_UDP_NETINIT
+config EXAMPLES_UDP_SIMPLE_NETINIT
 	bool "Initialize network"
 	default n if NSH_NETINIT
 	default y if !NSH_NETINIT
@@ -88,59 +88,59 @@ config EXAMPLES_UDP_NETINIT
 
 choice
 	prompt "IP Domain"
-	default EXAMPLES_UDP_IPv4 if NET_IPv4
-	default EXAMPLES_UDP_IPv6 if NET_IPv6 && !NET_IPv4
+	default EXAMPLES_UDP_SIMPLE_IPv4 if NET_IPv4
+	default EXAMPLES_UDP_SIMPLE_IPv6 if NET_IPv6 && !NET_IPv4
 
-config EXAMPLES_UDP_IPv4
+config EXAMPLES_UDP_SIMPLE_IPv4
 	bool "IPv4"
 	depends on NET_IPv4
 
-config EXAMPLES_UDP_IPv6
+config EXAMPLES_UDP_SIMPLE_IPv6
 	bool "IPv6"
 	depends on NET_IPv6
 
 endchoice # IP Domain
 
-config EXAMPLES_UDP_BROADCAST
+config EXAMPLES_UDP_SIMPLE_BROADCAST
 	bool "Broadcast outgoing messages"
 	default n
 	depends on NET_BROADCAST
 	---help---
 		Send and receive all UDP packets using the broadcast address.
 
-if EXAMPLES_UDP_IPv4
+if EXAMPLES_UDP_SIMPLE_IPv4
 
 comment "IPv4 addresses"
 
-if EXAMPLES_UDP_NETINIT
+if EXAMPLES_UDP_SIMPLE_NETINIT
 
-config EXAMPLES_UDP_IPADDR
+config EXAMPLES_UDP_SIMPLE_IPADDR
 	hex "Target IP address"
 	default 0x0a000002
 
-config EXAMPLES_UDP_DRIPADDR
+config EXAMPLES_UDP_SIMPLE_DRIPADDR
 	hex "Target default router address (Gateway)"
 	default 0x0a000001
 
-config EXAMPLES_UDP_NETMASK
+config EXAMPLES_UDP_SIMPLE_NETMASK
 	hex "Network mask"
 	default 0xffffff00
 
-endif # !EXAMPLES_UDP_NETINIT
+endif # !EXAMPLES_UDP_SIMPLE_NETINIT
 
-config EXAMPLES_UDP_SERVERIP
+config EXAMPLES_UDP_SIMPLE_SERVERIP
 	hex "Server IP address"
-	default 0x0a000001 if !EXAMPLES_UDP_SERVER1
-	default 0x0a000002 if EXAMPLES_UDP_SERVER1
+	default 0x0a000001 if !EXAMPLES_UDP_SIMPLE_SERVER1
+	default 0x0a000002 if EXAMPLES_UDP_SIMPLE_SERVER1
 
-endif # EXAMPLES_UDP_IPv4
+endif # EXAMPLES_UDP_SIMPLE_IPv4
 
-if EXAMPLES_UDP_IPv6
-if !NET_ICMPv6_AUTOCONF && EXAMPLES_UDP_NETINIT
+if EXAMPLES_UDP_SIMPLE_IPv6
+if !NET_ICMPv6_AUTOCONF && EXAMPLES_UDP_SIMPLE_NETINIT
 
 comment "Target IPv6 address"
 
-config EXAMPLES_UDP_IPv6ADDR_1
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_1
 	hex "[0]"
 	default 0xfc00
 	range 0x0 0xffff
@@ -150,7 +150,7 @@ config EXAMPLES_UDP_IPv6ADDR_1
 		specified individually.  This is the first of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_2
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_2
 	hex "[1]"
 	default 0x0000
 	range 0x0 0xffff
@@ -160,7 +160,7 @@ config EXAMPLES_UDP_IPv6ADDR_2
 		specified individually.  This is the second of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_3
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_3
 	hex "[2]"
 	default 0x0000
 	range 0x0 0xffff
@@ -170,7 +170,7 @@ config EXAMPLES_UDP_IPv6ADDR_3
 		specified individually.  This is the third of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_4
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_4
 	hex "[3]"
 	default 0x0000
 	range 0x0 0xffff
@@ -180,7 +180,7 @@ config EXAMPLES_UDP_IPv6ADDR_4
 		specified individually.  This is the fourth of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_5
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_5
 	hex "[4]"
 	default 0x0000
 	range 0x0 0xffff
@@ -190,7 +190,7 @@ config EXAMPLES_UDP_IPv6ADDR_5
 		specified individually.  This is the fifth of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_6
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_6
 	hex "[5]"
 	default 0x0000
 	range 0x0 0xffff
@@ -200,7 +200,7 @@ config EXAMPLES_UDP_IPv6ADDR_6
 		specified individually.  This is the sixth of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_7
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_7
 	hex "[6]"
 	default 0x0000
 	range 0x0 0xffff
@@ -210,7 +210,7 @@ config EXAMPLES_UDP_IPv6ADDR_7
 		specified individually.  This is the seventh of the 8-values.  The
 		default for all eight values is fc00::2.
 
-config EXAMPLES_UDP_IPv6ADDR_8
+config EXAMPLES_UDP_SIMPLE_IPv6ADDR_8
 	hex "[7]"
 	default 0x0002
 	range 0x0 0xffff
@@ -222,7 +222,7 @@ config EXAMPLES_UDP_IPv6ADDR_8
 
 comment "Router IPv6 address"
 
-config EXAMPLES_UDP_DRIPv6ADDR_1
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_1
 	hex "[0]"
 	default 0xfc00
 	range 0x0 0xffff
@@ -232,7 +232,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_1
 		address must be specified individually.  This is the first of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_2
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_2
 	hex "[1]"
 	default 0x0000
 	range 0x0 0xffff
@@ -242,7 +242,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_2
 		address must be specified individually.  This is the second of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_3
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_3
 	hex "[2]"
 	default 0x0000
 	range 0x0 0xffff
@@ -252,7 +252,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_3
 		address must be specified individually.  This is the third of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_4
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_4
 	hex "[3]"
 	default 0x0000
 	range 0x0 0xffff
@@ -262,7 +262,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_4
 		address must be specified individually.  This is the fourth of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_5
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_5
 	hex "[4]"
 	default 0x0000
 	range 0x0 0xffff
@@ -272,7 +272,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_5
 		address must be specified individually.  This is the fifth of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_6
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_6
 	hex "[5]"
 	default 0x0000
 	range 0x0 0xffff
@@ -282,7 +282,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_6
 		address must be specified individually.  This is the sixth of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_7
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_7
 	hex "[6]"
 	default 0x0000
 	range 0x0 0xffff
@@ -292,7 +292,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_7
 		address must be specified individually.  This is the seventh of the
 		8-values.  The default for all eight values is fc00::1.
 
-config EXAMPLES_UDP_DRIPv6ADDR_8
+config EXAMPLES_UDP_SIMPLE_DRIPv6ADDR_8
 	hex "[7]"
 	default 0x0001
 	range 0x0 0xffff
@@ -304,7 +304,7 @@ config EXAMPLES_UDP_DRIPv6ADDR_8
 
 comment "IPv6 Network mask"
 
-config EXAMPLES_UDP_IPv6NETMASK_1
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_1
 	hex "[0]"
 	default 0xffff
 	range 0x0 0xffff
@@ -314,7 +314,7 @@ config EXAMPLES_UDP_IPv6NETMASK_1
 		individually.  This is the first of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_2
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_2
 	hex "[1]"
 	default 0xffff
 	range 0x0 0xffff
@@ -324,7 +324,7 @@ config EXAMPLES_UDP_IPv6NETMASK_2
 		individually.  This is the second of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_3
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_3
 	hex "[2]"
 	default 0xffff
 	range 0x0 0xffff
@@ -334,7 +334,7 @@ config EXAMPLES_UDP_IPv6NETMASK_3
 		individually.  This is the third of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_4
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_4
 	hex "[3]"
 	default 0xffff
 	range 0x0 0xffff
@@ -344,7 +344,7 @@ config EXAMPLES_UDP_IPv6NETMASK_4
 		individually.  This is the fourth of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_5
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_5
 	hex "[4]"
 	default 0xffff
 	range 0x0 0xffff
@@ -354,7 +354,7 @@ config EXAMPLES_UDP_IPv6NETMASK_5
 		individually.  This is the fifth of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_6
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_6
 	hex "[5]"
 	default 0xffff
 	range 0x0 0xffff
@@ -364,7 +364,7 @@ config EXAMPLES_UDP_IPv6NETMASK_6
 		individually.  This is the sixth of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_7
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_7
 	hex "[6]"
 	default 0xffff
 	range 0x0 0xffff
@@ -374,7 +374,7 @@ config EXAMPLES_UDP_IPv6NETMASK_7
 		individually.  This is the seventh of the 8-values.  The default for
 		all eight values is fe00::0.
 
-config EXAMPLES_UDP_IPv6NETMASK_8
+config EXAMPLES_UDP_SIMPLE_IPv6NETMASK_8
 	hex "[7]"
 	default 0xff80
 	range 0x0 0xffff
@@ -388,7 +388,7 @@ endif # NET_ICMPv6_AUTOCONF
 
 comment "Default Server IPv6 address"
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_1
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_1
 	hex "[0]"
 	default 0xfc00
 	range 0x0 0xffff
@@ -404,7 +404,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_1
 		values forming the full IP address must be specified individually.
 		This is the first of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_2
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_2
 	hex "[1]"
 	default 0x0000
 	range 0x0 0xffff
@@ -420,7 +420,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_2
 		values forming the full IP address must be specified individually.
 		This is the second of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_3
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_3
 	hex "[2]"
 	default 0x0000
 	range 0x0 0xffff
@@ -436,7 +436,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_3
 		values forming the full IP address must be specified individually.
 		This is the Third of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_4
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_4
 	hex "[3]"
 	default 0x0000
 	range 0x0 0xffff
@@ -452,7 +452,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_4
 		values forming the full IP address must be specified individually.
 		This is the fourth of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_5
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_5
 	hex "[4]"
 	default 0x0000
 	range 0x0 0xffff
@@ -468,7 +468,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_5
 		values forming the full IP address must be specified individually.
 		This is the fifth of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_6
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_6
 	hex "[5]"
 	default 0x0000
 	range 0x0 0xffff
@@ -484,7 +484,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_6
 		values forming the full IP address must be specified individually.
 		This is the sixth of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_7
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_7
 	hex "[6]"
 	default 0x0000
 	range 0x0 0xffff
@@ -500,7 +500,7 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_7
 		values forming the full IP address must be specified individually.
 		This is the seventh of the 8-values.
 
-config EXAMPLES_UDP_SERVERIPv6ADDR_8
+config EXAMPLES_UDP_SIMPLE_SERVERIPv6ADDR_8
 	hex "[7]"
 	default 0x0001 if !EXAMPLES_UDP_SERVER1
 	default 0x0002 if EXAMPLES_UDP_SERVER1
@@ -517,14 +517,14 @@ config EXAMPLES_UDP_SERVERIPv6ADDR_8
 		values forming the full IP address must be specified individually.
 		This is the last of the 8-values.
 
-endif # EXAMPLES_UDP_IPv6
+endif # EXAMPLES_UDP_SIMPLE_IPv6
 
-config EXAMPLES_UDP_SERVER_PORTNO
+config EXAMPLES_UDP_SIMPLE_SERVER_PORTNO
 	int "Server port number"
-	default 5471
+	default 61616
 
-config EXAMPLES_UDP_CLIENT_PORTNO
+config EXAMPLES_UDP_SIMPLE_CLIENT_PORTNO
 	int "Client port number"
-	default 5472
+	default 61617
 
 endif # EXAMPLES_UDP

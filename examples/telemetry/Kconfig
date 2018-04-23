@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_TELEMETRY
+	bool "\"CPU, SRAM and energetic consumption monitor\" example"
+	default n
+	---help---
+		This example show data releated of the state of the board such as CPU Load, SRAM ussage and energetic consumption measured with INA219 sensor.
+
+if EXAMPLES_TELEMETRY
+
+config EXAMPLES_TELEMETRY_PROGNAME
+	string "Program name"
+	default "telemetry"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_TELEMETRY_PRIORITY
+	int "Telemetry task priority"
+	default 100
+
+config EXAMPLES_TELEMETRY_STACKSIZE
+	int "Telemetry stack size"
+	default 2048
+
+endif

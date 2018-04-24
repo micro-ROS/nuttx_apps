@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ADC_SIMPLE
+	bool "Simple example of the ADC"
+	default n
+	depends on ADC
+	---help---
+		Enable a simple reading example of the ADC
+
+if EXAMPLES_ADC_SIMPLE
+
+config EXAMPLES_ADC_SIMPLE_PROGNAME
+	string "Program name"
+	default "adc_simple"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ADC_SIMPLE_PRIORITY
+	int "ADC Simple task priority"
+	default 100
+
+config EXAMPLES_ADC_SIMPLE_STACKSIZE
+	int "ADC simple stack size"
+	default 2048
+
+endif

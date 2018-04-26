@@ -36,21 +36,26 @@
  /****************************************************************************
   * Included Files
   ****************************************************************************/
+
  #include <nuttx/config.h>
  #include <stdio.h>
+ #include <stdlib.h>
  #include <fcntl.h>
  #include <unistd.h>
  #include <nuttx/sensors/ina219.h>
-
 
  /****************************************************************************
   * Public Functions
   ****************************************************************************/
 
- /****************************************************************************
-  * telemetry_main
-  ****************************************************************************/
+  /****************************************************************************
+   * Variables
+   ****************************************************************************/
+  struct ina219_s sample;
 
+ /****************************************************************************
+  * hello_main
+  ****************************************************************************/
 
  #ifdef CONFIG_BUILD_KERNEL
  int main(int argc, FAR char *argv[])
@@ -58,66 +63,134 @@
  int telemetry_main(int argc, char *argv[])
  #endif
  {
-   //Variables
-   struct ina219_s sample;
-   int fd;
-   int ret;
-   FILE *fd_f;
+   //File descriptors
+   FILE *fd_save;
+   FILE *fd_sensor;
+   FILE *fd_cpu;
+   FILE *fd_mem;
+
+   //Buffers
+   char cpuload_buf[6];
+   char meminfo_buf[256];
+   char buffer[256];
+
+   //Auxilary Variables
+   int i=0;
    char aux_c;
-   int aux_i=0;//Index of the cpu load
-   char cpuload[6];
-   char meminfo[256];
-   //Fist it necessary to mount the proc file system
+   int n=0;
+   char aux[10];
+   int iterations=0;
+   int iterations_counter=0;
+
+   //Checking the arguments of the function.
+   if(argc<4){
+     //It's neccesary almost the name of the file
+     printf("Correct: telemetry file.txt number_measures show_option\n");
+     printf("If you want a continue measure, write i as argument \n");
+     printf("The available options are:\n s (to save in the sd card)\n");
+     printf("c (to see the data in the console) \n b (both modes)\n");
+     return -1;
+   }
+   else if(argc==4){
+     //This is to check the name of the file
+     sprintf(buffer,"/mnt/%s",argv[1]);
+     int num=atoi(argv[2]);
+     //To set the number of iterations
+     if(num>1 && num<=500){
+       iterations=num;
+     }
+     else if(argv[2]=='i'){
+       iterations=-1;
+     }
+     else{
+       printf("Error, must be 1 to 500 iterations or i to continue measurement\n");
+       return -1;
+     }
+    /* if(argv[3]!= 's' || argv[3]!= 'c' || argv[3]!= 'b'){
+       printf("Must be, s, c or b\n");
+       return -1;
+     }*/
+   }
+   else{
+     printf("Too much arguments\n");
+     printf("Correct: telemetry file.txt number_measures show_option\n");
+     printf("If you want a continue measure, write i as argument \n");
+     printf("The available options are:\n s (to save in the sd card)\n");
+     printf("c (to see the data in the console) \n b (both modes)\n");
+     return -1;
+   }
+
+
+
+   //Commands to mount the file system of the SD card and the data of the board
+   system("mount -t vfat /dev/mmcsd0 /mnt");
    system("mount -t procfs /proc");
 
-   //Values of the energetic consumption from the INA219 sensor
-   fd = open("/dev/ina219", O_RDWR); //Open the sensor
-   if(fd<0){
-     printf("Sensor not available\n");
+   //Opening the Files
+   fd_save = fopen( buffer , "a+" );
+   fd_cpu = fopen("/proc/cpuload", "r");
+   fd_mem = fopen("/proc/meminfo", "r");
+   fd_sensor = open("/dev/ina219", O_RDWR);
+
+   if(fd_save < 0 || fd_cpu < 0 || fd_mem < 0|| fd_sensor < 0){
+     printf("Error opening file\n");
+     return -1;
    }
-   ret = read(fd, &sample, sizeof(sample));//Reading the value of sensor
-   if (ret != sizeof(sample)) return 0;//Checking if the data are correct
-   close(fd);//Closing the sensor
 
-   //Getting the load in the CPU.
-   //Previously check in the config: RTOS Features->
-   //->Performace monitoring ->Enable CPU load monitoring
-   FILE *acc = fopen("/proc/cpuload", "r"); //Opening the file of the CPU Load
+   //This loop gets the data from the sensor and from the files, then it
+   //construct the message, and finally it save in the file
+   printf("Starting telemetry SD\n");
+   /*buffer="New Measure\n";//This is just in case we use the same file
+   fwrite(aux_buffer , 1 , n , fd_save );*/
 
-   //This way of get the values is not the best, but for now it works.
-   //I need to find out how to use fscanf
-   while(1) {
-      aux_c = fgetc(acc);
-      if( feof(acc) ) break;
-      cpuload[aux_i]=aux_c;
-      aux_i++;
+   while(iterations!=iterations_counter){
+     //Reading the value of sensor
+     read(fd_sensor, &sample, sizeof(sample));
+     //getting the data from the CPU
+     while(1){
+       aux_c = fgetc(fd_cpu);
+       if( feof(fd_cpu) ) break;
+       cpuload_buf[i]=aux_c;
+       i++;
+     }
+     i=0;
+     //getting the data from the CPU
+     while(1){
+       aux_c = fgetc(fd_mem);
+       if( feof(fd_mem) ) break;
+       meminfo_buf[i]=aux_c;
+       i++;
+     }
+     //With this loop, we look for the value of used SRAM
+     for(i=0;i<10;i++){
+       aux[i]=meminfo_buf[76+i];
+     }
+     i=127072 - atoi(aux);
+     //Creating the message
+     n=sprintf(buffer,"V: %4u mV I: %4u mA CPU: %s Free SRAM: %d Bytes\n",
+     sample.voltage,sample.current,cpuload_buf,i);
+     //Writing to the file
+     if(argv[3]=='s'){
+       //Save in the SD
+       fwrite(buffer , 1 , n , fd_save );
+     }
+     else if(argv[3]=='c'){
+       //Show in the console
+       printf(buffer);
+     }
+     else{
+       fwrite(buffer , 1 , n , fd_save );
+       printf(buffer);
+     }
+
+     usleep(200);
+     iterations_counter++;
    }
-   aux_i=0;
-   fclose(acc);
 
-   //Getting the load in the CPU.
-   //Previously check in the config: RTOS Features->
-   //->Performace monitoring ->Enable CPU load monitoring
-   acc = fopen("/proc/meminfo", "r"); //Opening the file of the CPU Load
-
-   //This way of get the values is not the best, but for now it works.
-   //I need to find out how to use fscanf
-   while(1) {
-      aux_c = fgetc(acc);
-      if( feof(acc) ) break;
-      meminfo[aux_i]=aux_c;
-      aux_i++;
-   }
-   aux_i=0;
-   fclose(acc);
-
-
-   int power=((sample.current/1000)*(sample.current/1000)*(sample.voltage/1000))/1000000;
-   //Getting the ussage of the SRAM
-   printf("CPU Load: %s\n", cpuload);
-   printf(meminfo);
-   printf("\n");
-   printf("Bus Voltage: %4u mV Current: %4u mA\n ",(sample.voltage/1000), (sample.current/1000));
-   printf("Power consumption: %4u mW \n",power);
-
+   //Closing the files
+   fclose(fd_save);
+   fclose(fd_cpu);
+   fclose(fd_mem);
+   close(fd_sensor);
+   return 0;
  }

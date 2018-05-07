@@ -1,8 +1,8 @@
 /****************************************************************************
  * examples/telemetry/telemetry_main.c
  *
- *   Copyright (C) 2018 Juan Flores Muñoz. All rights reserved.
- *   Author: Juan Flores Muñoz <jfloresmu92@gmail.com>
+ *   Copyright (C) 2018 Erle Robotics (Juan Flores Muñoz). All rights reserved.
+ *   Author: Erle Robotics (Juan Flores Muñoz) <juan@erlerobotics.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

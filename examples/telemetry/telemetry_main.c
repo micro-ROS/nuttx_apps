@@ -43,6 +43,7 @@
  #include <fcntl.h>
  #include <unistd.h>
  #include <nuttx/sensors/ina219.h>
+ #include <string.h>
 
  /****************************************************************************
   * Public Functions
@@ -73,6 +74,7 @@
    char cpuload_buf[6];
    char meminfo_buf[256];
    char buffer[256];
+   char buffer_2[256];
 
    //Auxilary Variables
    int i=0;
@@ -94,22 +96,21 @@
    else if(argc==4){
      //This is to check the name of the file
      sprintf(buffer,"/mnt/%s",argv[1]);
+     sprintf(buffer_2,"%s",argv[2]);
+
      int num=atoi(argv[2]);
      //To set the number of iterations
      if(num>1 && num<=500){
        iterations=num;
      }
-     else if(argv[2]=='i'){
+     else if(strcmp(buffer_2,"i")==0){
        iterations=-1;
      }
      else{
        printf("Error, must be 1 to 500 iterations or i to continue measurement\n");
        return -1;
      }
-    /* if(argv[3]!= 's' || argv[3]!= 'c' || argv[3]!= 'b'){
-       printf("Must be, s, c or b\n");
-       return -1;
-     }*/
+
    }
    else{
      printf("Too much arguments\n");
@@ -127,7 +128,7 @@
    system("mount -t procfs /proc");
 
    //Opening the Files
-   fd_save = fopen( buffer , "a+" );
+   fd_save = fopen( buffer , "w" );
    fd_cpu = fopen("/proc/cpuload", "r");
    fd_mem = fopen("/proc/meminfo", "r");
    fd_sensor = open("/dev/ina219", O_RDWR);
@@ -170,11 +171,12 @@
      n=sprintf(buffer,"V: %4u mV I: %4u mA CPU: %s Free SRAM: %d Bytes\n",
      sample.voltage,sample.current,cpuload_buf,i);
      //Writing to the file
-     if(argv[3]=='s'){
+     sprintf(buffer_2,"%s",argv[3]);
+     if(strcmp(buffer_2,"s")==0){
        //Save in the SD
        fwrite(buffer , 1 , n , fd_save );
      }
-     else if(argv[3]=='c'){
+     else if(strcmp(buffer_2,"c")==0){
        //Show in the console
        printf(buffer);
      }

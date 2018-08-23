@@ -39,7 +39,7 @@
 
 #include <nuttx/config.h>
 #include <fcntl.h>
-#include <nuttx/sensors/bmp180.h>
+#include <nuttx/sensors/hih6130.h>
 #include <stdio.h>
 
 /****************************************************************************
@@ -53,23 +53,24 @@
 #ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
 #else
-int bmp180_main(int argc, char *argv[])
+int hih6130_main(int argc, char *argv[])
 #endif
 {
-  int fd_press; //BMP180 file descriptor
-  uint32_t sample_press;//Variable where we save the data of the sensor
+  int fd_temp; //HIH6130 file descriptor
+
+  struct hih6130_s sample;//Data structure of the sensor
 
   //Opening the sensor with read only permission
-  fd_press=open("/dev/press0", O_RDWR);
-  if(fd_press<0){
-    printf("Error opening BMP180 sensor %d\n",fd_press);
+  fd_temp=open("/dev/hih6130", O_RDONLY);
+  if(fd_temp<0){
+    printf("Error opening HIH6130 sensor %d\n",fd_temp);
   }
 
   while(1){
     //Read the data from the sensor and save in the structure
-    read(fd_press, &sample_press,sizeof(uint32_t));
+    read(fd_temp, &sample,sizeof(uint32_t));
     //Show the data and wait 1 second
-    printf("Pressure: %d \n",sample_press);
+    printf("Temperature: %d ºC Humidity: %d  \n",sample.temp,sample.hum);
     sleep(1);
   }
 

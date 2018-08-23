@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_HIH6130
+	bool "\"HIH6130 humidity/temperature sensor\" example"
+	default n
+	---help---
+		Enable the \"HIH6130 humidity/temperature sensor\" example
+
+if EXAMPLES_HIH6130
+
+config EXAMPLES_HIH6130_PROGNAME
+	string "Program name"
+	default "hih6130"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_HIH6130_PRIORITY
+	int "HIH6130 task priority"
+	default 100
+
+config EXAMPLES_HIH6130_STACKSIZE
+	int "HIH6130 stack size"
+	default 2048
+
+endif

@@ -3,16 +3,16 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-config EXAMPLES_UROS
+config EXAMPLES_PUBLISHER
 	bool "uROS example"
 	default n
 	depends on UROS
 	---help---
-		Enable the uROS example
+		Enable the publisher uROS example
 
-if EXAMPLES_UROS
+if EXAMPLES_PUBLISHER
 
-config EXAMPLES_UROS_PROGNAME
+config EXAMPLES_PUBLISHER_PROGNAME
 	string "Program name"
 	default "publisher"
 	depends on BUILD_KERNEL

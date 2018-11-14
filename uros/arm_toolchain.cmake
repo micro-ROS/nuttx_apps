@@ -17,8 +17,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CROSSDEV "" CACHE STRING "GCC compiler use in NuttX.")
 set(ARCH_CPU_FLAGS "" CACHE STRING "Makefile arquitecture flags.")
 set(ARCH_OPT_FLAGS "" CACHE STRING "Makefile optimization flags.")
-separate_arguments(ARCH_CPU_FLAGS)
-separate_arguments(ARCH_OPT_FLAGS)
 
 # Compiler tools
 foreach(tool gcc ld ar)
@@ -32,10 +30,9 @@ endforeach()
 CMAKE_FORCE_C_COMPILER(${CROSSDEV}gcc GNU)
 CMAKE_FORCE_CXX_COMPILER(${CROSSDEV}g++ GNU)
 
-set(CMAKE_C_FLAGS_INIT "-std=c99" CACHE STRING "" FORCE)
-#-fPIC
-set(CMAKE_CXX_FLAGS_INIT "-std=c++11" CACHE STRING "" FORCE)
-#-mcpu=cortex-m4 -mthumb -mfloat-abi=soft -fPIC
+set(CMAKE_C_FLAGS_INIT "-std=c99 ${ARCH_CPU_FLAGS} ${ARCH_OPT_FLAGS}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_INIT "-std=c++11 ${ARCH_CPU_FLAGS} ${ARCH_OPT_FLAGS} " CACHE STRING "" FORCE)
+
 
 include_directories(SYSTEM 
     /root/nuttx/include
@@ -47,10 +44,5 @@ link_directories(
     /root/nuttx/staging
     /root/nuttx/configs/olimex-stm32-e407/src
     )
-
-add_compile_options(
-    ${ARCH_CPU_FLAGS}
-    ${ARCH_OPT_FLAGS}
-    )
-
+    
 set(__BIG_ENDIAN__ 0)

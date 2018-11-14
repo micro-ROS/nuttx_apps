@@ -39,7 +39,9 @@ all: .built
 
 colcon_compile: 
 	$(Q) cd $(UROS_DIR); \
-		colcon build --cmake-args \
+		colcon build \
+			--packages-ignore-regex=.*_cpp \
+			--cmake-args \
 			-DBUILD_SHARED_LIBS=OFF \
 			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 			-DBUILD_TESTING=OFF \

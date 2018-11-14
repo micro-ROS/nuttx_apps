@@ -52,7 +52,7 @@ MAINSRC = publisher_main.c
 
 CONFIG_EXAMPLES_PUBLISHER_PROGNAME ?= publisher$(EXEEXT)
 PROGNAME = $(CONFIG_EXAMPLES_PUBLISHER_PROGNAME)
-UROSDIR = $(shell find $(APPDIR)/../ros2_ws/install -type d -name include)
+UROSDIR = $(shell find $(APPDIR)/../uros_ws/install -type d -name include)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROSDIR)"} -std=c99
 
 MODULE = CONFIG_EXAMPLES_PUBLISHER

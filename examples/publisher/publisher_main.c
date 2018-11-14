@@ -11,13 +11,9 @@ int publisher_main(int argc, char* argv[])
 {
     (void)argc;
     (void)argv;
-    const char* a = "";
-    rclc_init(1, a);
-    rclc_node_t* node     = rclc_create_node("publisher_node", "");
-    //rclc_publisher_t* publisher = rclc_create_publisher(node, RCLC_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "publisher_example", 1);
-    const rosidl_message_type_support_t* c = rosidl_typesupport_micrortps_c__get_message_type_support_handle__std_msgs__msg__Int32();
-    //const rosidl_message_type_support_t* b = rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Int32();
+    rclc_init(1, "");
     const rclc_message_type_support_t type_support = RCLC_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32);
+    rclc_node_t* node     = rclc_create_node("publisher_node", "");
     rclc_publisher_t* publisher = rclc_create_publisher(node, type_support, "publisher_example", 1);
 
     std_msgs__msg__Int32 msg;

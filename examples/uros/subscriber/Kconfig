@@ -3,29 +3,29 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-config EXAMPLES_PUBLISHER
-	bool "uROS example"
+config UROS_EXAMPLES_SUBSCRIBER
+	bool "uROS Subscriber"
 	default n
 	depends on UROS
 	---help---
-		Enable the publisher uROS example
+		Enable the subscriber uROS example
 
-if EXAMPLES_PUBLISHER
+if UROS_EXAMPLES_SUBSCRIBER
 
-config EXAMPLES_PUBLISHER_PROGNAME
+config UROS_EXAMPLES_SUBSCRIBER_PROGNAME
 	string "Program name"
-	default "publisher"
+	default "subscriber"
 	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
-#config EXAMPLES_PUBLISHER_PRIORITY
-#	int "Publisher task priority"
+#config UROS_EXAMPLES_SUBSCRIBER_PRIORITY
+#	int "Subscriber task priority"
 #	default 100
 #
-#config EXAMPLES_PUBLISHER_STACKSIZE
-#	int "Publisher stack size"
+#config UROS_EXAMPLES_SUBSCRIBER_STACKSIZE
+#	int "Subscriber stack size"
 #	default 2048
 
 endif

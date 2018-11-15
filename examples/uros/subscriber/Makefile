@@ -1,8 +1,7 @@
 ############################################################################
-# apps/examples/micrortpsclient/Make.defs
-# Adds selected applications to apps/ build
+# apps/examples/uros_subscriber/Makefile
 #
-#   Copyright (C) 2015 Gregory Nutt. All rights reserved.
+#   Copyright (C) 2008, 2010-2013 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +33,28 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_SUBSCRIBER),y)
-CONFIGURED_APPS += examples/subscriber
-endif
+-include $(TOPDIR)/Make.defs
+
+# uROS-subscriber built-in application info
+
+CONFIG_UROS_EXAMPLES_SUBSCRIBER_PRIORITY ?= SCHED_PRIORITY_DEFAULT
+CONFIG_UROS_EXAMPLES_SUBSCRIBER_STACKSIZE ?= 65000
+
+APPNAME = subscriber
+PRIORITY = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_PRIORITY)
+STACKSIZE = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_STACKSIZE)
+
+# uROS-subscriber Example
+
+ASRCS =
+CSRCS =
+MAINSRC = subscriber_main.c 
+
+CONFIG_UROS_EXAMPLES_SUBSCRIBER_PROGNAME ?= subscriber$(EXEEXT)
+PROGNAME = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_PROGNAME)
+UROSDIR = $(shell find $(APPDIR)/../uros_ws/install -type d -name include)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROSDIR)"} -std=c99
+
+MODULE = CONFIG_UROS_EXAMPLES_SUBSCRIBER
+
+include $(APPDIR)/Application.mk

@@ -1,0 +1,11 @@
+menuconfig UROS_EXAMPLES
+	tristate "UROS Examples"
+	default n
+	---help---
+		Enable the uROS examples.
+
+if UROS_EXAMPLES
+source "/root/apps/examples/uros/publisher/Kconfig"
+source "/root/apps/examples/uros/subscriber/Kconfig"
+endif # UROS_EXAMPLES
+

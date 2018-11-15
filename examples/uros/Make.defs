@@ -1,1 +1,1 @@
-include $(wildcard uros/*/Make.defs)
+include $(wildcard examples/uros/*/Make.defs)

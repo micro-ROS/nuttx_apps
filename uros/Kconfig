@@ -1,4 +1,4 @@
-# Kconfig for Micro RTPS
+# Kconfig for micro-ROS
 
 menu "uROS"
 

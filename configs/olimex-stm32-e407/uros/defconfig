@@ -99,3 +99,7 @@ CONFIG_BOARDCTL_USBDEVCTRL=y
 
 # Enable debug
 CONFIG_DEBUG_SYMBOLS=y
+
+# Use Nuttx Math lib
+CONFIG_LIBM=y
+

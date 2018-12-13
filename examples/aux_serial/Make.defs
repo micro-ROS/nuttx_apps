@@ -34,6 +34,6 @@
 #
 ############################################################################
 
-ifneq ($(CONFIG_EXAMPLES_AUX_SERIAL),)
-CONFIGURED_APPS += examples/serial_aux
+ifneq ($(CONFIG_EXAMPLES_SERIAL_AUX),)
+CONFIGURED_APPS += examples/aux_serial
 endif

@@ -1,0 +1,29 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_SERIAL_AUX
+	bool "Auxiliar Serial Port"
+	default n
+	---help---
+		Enable the example of use an auxiliar serial port
+
+if EXAMPLES_SERIAL_AUX
+
+config EXAMPLES_SERIAL_AUX_PROGNAME
+	string "Program name"
+	default "Aux Serial"
+	depends on BUILD_LOADABLE
+	---help---
+
+
+config EXAMPLES_SERIAL_AUX_PRIORITY
+	int "Aux Serial task priority"
+	default 100
+
+config EXAMPLES_SERIAL_AUX_STACKSIZE
+	int "Aux Serial stack size"
+	default 2048
+
+endif

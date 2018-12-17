@@ -4,10 +4,10 @@
 #
 
 config EXAMPLES_TELEMETRY
-	bool "\"CPU, SRAM and energetic consumption monitor\" example"
+	bool "Performance Telemetry App" example"
 	default n
 	---help---
-		This example show data releated of the state of the board such as CPU Load, SRAM ussage and energetic consumption measured with INA219 sensor.
+		With this app you can see an example ussage of different tools to control the MCU.
 
 if EXAMPLES_TELEMETRY
 

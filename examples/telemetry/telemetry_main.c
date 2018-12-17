@@ -1,8 +1,8 @@
 /****************************************************************************
  * examples/telemetry/telemetry_main.c
  *
- *   Copyright (C) 2018 Erle Robotics (Juan Flores Muñoz). All rights reserved.
- *   Author: Erle Robotics (Juan Flores Muñoz) <juan@erlerobotics.com>
+ *   Copyright (C) 2018 Acutronics Link Robotics. All rights reserved.
+ *   Author: Acutronics Link Robotics <juan@erlerobotics.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,166 +33,92 @@
  *
  ****************************************************************************/
 
- /****************************************************************************
-  * Included Files
-  ****************************************************************************/
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
 
- #include <nuttx/config.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <fcntl.h>
- #include <unistd.h>
- #include <nuttx/sensors/ina219.h>
- #include <string.h>
+#include <fcntl.h>
+#include <math.h>
+#include <nuttx/config.h>
+#include <stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
- /****************************************************************************
-  * Public Functions
-  ****************************************************************************/
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
 
-  /****************************************************************************
-   * Variables
-   ****************************************************************************/
-  struct ina219_s sample;
+/****************************************************************************
+ * Variables
+ ****************************************************************************/
 
- /****************************************************************************
-  * hello_main
-  ****************************************************************************/
+int a = 0;
+float e = 0;
 
- #ifdef CONFIG_BUILD_KERNEL
- int main(int argc, FAR char *argv[])
- #else
- int telemetry_main(int argc, char *argv[])
- #endif
- {
-   //File descriptors
-   FILE *fd_save;
-   FILE *fd_sensor;
-   FILE *fd_cpu;
-   FILE *fd_mem;
+char cpuload_buf[256];
+int aux_c;
+int lSize;
+char *buffer;
 
-   //Buffers
-   char cpuload_buf[6];
-   char meminfo_buf[256];
-   char buffer[256];
-   char buffer_2[256];
+/****************************************************************************
+ * hello_main
+ ****************************************************************************/
 
-   //Auxilary Variables
-   int i=0;
-   char aux_c;
-   int n=0;
-   char aux[10];
-   int iterations=0;
-   int iterations_counter=0;
+#ifdef CONFIG_BUILD_KERNEL
+int main(int argc, FAR char *argv[])
+#else
+int telemetry_main(int argc, char *argv[])
+#endif
+{
+  int i = 0;
+  printf("Mounting file system \n\n");
+  system("mount -t procfs /proc");
 
-   //Checking the arguments of the function.
-   if(argc<4){
-     //It's neccesary almost the name of the file
-     printf("Correct: telemetry file.txt number_measures show_option\n");
-     printf("If you want a continue measure, write i as argument \n");
-     printf("The available options are:\n s (to save in the sd card)\n");
-     printf("c (to see the data in the console) \n b (both modes)\n");
-     return -1;
-   }
-   else if(argc==4){
-     //This is to check the name of the file
-     sprintf(buffer,"/mnt/%s",argv[1]);
-     sprintf(buffer_2,"%s",argv[2]);
+  FILE *fd_cpu;
+  fd_cpu = fopen("/proc/cpuload", "r");
+  if (fd_cpu < 0) return -1;
+  sleep(1);
 
-     int num=atoi(argv[2]);
-     //To set the number of iterations
-     if(num>1 && num<=500){
-       iterations=num;
-     }
-     else if(strcmp(buffer_2,"i")==0){
-       iterations=-1;
-     }
-     else{
-       printf("Error, must be 1 to 500 iterations or i to continue measurement\n");
-       return -1;
-     }
+  printf("Pushing the CPU to the limits\n");
+  printf("We will do the next floating operation: \n");
+  printf("e=3.141592653589793\n");
+  printf("e=e*e\n");
+  printf("This operation 100000 times\n");
+  //   sleep(5);
+  e = 3.141592653589793;
 
-   }
-   else{
-     printf("Too much arguments\n");
-     printf("Correct: telemetry file.txt number_measures show_option\n");
-     printf("If you want a continue measure, write i as argument \n");
-     printf("The available options are:\n s (to save in the sd card)\n");
-     printf("c (to see the data in the console) \n b (both modes)\n");
-     return -1;
-   }
+  while (i < 100000) {
+    e = e * e;
+    printf("=");
+    i++;
+  }
+  printf("\n");
+  printf("\nMax CPU load achieve: \n");
+  system("cat /proc/cpuload");
 
+  printf("\nCPU performace test finis!\n");
 
+  printf("Showing interruptions\n\n");
+  system("cat /proc/irqs");
+  sleep(2);
 
-   //Commands to mount the file system of the SD card and the data of the board
-   system("mount -t vfat /dev/mmcsd0 /mnt");
-   system("mount -t procfs /proc");
+  printf("Memory ussage\n\n");
+  system("cat /proc/meminfo");
+  sleep(2);
 
-   //Opening the Files
-   fd_save = fopen( buffer , "w" );
-   fd_cpu = fopen("/proc/cpuload", "r");
-   fd_mem = fopen("/proc/meminfo", "r");
-   fd_sensor = open("/dev/ina219", O_RDWR);
+  printf("Stack of the application\n\n");
+  system("cat /proc/self/stack");
+  sleep(2);
 
-   if(fd_save < 0 || fd_cpu < 0 || fd_mem < 0|| fd_sensor < 0){
-     printf("Error opening file\n");
-     return -1;
-   }
+  printf("Status of the running task\n\n");
+  system("cat /proc/self/status");
+  sleep(2);
 
-   //This loop gets the data from the sensor and from the files, then it
-   //construct the message, and finally it save in the file
-   printf("Starting telemetry SD\n");
-   /*buffer="New Measure\n";//This is just in case we use the same file
-   fwrite(aux_buffer , 1 , n , fd_save );*/
+  printf("Type cat /proc/self/status\n");
+  printf("To see the context change after running this app\n");
+  return 0;
 
-   while(iterations!=iterations_counter){
-     //Reading the value of sensor
-     read(fd_sensor, &sample, sizeof(sample));
-     //getting the data from the CPU
-     while(1){
-       aux_c = fgetc(fd_cpu);
-       if( feof(fd_cpu) ) break;
-       cpuload_buf[i]=aux_c;
-       i++;
-     }
-     i=0;
-     //getting the data from the CPU
-     while(1){
-       aux_c = fgetc(fd_mem);
-       if( feof(fd_mem) ) break;
-       meminfo_buf[i]=aux_c;
-       i++;
-     }
-     //With this loop, we look for the value of used SRAM
-     for(i=0;i<10;i++){
-       aux[i]=meminfo_buf[76+i];
-     }
-     i=127072 - atoi(aux);
-     //Creating the message
-     n=sprintf(buffer,"V: %4u mV I: %4u mA CPU: %s Free SRAM: %d Bytes\n",
-     sample.voltage,sample.current,cpuload_buf,i);
-     //Writing to the file
-     sprintf(buffer_2,"%s",argv[3]);
-     if(strcmp(buffer_2,"s")==0){
-       //Save in the SD
-       fwrite(buffer , 1 , n , fd_save );
-     }
-     else if(strcmp(buffer_2,"c")==0){
-       //Show in the console
-       printf(buffer);
-     }
-     else{
-       fwrite(buffer , 1 , n , fd_save );
-       printf(buffer);
-     }
-
-     usleep(200);
-     iterations_counter++;
-   }
-
-   //Closing the files
-   fclose(fd_save);
-   fclose(fd_cpu);
-   fclose(fd_mem);
-   close(fd_sensor);
-   return 0;
- }
+  fclose(fd_cpu);
+}

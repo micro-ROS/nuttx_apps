@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_TELEMETRY
-	bool "Performance Telemetry App" example"
+	bool "Performance Telemetry App example"
 	default n
 	---help---
 		With this app you can see an example ussage of different tools to control the MCU.

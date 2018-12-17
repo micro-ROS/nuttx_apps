@@ -52,7 +52,7 @@
   /****************************************************************************
    * Variables
    ****************************************************************************/
-  struct ina219_s sample;
+ 
 
  /****************************************************************************
   * hello_main
@@ -131,7 +131,6 @@
    fd_save = fopen( buffer , "w" );
    fd_cpu = fopen("/proc/cpuload", "r");
    fd_mem = fopen("/proc/meminfo", "r");
-   fd_sensor = open("/dev/ina219", O_RDWR);
 
    if(fd_save < 0 || fd_cpu < 0 || fd_mem < 0|| fd_sensor < 0){
      printf("Error opening file\n");
@@ -146,7 +145,7 @@
 
    while(iterations!=iterations_counter){
      //Reading the value of sensor
-     read(fd_sensor, &sample, sizeof(sample));
+
      //getting the data from the CPU
      while(1){
        aux_c = fgetc(fd_cpu);
@@ -167,23 +166,14 @@
        aux[i]=meminfo_buf[76+i];
      }
      i=127072 - atoi(aux);
-     //Creating the message
-     n=sprintf(buffer,"V: %4u mV I: %4u mA CPU: %s Free SRAM: %d Bytes\n",
-     sample.voltage,sample.current,cpuload_buf,i);
+
      //Writing to the file
-     sprintf(buffer_2,"%s",argv[3]);
-     if(strcmp(buffer_2,"s")==0){
-       //Save in the SD
-       fwrite(buffer , 1 , n , fd_save );
-     }
-     else if(strcmp(buffer_2,"c")==0){
+
+ 
+ 
        //Show in the console
        printf(buffer);
-     }
-     else{
-       fwrite(buffer , 1 , n , fd_save );
-       printf(buffer);
-     }
+   
 
      usleep(200);
      iterations_counter++;
@@ -193,6 +183,6 @@
    fclose(fd_save);
    fclose(fd_cpu);
    fclose(fd_mem);
-   close(fd_sensor);
+
    return 0;
  }

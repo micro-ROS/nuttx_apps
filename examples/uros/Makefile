@@ -1,0 +1,1 @@
+include $(APPDIR)/Directory.mk

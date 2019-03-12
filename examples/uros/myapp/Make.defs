@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_UROS_EXAMPLES_MYAPP),y)
+    CONFIGURED_APPS += examples/uros/myapp
+endif

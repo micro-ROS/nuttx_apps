@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_DATE
+	tristate "date output example"
+	default n
+	---help---
+		Enable the date example
+
+if EXAMPLES_DATE
+
+config EXAMPLES_DATE_PROGNAME
+	string "Program name"
+	default "date"
+	depends on BUILD_LOADABLE
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_DATE_PRIORITY
+	int "Date task priority"
+	default 100
+
+config EXAMPLES_DATE_STACKSIZE
+	int "Date stack size"
+	default 2048
+
+endif

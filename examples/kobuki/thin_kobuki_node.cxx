@@ -52,10 +52,17 @@
 #include "rosidl_generator_c/string.h"
 
 #include "kobuki_robot.h"
+
+#define _USE_MATH_DEFINES
+#include <cmath>
 //#include <iostream>
 //#include <tf/transform_datatypes.h>
 
 using namespace std;
+
+const rosidl_generator_c__String ODOM_FRAME_ID ={ "odom", 4, 4 };
+const rosidl_generator_c__String IMU_FRAME_ID ={ "gyro_link", 9, 9 };
+const rosidl_generator_c__String ODOM_HEADER_FRAME_ID ={ "base_link", 9, 9 };
 
 void kobuki_on_message(const void* msgin)
 {
@@ -265,8 +272,8 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
    	  serial_device     = "/dev/ttyS0";
 	  odom_topic        = "odom";
  	  command_vel_topic = "cmd_vel";
-          odom_frame_id     = "odom";
-          imu_frame_id      = "gyro_link";
+          odom_frame_id     = ODOM_FRAME_ID; // "odom";
+          imu_frame_id      = IMU_FRAME_ID; // "gyro_link";
  
   	  // cerr << "running with params: ";
 	  // cerr << "serial_device: " << serial_device << endl;
@@ -302,14 +309,14 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 		  // send the odometry
       		  double x,y,theta, vx, vtheta;
       		  robot.getOdometry(x,y,theta,vx,vtheta);
-      		  odom.header.seq = seq;
+      		  //odom.header.seq = seq;    // header.seq does not exist
       		  //odom.header.stamp = timestamp;
-      		  odom.header.frame_id = "base_link";
+      		  odom.header.frame_id = ODOM_HEADER_FRAME_ID; // "base_link";
       		  odom.pose.pose.position.x = x;
       		  odom.pose.pose.position.y = y;
       		  odom.pose.pose.position.z = 0;
-      		  double s = sin (theta/2);
-      		  double c = cos (theta/2);
+      		  double s = sinf ((float) theta/2);//TODO use CONFIG_HAVE_DOUBLE
+      		  double c = cosf ((float) theta/2);
       		  odom.pose.pose.orientation.x = 0;
       		  odom.pose.pose.orientation.y = 0;
       		  odom.pose.pose.orientation.z = s;
@@ -323,7 +330,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
       		  // imu data
       		  double heading;
       		  robot.getImu(heading, vtheta);
-		  imu.header.seq = seq;
+		  //imu.header.seq = seq; //header.seq does not exist
       		  //imu.header.stamp = timestamp;
       		  //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
       		  imu.angular_velocity.z = vtheta;

@@ -143,3 +143,10 @@ protected:
   PacketParser* _parser;
   Packet* _control_packet;
 };
+
+
+//TODO misssing trigonometric functions
+//float sinf(float v) { return 0.0;}
+//float cosf(flaot v) { return 0.0;}
+//double fmod (double x, double y) {return 0;}
+//double fabs(double x){return 0;}

@@ -316,12 +316,12 @@ void KobukiRobot::processOdometry(uint16_t left_encoder_,
     double dx = 0, dy = 0, dtheta = (dr-dl)/_baseline;
     if (dl!=dr) {
       double R=.5*(dr+dl)/dtheta;
-      dx = R*sin(dtheta);
-      dy = R*(1-cos(dtheta));
+      dx = R*sinf((float)dtheta);
+      dy = R*(1-cosf((float) dtheta));
     } else {
       dx = dr;
     }
-    double s = sin(_theta), c = cos(_theta);
+    double s = sinf((float)_theta), c = cosf((float)_theta);
     double diff_x = c * dx - s * dy;
     //ROS_INFO_STREAM("Elapsed " << elapsed_time_ms << " distance " << diff_x);
     _velocity_x = diff_x / (static_cast<double>(elapsed_time_ms) / 1000.0);

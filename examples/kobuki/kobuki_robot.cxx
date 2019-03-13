@@ -27,10 +27,17 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 #include "kobuki_robot.h"
 #include "kobuki_protocol.h"
+
+
+#define _USE_MATH_DEFINES
 #include <cmath>
+//#include <math.h>
+//hack above does not work to include M_PI
+#define M_PI       3.1415926535897932384626433832795029
+
+
 #include <stdexcept>
 #include <iostream>
 #include "serial.h"
@@ -112,13 +119,16 @@ void KobukiRobot::setSpeed(double tv, double rv) {
     _control_packet->_payloads.size());
 }
 
-void KobukiRobot::receiveData(ros::Time& timestamp) {
+//TODO time
+//void KobukiRobot::receiveData(ros::Time& timestamp) {
+void KobukiRobot::receiveData(uros_time_t& timestamp) {  
   if (_serial_fd < 0)
     throw std::runtime_error("robot not connected");
 
   char buf [255];
   int n = read (_serial_fd, buf, 255);
-  timestamp = ros::Time::now();
+  //TODO time
+  //timestamp = ros::Time::now();
   for (int i = 0; i<n; i++){
     _sync_finder->putChar(buf[i]);
     if (_sync_finder->packetReady()){

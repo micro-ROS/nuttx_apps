@@ -12,8 +12,8 @@ STACKSIZE = $(CONFIG_UROS_EXAMPLES_KOBUKI_STACKSIZE)
 # uROS- Example for turtlebot publisher
 
 ASRCS = 
-#CSRCS = serial.c
-#CXXSRCS = kobuki_robot.cxx kobuki_protocol.cxx thin_kobuki_test.cxx thin_kobuki_file_test.cxx
+CSRCS = serial.c
+CXXSRCS = kobuki_robot.cxx kobuki_protocol.cxx
 MAINSRC = thin_kobuki_node.cxx
 
 CONFIG_UROS_EXAMPLES_KOBUKI_PROGNAME ?= kobuki$(EXEEXT)

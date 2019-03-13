@@ -40,6 +40,19 @@ namespace ros {
   class Time;
 }
 
+//TODO replace with
+//#include<rcl/time.h>
+//rcl_lcokc_ myclock
+//rcl_ros_clock_init(myClock, rcutils_get_dfault_allocator);
+//rcl_time_point_value myNow;
+//rcl_clock_get_now/myClock, myNow);
+// __Time myTimeMsg
+
+typedef struct {
+  int32_t   sec;
+  uint32_t  nsec;
+} uros_time_t;
+  
 class KobukiRobot {
 public:
   enum Side {Left, Center, Right};
@@ -47,7 +60,10 @@ public:
   void connect(std::string device);
   void disconnect();
   void runFromFile(std::istream& is);
-  void receiveData(ros::Time&);
+
+  //void receiveData(ros::Time&);
+  void receiveData(uros_time_t& );
+  
   void sendControls();
   void playSequence(uint8_t sequence);
   void playSound(uint8_t duration, uint16_t note);

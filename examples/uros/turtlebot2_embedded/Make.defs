@@ -1,3 +1,0 @@
-ifeq ($(CONFIG_UROS_EXAMPLES_KOBUKI),y)
-    CONFIGURED_APPS += examples/uros/turtlebot2_embedded
-endif

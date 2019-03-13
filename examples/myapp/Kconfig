@@ -1,0 +1,26 @@
+config UROS_EXAMPLES_MYAPP
+	bool "uROS Myapp"
+	default n
+	depends on UROS
+	---help---
+		Enable the publisher uROS example
+
+if UROS_EXAMPLES_MYAPP
+
+config UROS_EXAMPLES_MYAPP_PROGNAME
+	string "Program name"
+	default "myapp"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+#config UROS_EXAMPLES_MYAPP_PRIORITY
+#	int "Myapp task priority"
+#	default 100
+#
+#config UROS_EXAMPLES_MYAPP_STACKSIZE
+#	int "Myapp stack size"
+#	default 2048
+
+endif

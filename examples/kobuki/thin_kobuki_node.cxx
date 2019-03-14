@@ -84,12 +84,22 @@ uros_time_t last_update;
 
 void commandVelCallback(const void * msgin){ //TwistConstPtr
   const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
-  tv = twist->linear.x;
-  rv = twist->angular.z;
-  robot.setSpeed(tv, rv);
-  robot.sendControls();
-  //last_update = ros::Time::now();
-  printf("commandVelCallback twist received\n");
+  if ( twist != NULL ) {
+    tv = twist->linear.x;
+    rv = twist->angular.z;
+    //const char* bytesPtr = (const char*) msgin;
+    //printf("msgin: ");
+    //for(int i=0; i < 48;++i) {
+    //  printf("%02x ", bytesPtr[i]);
+    //}
+    //printf("\n");
+    robot.setSpeed(tv, rv);
+    robot.sendControls();
+    //last_update = ros::Time::now();
+    printf("CommandVelCallback twist received tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
+    } else {
+    printf("Error in callback commandVelCallback Twist message expected!\n");
+  }
 }
 
 /*
@@ -323,8 +333,8 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
       		  odom.twist.twist.linear.x = vx;
       		  odom.twist.twist.angular.z = vtheta;
       			
-		  rclc_publish( pub_odom, (const void *) &odom);
-		  printf("Sending odom\n");
+		  //rclc_publish( pub_odom, (const void *) &odom);
+		  //printf("Sending odom\n");
 	
       		  // imu data
       		  double heading;
@@ -334,8 +344,8 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
       		  //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
       		  imu.angular_velocity.z = vtheta;
       			
-		  rclc_publish( pub_imu, (const void *) &imu); 
-		  printf("Sending imu\n");
+		  //rclc_publish( pub_imu, (const void *) &imu); 
+		  //printf("Sending imu\n");
 
       		 
       		  //packet_count = robot.packetCount();

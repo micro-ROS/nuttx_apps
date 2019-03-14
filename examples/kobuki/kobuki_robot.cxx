@@ -31,11 +31,16 @@
 #include "kobuki_protocol.h"
 
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-//#include <math.h>
+//NOTE1: need to configure (/root/nuttx$>make menuconfig) standard math library with
+//      CONFIG_LIBM=y
+//NOTE2: architecture specific math.h does not exist
+//      CONFIG_ARCH_MATH=y ==> does not work, because arch/*/math.h does not exist
+
+//#define _USE_MATH_DEFINES
+//#include <cmath>
+#include <math.h>
 //hack above does not work to include M_PI
-#define M_PI       3.1415926535897932384626433832795029
+//#define M_PI       3.1415926535897932384626433832795029
 
 
 #include <stdexcept>

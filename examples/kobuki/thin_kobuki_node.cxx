@@ -295,7 +295,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 
   	  imu.header.frame_id = imu_frame_id;
   	  odom.header.frame_id = odom_frame_id;
-  	  int seq = 0;
+  	  
   	  int packet_count = 0;
 
   	  while( true ){ // ros::ok() did not work on Olimex with micro-ROS
@@ -303,13 +303,12 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 
 	        //ros::Time timestamp;
 	        uros_time_t timestamp;
-	        robot.receiveData(timestamp);
+	        //robot.receiveData(timestamp);
 
-		if (packet_count < robot.packetCount()) {
+		//if (packet_count < robot.packetCount()) {
 		  // send the odometry
       		  double x,y,theta, vx, vtheta;
-      		  robot.getOdometry(x,y,theta,vx,vtheta);
-      		  //odom.header.seq = seq;    // header.seq does not exist
+      		  //robot.getOdometry(x,y,theta,vx,vtheta);
       		  //odom.header.stamp = timestamp;
       		  odom.header.frame_id = ODOM_HEADER_FRAME_ID; // "base_link";
       		  odom.pose.pose.position.x = x;
@@ -329,7 +328,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 	
       		  // imu data
       		  double heading;
-      		  robot.getImu(heading, vtheta);
+      		  //robot.getImu(heading, vtheta);
 		  //imu.header.seq = seq; //header.seq does not exist
       		  //imu.header.stamp = timestamp;
       		  //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
@@ -338,9 +337,9 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 		  rclc_publish( pub_imu, (const void *) &imu); 
 		  printf("Sending imu\n");
 
-      		  seq++;
-      		  packet_count = robot.packetCount();
-    	        }
+      		 
+      		  //packet_count = robot.packetCount();
+	       //}
 
 	  //spin once
 	  rclc_spin_node_once(node, 500);

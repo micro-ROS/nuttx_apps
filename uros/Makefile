@@ -2,7 +2,7 @@
 -include $(TOPDIR)/Make.defs
 include $(APPDIR)/Make.defs
 
-UROS_DIR = $(APPDIR)/../uros_ws
+UROS_DIR = $(APPDIR)/$(CONFIG_UROS_DIR)
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
   BIN = ..\libapps$(LIBEXT)

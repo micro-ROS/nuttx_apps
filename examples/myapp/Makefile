@@ -1,0 +1,25 @@
+-include $(TOPDIR)/Make.defs
+
+# uROS- myapp application info
+
+CONFIG_UROS_EXAMPLES_MYAPP_PRIORITY ?= SCHED_PRIORITY_DEFAULT
+CONFIG_UROS_EXAMPLES_MYAPP_STACKSIZE ?= 65000
+
+APPNAME = myapp 
+PRIORITY = $(CONFIG_UROS_EXAMPLES_MYAPP_PRIORITY)
+STACKSIZE = $(CONFIG_UROS_EXAMPLES_MYAPP_STACKSIZE)
+
+# uROS- Example for turtlebot publisher
+
+ASRCS =
+CSRCS =
+MAINSRC = myapp_main.c 
+
+CONFIG_UROS_EXAMPLES_MYAPP_PROGNAME ?= myapp$(EXEEXT)
+PROGNAME = $(CONFIG_UROS_EXAMPLES_MYAPP_PROGNAME)
+UROSDIR = $(shell find $(APPDIR)/../uros_ws/install -type d -name include)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROSDIR)"} -std=c99
+
+MODULE = CONFIG_UROS_EXAMPLES_MYAPP
+
+include $(APPDIR)/Application.mk

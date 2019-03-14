@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package>
+  <name>turtlebot2_embedded</name>
+  <version>0.6.0</version>
+  <description>A thin node to connect with the kobuki robot</description>
+
+  <maintainer email="ingo.luetkebohle@de.bosch.com">Luetkebohle Ingo (CR/AEX3)</maintainer>
+
+  <license>BSD</license>
+
+  <!-- <url type="website">http://wiki.ros.org/free_kobuki</url> -->
+
+  <author email="ingo.luetkebohle@de.bosch.com">Luetkebohle Ingo (CR/AEX3)</author>
+  <author email="grisetti@dis.uniroma1.it">Giorgio Grisetti</author>
+  
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rosconsole</build_depend>
+  <build_depend>pigpio</build_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rosconsole</run_depend>
+  <run_depend>rosconsole</run_depend>
+  
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- You can specify that this package is a metapackage here: -->
+    <!-- <metapackage/> -->
+
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
+

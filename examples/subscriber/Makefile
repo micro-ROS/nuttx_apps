@@ -52,8 +52,8 @@ MAINSRC = subscriber_main.c
 
 CONFIG_UROS_EXAMPLES_SUBSCRIBER_PROGNAME ?= subscriber$(EXEEXT)
 PROGNAME = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_PROGNAME)
-UROSDIR = $(shell find $(APPDIR)/../uros_ws/install -type d -name include)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROSDIR)"} -std=c99
+UROS_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROS_INCLUDES)"} -std=c99
 
 MODULE = CONFIG_UROS_EXAMPLES_SUBSCRIBER
 

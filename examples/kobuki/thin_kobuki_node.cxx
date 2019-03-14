@@ -333,8 +333,8 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
       		  odom.twist.twist.linear.x = vx;
       		  odom.twist.twist.angular.z = vtheta;
       			
-		  //rclc_publish( pub_odom, (const void *) &odom);
-		  //printf("Sending odom\n");
+		  rclc_publish( pub_odom, (const void *) &odom);
+		  printf("Sending odom\n");
 	
       		  // imu data
       		  double heading;

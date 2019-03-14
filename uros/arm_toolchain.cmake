@@ -27,22 +27,24 @@ foreach(tool gcc ld ar)
 	endif()
 endforeach()
 
-CMAKE_FORCE_C_COMPILER(${CROSSDEV}gcc GNU)
-CMAKE_FORCE_CXX_COMPILER(${CROSSDEV}g++ GNU)
+#CMAKE_FORCE_C_COMPILER(${CROSSDEV}gcc GNU)
+#CMAKE_FORCE_CXX_COMPILER(${CROSSDEV}g++ GNU)
+set(CMAKE_C_COMPILER ${CROSSDEV}gcc)
+set(CMAKE_CXX_COMPILER ${CROSSDEV}g++)
 
 set(CMAKE_C_FLAGS_INIT "-std=c99 ${ARCH_CPU_FLAGS} ${ARCH_OPT_FLAGS}" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_INIT "-std=c++11 ${ARCH_CPU_FLAGS} ${ARCH_OPT_FLAGS} " CACHE STRING "" FORCE)
 
 
 include_directories(SYSTEM 
-    /root/nuttx/include
-    /root/nuttx/include/cxx
-    /root/nuttx/include/uClibc++
+	${NUTTX_TOPDIR}/include
+	${NUTTX_TOPDIR}/include/cxx
+	${NUTTX_TOPDIR}/include/uClibc++
     )
 
 link_directories(
-    /root/nuttx/staging
-    /root/nuttx/configs/olimex-stm32-e407/src
+	${NUTTX_APPDIR}/staging
+	${NUTTX_APPDIR}/configs/olimex-stm32-e407/src
     )
     
 set(__BIG_ENDIAN__ 0)

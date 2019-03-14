@@ -38,6 +38,12 @@ all: .built
 	$(Q) touch .built
 
 colcon_compile: 
+	cat arm_toolchain.cmake.in | \
+		sed "s/@CROSSDEV@/$(CROSSDEV)/g" | \
+		sed "s/@NUTTX_TOPDIR@/$(subst /,\/,$(TOPDIR))/g" |\
+		sed "s/@ARCH_CPU_FLAGS@/\"$(ARCHCPUFLAGS)\"/g" |\
+		sed "s/@ARCH_OPT_FLAGS@/\"$(ARCHOPTIMIZATION)\"/g" \
+		> arm_toolchain.cmake
 	$(Q) cd $(UROS_DIR); \
 		colcon build \
 			--packages-ignore-regex=.*_cpp \
@@ -47,11 +53,7 @@ colcon_compile:
 			-DBUILD_TESTING=OFF \
 			-DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
 			-DCMAKE_TOOLCHAIN_FILE=$(APPDIR)/uros/arm_toolchain.cmake \
-			-DNUTTX_TOPDIR=$(TOPDIR) \
-			-DCROSSDEV=$(CROSSDEV) \
-			-DARCH_CPU_FLAGS="$(ARCHCPUFLAGS)" \
 			-DCMAKE_VERBOSE_MAKEFILE=ON \
-			-DARCH_OPT_FLAGS="$(ARCHOPTIMIZATION)"; \
 
 install: 
 

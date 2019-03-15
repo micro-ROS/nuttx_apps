@@ -120,7 +120,7 @@ void KobukiRobot::setSpeed(double tv, double rv) {
     }
   }
   _control_packet->_payloads.push_back(bp);
-  ROS_DEBUG("Prepared speed command tv=%.2f, rv=%.2f at pos %ld", tv, rv,
+  ROS_DEBUG("Prepared speed command tv=%.2f, rv=%.2f at pos %ld\n", tv, rv,
     _control_packet->_payloads.size());
 }
 
@@ -161,7 +161,7 @@ void KobukiRobot::sendControls() {
 	      sent += write(_serial_fd, tx_buffer+sent, k-sent);
 	    } while (sent<k);
 	  }
-    ROS_DEBUG("Sent %ld pending control packets",
+    ROS_DEBUG("Sent %ld pending control packets\n",
       _control_packet->_payloads.size());
 
 	  _control_packet->clear();

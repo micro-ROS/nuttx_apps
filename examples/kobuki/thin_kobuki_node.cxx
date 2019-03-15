@@ -60,6 +60,7 @@
 
 using namespace std;
 
+// string constants for topics
 const rosidl_generator_c__String ODOM_FRAME_ID ={ "odom", 4, 4 };
 const rosidl_generator_c__String IMU_FRAME_ID ={ "gyro_link", 9, 9 };
 const rosidl_generator_c__String ODOM_HEADER_FRAME_ID ={ "base_link", 9, 9 };
@@ -84,12 +85,25 @@ uros_time_t last_update;
 
 void commandVelCallback(const void * msgin){ //TwistConstPtr
   const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
-  tv = twist->linear.x;
-  rv = twist->angular.z;
-  robot.setSpeed(tv, rv);
-  robot.sendControls();
-  //last_update = ros::Time::now();
-  printf("commandVelCallback twist received\n");
+  if ( twist != NULL ) {
+    tv = twist->linear.x;
+    rv = twist->angular.z;
+    //const char* bytesPtr = (const char*) msgin;
+    //printf("msgin: ");
+    //for(int i=0; i < 48;++i) {
+    //  printf("%02x ", bytesPtr[i]);
+    //}
+    //printf("\n");
+    robot.setSpeed(tv, rv);
+    robot.sendControls();
+    //last_update = ros::Time::now();
+    printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
+
+    //debug output float CONFIG_LIBC_FLOATINGPOINT=y
+    printf("CommandVelCallback twist received (float) tv=%f rv=%lf \n", (float) (twist->linear.x), (double) (twist->angular.z));
+    } else {
+    printf("Error in callback commandVelCallback Twist message expected!\n");
+  }
 }
 
 /*
@@ -196,12 +210,14 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 	//defines publishers and subscribers
 	rclc_publisher_t  * pub_odom                = NULL;
 	rclc_publisher_t  * pub_imu                 = NULL;
-        rclc_subscription_t * sub_cmd_vel             = NULL;
+	rclc_publisher_t  * pub_twist               = NULL;
+	rclc_subscription_t * sub_cmd_vel             = NULL;
         //rclc_subscription_t * sub_cmd_vel_stamped     = NULL;
 
 	//defines status variables for creation of publishers and subscribers
 	bool pub_odom_ok             = false;
 	bool pub_imu_ok              = false;
+	bool pub_twist_ok            = false;
 	bool sub_cmd_vel_ok          = false;
 	//bool sub_cmd_vel_stamped     = false;
         // timer safestop;
@@ -221,6 +237,15 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
           printf("Failed to create publisher: imu_data.\n");
         }
 
+
+	if (pub_twist = rclc_create_publisher(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "kobuki_twist", 10)){
+          pub_twist_ok = true;
+          printf("Created publisher: kobuki_twist.\n");
+        } else {
+          printf("Failed to create publisher: kobuki_twist.\n");
+        }
+
+	
         if(sub_cmd_vel = rclc_create_subscription(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
                                                         "cmd_vel", commandVelCallback, 1, false))
         {
@@ -256,7 +281,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 	  
 	  rosidl_generator_c__String odom_frame_id;
 	  rosidl_generator_c__String imu_frame_id;
-		  
+	  
 	  std::string command_vel_topic;
 
 	  
@@ -274,6 +299,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
  	  command_vel_topic = "cmd_vel";
           odom_frame_id     = ODOM_FRAME_ID; // "odom";
           imu_frame_id      = IMU_FRAME_ID; // "gyro_link";
+
  
   	  // cerr << "running with params: ";
 	  // cerr << "serial_device: " << serial_device << endl;
@@ -293,10 +319,16 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
   	  sensor_msgs__msg__Imu  imu;
           sensor_msgs__msg__Imu__init(&imu);
 
+
+	  geometry_msgs__msg__Twist  msg_twist;
+          geometry_msgs__msg__Twist__init(&msg_twist);
+	  
   	  imu.header.frame_id = imu_frame_id;
   	  odom.header.frame_id = odom_frame_id;
-  	  
+
+		  
   	  int packet_count = 0;
+	  float64 delta    = 0.0;
 
   	  while( true ){ // ros::ok() did not work on Olimex with micro-ROS
     		//ros::spinOnce();
@@ -323,8 +355,8 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
       		  odom.twist.twist.linear.x = vx;
       		  odom.twist.twist.angular.z = vtheta;
       			
-		  rclc_publish( pub_odom, (const void *) &odom);
-		  printf("Sending odom\n");
+		  //rclc_publish( pub_odom, (const void *) &odom);
+		  //printf("Sending odom\n");
 	
       		  // imu data
       		  double heading;
@@ -332,17 +364,30 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 		  //imu.header.seq = seq; //header.seq does not exist
       		  //imu.header.stamp = timestamp;
       		  //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
-      		  imu.angular_velocity.z = vtheta;
+      		  //imu.angular_velocity.z = vtheta;
       			
-		  rclc_publish( pub_imu, (const void *) &imu); 
-		  printf("Sending imu\n");
+		  //rclc_publish( pub_imu, (const void *) &imu); 
+		  //printf("Sending imu\n");
 
-      		 
+		  // debug - sending a twist message - because odom and imu data produce error messages in nsh shell as well as in ros2-environment
+		  msg_twist.linear.x = 1.0 + delta;
+		  msg_twist.linear.y = 2.0;
+		  msg_twist.linear.z = 3.0;
+
+		  msg_twist.angular.x = 0.1;
+		  msg_twist.angular.y = 0.2;
+		  msg_twist.angular.z = 0.3 + delta;
+		  rclc_publish ( pub_twist, (const void *) & msg_twist);
+		  printf("Sending kobuki_twist\n");
+
+		  delta += 0.1;
+		  if (delta > 100) { delta = 0.0; }
+		  
       		  //packet_count = robot.packetCount();
 	       //}
 
 	  //spin once
-	  rclc_spin_node_once(node, 500);
+	  rclc_spin_node_once(node, 1);
           }
         }        
    }

@@ -294,7 +294,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 	  // nh.param("odom_frame_id", odom_frame_id, std::string("/odom"));
 	  // nh.param("imu_frame_id", imu_frame_id, std::string("gyro_link"));
  
-   	  serial_device     = "/dev/ttyS0";
+   	  serial_device     = "/dev/ttyS1";
 	  odom_topic        = "odom";
  	  command_vel_topic = "cmd_vel";
           odom_frame_id     = ODOM_FRAME_ID; // "odom";

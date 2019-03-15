@@ -319,10 +319,7 @@ int Packet::write(unsigned char* buffer){
 }
 
 /************************************************************/
-PacketSyncFinder::PacketSyncFinder() {
-  _length = 0;
-  _state = Unsynced;
-  _packet_ready = false;
+PacketSyncFinder::PacketSyncFinder() : _length(0), _state(Unsynced), _packet_ready(false){
 }
 
 void PacketSyncFinder::putChar(unsigned char c) {

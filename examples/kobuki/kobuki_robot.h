@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <string>
 #include <istream>
+#include "kobuki_protocol.h"
 
 class Packet;
 class PacketSyncFinder;
@@ -139,7 +140,7 @@ protected:
   void processPacket(Packet* p);
 
   int _serial_fd;
-  PacketSyncFinder* _sync_finder;
+  PacketSyncFinder _sync_finder;
   PacketParser* _parser;
   Packet* _control_packet;
 };

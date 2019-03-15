@@ -306,14 +306,14 @@ struct Packet{
 
 class PacketSyncFinder{
 public:
-  enum State {Unsynced, Sync1, Length, Payload, Checksum};
+  enum State {Unsynced = 0, Sync1 = 1, Length = 2, Payload = 3, Checksum = 4};
   PacketSyncFinder();
   void putChar(unsigned char c);    
-  inline bool packetReady() const {return _packet_ready;}
-  inline const unsigned char* buffer() const { return _payload_buf; }
-  inline uint8_t bufferLength() const { return _length; }
+  bool packetReady() const {return _packet_ready;}
+  const unsigned char* buffer() const { return _payload_buf; }
+  uint8_t bufferLength() const { return _length; }
 protected:
-  volatile bool _packet_ready;
+  bool _packet_ready;
   State _state;
   uint8_t _length;
   uint8_t _payload_buf_idx;

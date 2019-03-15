@@ -76,9 +76,8 @@ _heading(0) {
   _baseline = 0.230;
   _first_round = true;
   _serial_fd=-1;
-  _parser = new PacketParser;
-  _sync_finder  = new PacketSyncFinder;
-  _control_packet = new Packet;
+  _parser = new PacketParser();
+  _control_packet = new Packet();
 }
 
 
@@ -132,13 +131,15 @@ void KobukiRobot::receiveData(uros_time_t& timestamp) {
 
   char buf [255];
   int n = read (_serial_fd, buf, 255);
+  printf("Read %d bytes\n", n);
   //TODO time
   //timestamp = ros::Time::now();
   for (int i = 0; i<n; i++){
-    _sync_finder->putChar(buf[i]);
-    if (_sync_finder->packetReady()){
-      const unsigned char* b=_sync_finder->buffer();
-      Packet* packet = _parser->parseBuffer(b, _sync_finder->bufferLength());
+    _sync_finder.putChar(buf[i]);
+    if (_sync_finder.packetReady()){
+      printf("Packet ready\n");
+      const unsigned char* b=_sync_finder.buffer();
+      Packet* packet = _parser->parseBuffer(b, _sync_finder.bufferLength());
       if (packet) {
         _packet_count++;
         processPacket(packet);
@@ -184,10 +185,10 @@ void KobukiRobot::connect(std::string device) {
 void KobukiRobot::runFromFile(istream& is) {
   while(is) {
     unsigned char c = is.get();
-    _sync_finder->putChar(c);
-    if (_sync_finder->packetReady()){
-      const unsigned char* b=_sync_finder->buffer();
-      Packet* packet = _parser->parseBuffer(b, _sync_finder->bufferLength());
+    _sync_finder.putChar(c);
+    if (_sync_finder.packetReady()){
+      const unsigned char* b=_sync_finder.buffer();
+      Packet* packet = _parser->parseBuffer(b, _sync_finder.bufferLength());
       if (packet) {
         processPacket(packet);
 	_packet_count++;

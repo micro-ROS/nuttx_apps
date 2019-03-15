@@ -1,5 +1,5 @@
 config UROS_EXAMPLES_PUBLISHER
-	bool "uROS Publisher"
+	bool "microROS Publisher"
 	default n
 	depends on UROS
 	---help---

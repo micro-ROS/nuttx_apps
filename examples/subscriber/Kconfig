@@ -1,5 +1,5 @@
 config UROS_EXAMPLES_SUBSCRIBER
-	bool "uROS Subscriber"
+	bool "microROS Subscriber"
 	default n
 	depends on UROS
 	---help---

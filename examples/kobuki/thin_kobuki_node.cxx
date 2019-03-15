@@ -335,9 +335,11 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 
 	        //ros::Time timestamp;
 	        uros_time_t timestamp;
-	        //robot.receiveData(timestamp);
+	        robot.receiveData(timestamp);
 
-		//if (packet_count < robot.packetCount()) {
+		if (packet_count < robot.packetCount()) {
+      		  packet_count = robot.packetCount();
+
 		  // send the odometry
       		  double x,y,theta, vx, vtheta;
       		  //robot.getOdometry(x,y,theta,vx,vtheta);
@@ -377,14 +379,13 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 		  msg_twist.angular.x = 0.1;
 		  msg_twist.angular.y = 0.2;
 		  msg_twist.angular.z = 0.3 + delta;
-		  rclc_publish ( pub_twist, (const void *) & msg_twist);
-		  printf("Sending kobuki_twist\n");
+		  //rclc_publish ( pub_twist, (const void *) & msg_twist);
+		  //printf("Sending kobuki_twist\n");
 
 		  delta += 0.1;
 		  if (delta > 100) { delta = 0.0; }
 		  
-      		  //packet_count = robot.packetCount();
-	       //}
+	       }
 
 	  //spin once
 	  rclc_spin_node_once(node, 1);

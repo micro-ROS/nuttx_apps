@@ -131,13 +131,11 @@ void KobukiRobot::receiveData(uros_time_t& timestamp) {
 
   char buf [255];
   int n = read (_serial_fd, buf, 255);
-  printf("Read %d bytes\n", n);
   //TODO time
   //timestamp = ros::Time::now();
   for (int i = 0; i<n; i++){
     _sync_finder.putChar(buf[i]);
     if (_sync_finder.packetReady()){
-      printf("Packet ready\n");
       const unsigned char* b=_sync_finder.buffer();
       Packet* packet = _parser->parseBuffer(b, _sync_finder.bufferLength());
       if (packet) {

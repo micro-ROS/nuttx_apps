@@ -351,6 +351,7 @@ void PacketSyncFinder::putChar(unsigned char c) {
       _state = Checksum;
     break;
   case Checksum:
+    {
     unsigned char cs=0;
     cs^=_length;
     cs^=c;
@@ -362,6 +363,7 @@ void PacketSyncFinder::putChar(unsigned char c) {
       _packet_ready=true;
     }
     _state = Unsynced;
+    }
     break;
   }
   
@@ -397,23 +399,23 @@ PacketParser::PacketParser(){
   c= new PayloadCreator<BasicSensorDataPayload>;
   _creators[c->header] = c;
   
-  c= new PayloadCreator<DockingIRPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<DockingIRPayload>;
+  //_creators[c->header] = c;
 
   c= new PayloadCreator<InertialSensorDataPayload>;
   _creators[c->header] = c;
 
-  c= new PayloadCreator<CliffSensorDataPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<CliffSensorDataPayload>;
+  //_creators[c->header] = c;
 
-  c= new PayloadCreator<CurrentPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<CurrentPayload>;
+  //_creators[c->header] = c;
 
-  c= new PayloadCreator<HardwareVersionPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<HardwareVersionPayload>;
+  //_creators[c->header] = c;
 
-  c= new PayloadCreator<FirmwareVersionPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<FirmwareVersionPayload>;
+  //_creators[c->header] = c;
 
   c= new PayloadCreator<GyroPayload>;
   _creators[c->header] = c;
@@ -423,25 +425,26 @@ PacketParser::PacketParser(){
   _creators[c->header] = c;
   */
 
-  c= new PayloadCreator<UUIDPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<UUIDPayload>;
+  //_creators[c->header] = c;
 
-  c= new PayloadCreator<ControllerInfoPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<ControllerInfoPayload>;
+  //_creators[c->header] = c;
 }
   
 SubPayload* PacketParser::createPayload(uint8_t header) {
-  BasePayloadCreator* c = _creators[header];
-  if (!c) {
-    //throw std::runtime_error("unknown payload");
-
-    return 0;
+  BasePayloadCreator *c = _creators[header];
+  if(c == NULL) {
+	 return NULL;
+  } else {
+	  return c->create();
   }
-  return c->create();
 }
 
 Packet* PacketParser::parseBuffer(const unsigned char*& buffer, uint8_t length){
   int i = 0;
+  if(length == 0)
+	  return NULL;
   Packet* p = new Packet();
   p->length = length;
   while (i<length) {

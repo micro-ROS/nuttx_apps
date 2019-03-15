@@ -32,8 +32,8 @@ all: .built
 		cd $(UROS_DIR)/build/extracted && \
 		$(ARCROSSDEV)ar -x $$lib && \
 		cd - > /dev/null && \
-		$(ARCROSSDEV)ar q $(BIN) $(UROS_DIR)/build/extracted/*.o && \
-		rm $(UROS_DIR)/build/extracted/*.o; \
+		$(ARCROSSDEV)ar q $(BIN) $(UROS_DIR)/build/extracted/* && \
+		rm $(UROS_DIR)/build/extracted/*; \
 	done
 	$(Q) touch .built
 

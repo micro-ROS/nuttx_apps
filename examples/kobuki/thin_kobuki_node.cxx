@@ -364,7 +364,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 		  //imu.header.seq = seq; //header.seq does not exist
       		  //imu.header.stamp = timestamp;
       		  //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
-      		  imu.angular_velocity.z = vtheta;
+      		  //imu.angular_velocity.z = vtheta;
       			
 		  //rclc_publish( pub_imu, (const void *) &imu); 
 		  //printf("Sending imu\n");
@@ -387,7 +387,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 	       //}
 
 	  //spin once
-	  rclc_spin_node_once(node, 500);
+	  rclc_spin_node_once(node, 1);
           }
         }        
    }

@@ -319,10 +319,7 @@ int Packet::write(unsigned char* buffer){
 }
 
 /************************************************************/
-PacketSyncFinder::PacketSyncFinder() {
-  _length = 0;
-  _state = Unsynced;
-  _packet_ready = false;
+PacketSyncFinder::PacketSyncFinder() : _length(0), _state(Unsynced), _packet_ready(false){
 }
 
 void PacketSyncFinder::putChar(unsigned char c) {
@@ -354,6 +351,7 @@ void PacketSyncFinder::putChar(unsigned char c) {
       _state = Checksum;
     break;
   case Checksum:
+    {
     unsigned char cs=0;
     cs^=_length;
     cs^=c;
@@ -365,6 +363,7 @@ void PacketSyncFinder::putChar(unsigned char c) {
       _packet_ready=true;
     }
     _state = Unsynced;
+    }
     break;
   }
   
@@ -389,12 +388,13 @@ struct PayloadCreator: public BasePayloadCreator{
     header = t.header();
   }
   virtual SubPayload* create() {
-    return new T;
+    return new T();
   }
 };
 
 
 PacketParser::PacketParser(){
+  printf("pp ctor\n");
   _creators.resize(255,0);
   BasePayloadCreator* c;
   c= new PayloadCreator<BasicSensorDataPayload>;
@@ -434,17 +434,18 @@ PacketParser::PacketParser(){
 }
   
 SubPayload* PacketParser::createPayload(uint8_t header) {
-  BasePayloadCreator* c = _creators[header];
-  if (!c) {
-    //throw std::runtime_error("unknown payload");
-
-    return 0;
+  BasePayloadCreator *c = _creators[header];
+  if(c == NULL) {
+	 return NULL;
+  } else {
+	  return c->create();
   }
-  return c->create();
 }
 
 Packet* PacketParser::parseBuffer(const unsigned char*& buffer, uint8_t length){
   int i = 0;
+  if(length == 0)
+	  return NULL;
   Packet* p = new Packet();
   p->length = length;
   while (i<length) {

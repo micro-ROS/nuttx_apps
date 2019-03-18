@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <string>
 #include <istream>
+#include "kobuki_protocol.h"
 
 class Packet;
 class PacketSyncFinder;
@@ -72,8 +73,8 @@ public:
 
 
   /**  Accessor ,methods */
-  void getOdometry(double& x, double& y, double& theta, double& vx,
-    double& vtheta) const;
+  void getOdometry(float& x, float& y, float& theta, float& vx,
+    float& vtheta) const;
   void getImu(double& heading, double& vtheta);
   bool bumper(Side s) const;
   bool cliff(Side s) const;
@@ -132,15 +133,15 @@ protected:
   double _baseline, _left_ticks_per_m, _right_ticks_per_m;
   bool _first_round;
   int _packet_count;
-  Packet* _currentPacket;
 
   void processOdometry(uint16_t left_encoder_, uint16_t right_encoder_,
     int32_t elapsed_time);
   void processPacket(Packet* p);
 
   int _serial_fd;
-  PacketSyncFinder* _sync_finder;
+  PacketSyncFinder _sync_finder;
   PacketParser* _parser;
+  Packet* _currentPacket;
   Packet* _control_packet;
 };
 

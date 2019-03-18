@@ -2,7 +2,7 @@
 -include $(TOPDIR)/Make.defs
 include $(APPDIR)/Make.defs
 
-UROS_DIR = $(APPDIR)/../uros_ws
+UROS_DIR = $(APPDIR)/$(CONFIG_UROS_DIR)
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
   BIN = ..\libapps$(LIBEXT)
@@ -32,12 +32,18 @@ all: .built
 		cd $(UROS_DIR)/build/extracted && \
 		$(ARCROSSDEV)ar -x $$lib && \
 		cd - > /dev/null && \
-		$(ARCROSSDEV)ar q $(BIN) $(UROS_DIR)/build/extracted/*.o && \
-		rm $(UROS_DIR)/build/extracted/*.o; \
+		$(ARCROSSDEV)ar q $(BIN) $(UROS_DIR)/build/extracted/* && \
+		rm $(UROS_DIR)/build/extracted/*; \
 	done
 	$(Q) touch .built
 
 colcon_compile: 
+	cat arm_toolchain.cmake.in | \
+		sed "s/@CROSSDEV@/$(CROSSDEV)/g" | \
+		sed "s/@NUTTX_TOPDIR@/$(subst /,\/,$(TOPDIR))/g" |\
+		sed "s/@ARCH_CPU_FLAGS@/\"$(ARCHCPUFLAGS)\"/g" |\
+		sed "s/@ARCH_OPT_FLAGS@/\"$(ARCHOPTIMIZATION)\"/g" \
+		> arm_toolchain.cmake
 	$(Q) cd $(UROS_DIR); \
 		colcon build \
 			--packages-ignore-regex=.*_cpp \
@@ -45,13 +51,9 @@ colcon_compile:
 			-DBUILD_SHARED_LIBS=OFF \
 			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 			-DBUILD_TESTING=OFF \
-			-DCHECK_ENDIANNESS=OFF \
 			-DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
 			-DCMAKE_TOOLCHAIN_FILE=$(APPDIR)/uros/arm_toolchain.cmake \
-			-DCROSSDEV=$(CROSSDEV) \
-			-DARCH_CPU_FLAGS="$(ARCHCPUFLAGS)" \
 			-DCMAKE_VERBOSE_MAKEFILE=ON \
-			-DARCH_OPT_FLAGS="$(ARCHOPTIMIZATION)"; \
 
 install: 
 

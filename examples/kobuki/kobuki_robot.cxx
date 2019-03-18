@@ -202,8 +202,8 @@ void KobukiRobot::disconnect() {
   _serial_fd=-1;
 }
 
-void KobukiRobot::getOdometry(double& x, double& y, double& theta, double& vx,
-  double& vtheta) const {
+void KobukiRobot::getOdometry(float& x, float& y, float& theta, float& vx,
+  float& vtheta) const {
   x= _x;
   y= _y;
   theta = _theta;

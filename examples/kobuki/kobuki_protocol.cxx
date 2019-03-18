@@ -388,34 +388,35 @@ struct PayloadCreator: public BasePayloadCreator{
     header = t.header();
   }
   virtual SubPayload* create() {
-    return new T;
+    return new T();
   }
 };
 
 
 PacketParser::PacketParser(){
+  printf("pp ctor\n");
   _creators.resize(255,0);
   BasePayloadCreator* c;
   c= new PayloadCreator<BasicSensorDataPayload>;
   _creators[c->header] = c;
   
-  //c= new PayloadCreator<DockingIRPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<DockingIRPayload>;
+  _creators[c->header] = c;
 
   c= new PayloadCreator<InertialSensorDataPayload>;
   _creators[c->header] = c;
 
-  //c= new PayloadCreator<CliffSensorDataPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<CliffSensorDataPayload>;
+  _creators[c->header] = c;
 
-  //c= new PayloadCreator<CurrentPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<CurrentPayload>;
+  _creators[c->header] = c;
 
-  //c= new PayloadCreator<HardwareVersionPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<HardwareVersionPayload>;
+  _creators[c->header] = c;
 
-  //c= new PayloadCreator<FirmwareVersionPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<FirmwareVersionPayload>;
+  _creators[c->header] = c;
 
   c= new PayloadCreator<GyroPayload>;
   _creators[c->header] = c;
@@ -425,11 +426,11 @@ PacketParser::PacketParser(){
   _creators[c->header] = c;
   */
 
-  //c= new PayloadCreator<UUIDPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<UUIDPayload>;
+  _creators[c->header] = c;
 
-  //c= new PayloadCreator<ControllerInfoPayload>;
-  //_creators[c->header] = c;
+  c= new PayloadCreator<ControllerInfoPayload>;
+  _creators[c->header] = c;
 }
   
 SubPayload* PacketParser::createPayload(uint8_t header) {

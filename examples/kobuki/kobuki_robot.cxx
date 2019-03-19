@@ -52,11 +52,11 @@
 using namespace std;
 
 namespace {
-  const double wrap_angle(double angle) {
-    if (angle > M_PI) {
-      return -(2*M_PI) + angle;
-    } else if(angle < -M_PI) {
-      return (2*M_PI) - angle;
+  const float wrap_angle(float angle) {
+    if (angle > (float)M_PI) {
+      return -(2*(float)M_PI) + angle;
+    } else if(angle < -(float)M_PI) {
+      return (2*(float)M_PI) - angle;
     } else {
       return angle;
     }
@@ -94,11 +94,11 @@ void KobukiRobot::playSound(uint8_t duration, uint16_t note) {
   _control_packet->_payloads.push_back(sp);
 }
 
-void KobukiRobot::setSpeed(double tv, double rv) {
+void KobukiRobot::setSpeed(float tv, float rv) {
   BaseControlPayload* bp = new BaseControlPayload;
   // convert to mm;
   tv *=1000;
-  double b2 = _baseline * 500;
+  float b2 = _baseline * 500;
 
   if (fabs(tv) < 1){
     //cerr << "pure rotation" << endl;
@@ -210,7 +210,7 @@ void KobukiRobot::getOdometry(float& x, float& y, float& theta, float& vx,
   vx = _velocity_x;
   vtheta = _velocity_theta;
 }
-void KobukiRobot::getImu(double& heading, double& vtheta) {
+void KobukiRobot::getImu(float& heading, float& vtheta) {
   heading = _heading;
   vtheta = _velocity_theta;
 }
@@ -315,31 +315,32 @@ uint16_t KobukiRobot::digitalGPIO() const {
 void KobukiRobot::processOdometry(uint16_t left_encoder_,
   uint16_t right_encoder_, int32_t elapsed_time_ms){
   if (!_first_round) {
-    double dl= _left_ticks_per_m * (left_encoder_-_left_encoder);
-    double dr= _right_ticks_per_m * (right_encoder_-_right_encoder);
-    double dx = 0, dy = 0, dtheta = (dr-dl)/_baseline;
+    float dl= _left_ticks_per_m * (left_encoder_-_left_encoder);
+    float dr= _right_ticks_per_m * (right_encoder_-_right_encoder);
+    float dx = 0, dy = 0, dtheta = (dr-dl)/_baseline;
     if (dl!=dr) {
-      double R=.5*(dr+dl)/dtheta;
+      float R=.5f*(dr+dl)/dtheta;
       dx = R*sinf((float)dtheta);
       dy = R*(1-cosf((float) dtheta));
     } else {
       dx = dr;
     }
-    double s = sinf((float)_theta), c = cosf((float)_theta);
-    double diff_x = c * dx - s * dy;
+    float s = sinf((float)_theta), c = cosf((float)_theta);
+    float diff_x = c * dx - s * dy;
     //ROS_INFO_STREAM("Elapsed " << elapsed_time_ms << " distance " << diff_x);
-    _velocity_x = diff_x / (static_cast<double>(elapsed_time_ms) / 1000.0);
+    _velocity_x = diff_x / (static_cast<float>(elapsed_time_ms) / 1000.0f);
     _x += diff_x;
     _y += s * dx + c * dy;
     _theta += dtheta;
-    _theta = fmod(_theta+4*M_PI, 2*M_PI);
-    if (_theta>M_PI)
-      _theta -= 2*M_PI;
+    _theta = fmod(_theta+4*(float)M_PI, 2*(float)M_PI);
+    if (_theta>(float)M_PI)
+      _theta -= 2*(float)M_PI;
   } else {
     _x = _y = _theta = 0;
   }
   _left_encoder = left_encoder_;
   _right_encoder = right_encoder_;
+  //ROS_DEBUG("left=%hu, right=%hu, x=%.4f, y=%.4f\n", left_encoder_, right_encoder_, _x, _y);
 }
 
 void KobukiRobot::processPacket(Packet* p) {
@@ -384,17 +385,17 @@ void KobukiRobot::processPacket(Packet* p) {
       inertial_rate = idp->rate;
       inertial_angle = idp->angle;
       // convert to standard ROS representations
-      _heading = (static_cast<double>(inertial_angle) / 100.0) * (M_PI /
-        180.0);
+      _heading = (static_cast<float>(inertial_angle) / 100.0f) * (M_PI /
+        180.0f);
       if(_first_round) {
         _initial_heading = wrap_angle(_heading);
         _heading = 0;
       } else {
         _heading = wrap_angle(_heading - _initial_heading);
       }
-      ROS_DEBUG("Inertial rate %d, heading %d", inertial_rate, inertial_angle);
-      _velocity_theta = (static_cast<double>(inertial_rate) / 100.0) * (M_PI
-        / 180.0);
+      //ROS_DEBUG("Inertial rate %d, heading %d\n", inertial_rate, inertial_angle);
+      _velocity_theta = (static_cast<float>(inertial_rate) / 100.0f) * (M_PI
+        / 180.0f);
     }
       break;
     case CliffSensorDataPayload_HEADER: {

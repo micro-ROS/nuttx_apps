@@ -434,6 +434,8 @@ PacketParser::PacketParser(){
 }
   
 SubPayload* PacketParser::createPayload(uint8_t header) {
+  if(header >= 30)
+	  return NULL;
   BasePayloadCreator *c = _creators[header];
   if(c == NULL) {
 	 return NULL;

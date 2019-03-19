@@ -31,6 +31,7 @@
 #include <rclc/rclc.h>
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <nuttx/init.h>
 #include "platform/cxxinitialize.h"
@@ -41,6 +42,7 @@
 
 // ROS message types
 #include <geometry_msgs/msg/pose_stamped.h>
+#include <geometry_msgs/msg/vector3.h>
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h>
 #include <geometry_msgs/msg/twist.h>
@@ -61,11 +63,6 @@
 
 using namespace std;
 
-// string constants for topics
-const rosidl_generator_c__String ODOM_FRAME_ID ={ "odom", 4, 4 };
-const rosidl_generator_c__String IMU_FRAME_ID ={ "gyro_link", 9, 9 };
-const rosidl_generator_c__String ODOM_HEADER_FRAME_ID ={ "base_link", 9, 9 };
-
 void kobuki_on_message(const void* msgin)
 {
     const std_msgs__msg__Int32* msg = (const std_msgs__msg__Int32*)msgin;
@@ -76,12 +73,32 @@ void kobuki_on_message(const void* msgin)
 //const ros::Duration COMMAND_TIMEOUT(0.3);
 
 
-volatile double tv = 0, rv = 0;
+volatile float tv = 0, rv = 0;
 int numberMsgCmdVel = 0;
 
 //ros::Time last_update;
 uros_time_t last_update;
 
+struct mallinfo mi;
+static void
+display_mallinfo(void)
+{
+
+#ifdef CONFIG_CAN_PASS_STRUCTS
+  mi = mallinfo();
+#else
+  mallinfo(&mi);
+#endif
+
+  printf("Total non-mmapped bytes (arena):       %d\n", mi.arena);
+  printf("# of free chunks (ordblks):            %d\n", mi.ordblks);
+  printf("Size of largest free chunk (mxordblk)  %d\n", mi.mxordblk);
+  printf("Total allocated space (uordblks):      %d\n", mi.uordblks);
+  printf("Total free space (fordblks):           %d\n", mi.fordblks);
+}
+
+
+KobukiRobot *r;
 
 void commandVelCallback(const void * msgin){ //TwistConstPtr
   const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
@@ -89,19 +106,20 @@ void commandVelCallback(const void * msgin){ //TwistConstPtr
   printf("cmd_vel received(#%d)\n", numberMsgCmdVel);
 
   if ( twist != NULL ) {
-    tv = twist->linear.x;
-    rv = twist->angular.z;
+    tv = (float)twist->linear.x;
+    rv = (float)twist->angular.z;
     
-    /*robot.setSpeed(tv, rv);
-    robot.sendControls();*/
+    r->setSpeed(tv, rv);
+    r->sendControls();
 
     printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
 
     //debug output float CONFIG_LIBC_FLOATINGPOINT=y
-    printf("cmd_vel (#%d): tv=%f rv=%lf \n", numberMsgCmdVel, (float) (twist->linear.x), (double) (twist->angular.z));
+    printf("cmd_vel (#%d): tv=%f rv=%lf \n", numberMsgCmdVel, (double) (twist->linear.x), (double) (twist->angular.z));
     } else {
     printf("Error in callback commandVelCallback Twist message expected!\n");
   }
+  display_mallinfo();
 }
 
 
@@ -113,14 +131,13 @@ int main(int argc, char *argv[])
 int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Makefile (there is also a dependency on CONFIG_UROS_EXAMPLES_KOBUKI_PROGNAME)
 #endif
   {
+    display_mallinfo();
 try {
     KobukiRobot robot;
+    r = &robot;
     int result = 0;
     rclc_init(argc, argv);
 
-    //(void) argc;
-    //(void) argv;
-    //rclc_init(1,"");
     printf("Turtlebot2 embedded kobuki driver\n");
     rclc_node_t* node = NULL;
     if (node = rclc_create_node("free_kobuki_node", ""))
@@ -128,176 +145,84 @@ try {
 	//defines publishers and subscribers
 	rclc_publisher_t  * pub_odom                = NULL;
 	rclc_publisher_t  * pub_imu                 = NULL;
-	rclc_publisher_t  * pub_twist               = NULL;
 	rclc_subscription_t * sub_cmd_vel             = NULL;
-        //rclc_subscription_t * sub_cmd_vel_stamped     = NULL;
 
-	//defines status variables for creation of publishers and subscribers
-	bool pub_odom_ok             = false;
-	bool pub_imu_ok              = false;
-	bool pub_twist_ok            = false;
-	bool sub_cmd_vel_ok          = false;
-	//bool sub_cmd_vel_stamped     = false;
-        // timer safestop;
-      	
-	const char* pose_topic = "pose";
-	if (pub_odom = rclc_create_publisher(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, PoseStamped), pose_topic, 10)){
-          pub_odom_ok = true;
+	const char* pose_topic = "robot_pose";
+	if (pub_odom = rclc_create_publisher(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3), pose_topic, 1)){
           printf("Created publisher: %s\n", pose_topic);
         } else {
           printf("Failed to create publisher: %s.\n", pose_topic);
+	  return -1;
         }
 
-        if (pub_imu = rclc_create_publisher(node, RCLC_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "imu_data", 10) )
-        {
-          pub_imu_ok = true;
-          printf("Created publisher: imu_data.\n");
-        } else {
-          printf("Failed to create publisher: imu_data.\n");
-        }
-        
-
-	if (pub_twist = rclc_create_publisher(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "kobuki_twist", 10)){
-          pub_twist_ok = true;
-          printf("Created publisher: kobuki_twist.\n");
-        } else {
-          printf("Failed to create publisher: kobuki_twist.\n");
-        }
-
-	
         if(sub_cmd_vel = rclc_create_subscription(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-                                                        "cmd_vel", commandVelCallback, 1, false))
+                                                        "cmd_vel", commandVelCallback, 10, false))
         {
-	  sub_cmd_vel_ok = true;
 	  printf("Created subscriber: cmd_vel.\n");
         } else {
 	  printf("Failed to create subscriber: cmd_vel.\n");
+	  return -1;
 	}
 
-	/*
-        if(sub_cmd_vel = rclc_create_subscription(node, RCLC_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, TwistStamped),
-                                                        "cmd_vel_stamped", commandVeliStampedCallback, 1, false))
-        {
-          sub_cmd_vel_stamped_ok = true;
-          printf("Created subscriber: cmd_vel_stamped.\n");
-        } else {
-          print("Failed to create subscriber: cmd_vel_stamped.\n");
-        }
-	*/
+	// connections are properly setup
+	//TODO replace std::string with char var[256]
+	std::string serial_device;
+	std::string command_vel_topic;
+
 	
-	//check correct initialization, otherwise abort
-        if ( (pub_odom_ok    == false) || (pub_imu_ok     == false) || (pub_twist_ok == false) ||
-             (sub_cmd_vel_ok == false)                            )    // || (sub_cmd_vel_ok == false)    )
-        {
-	  printf("Abort: could not create subscriber or publisher.\n");
-	  return -1;
-        } else {
+   	serial_device     = "/dev/ttyS1";
+ 	command_vel_topic = "cmd_vel";
 
-	  // connections are properly setup
-	  //TODO replace std::string with char var[256]
-	  std::string serial_device;
-  	  std::string odom_topic;
-	  
-	  rosidl_generator_c__String odom_frame_id;
-	  rosidl_generator_c__String imu_frame_id;
-	  
-	  std::string command_vel_topic;
+        robot.connect(serial_device);
 
-	  
-   	  serial_device     = "/dev/ttyS1";
-	  odom_topic        = "odom";
- 	  command_vel_topic = "cmd_vel";
-          odom_frame_id     = ODOM_FRAME_ID; // "odom";
-          imu_frame_id      = IMU_FRAME_ID; // "gyro_link";
-
-          robot.connect(serial_device);
-
-	  //ros::Rate r(100);
-	  //TODO set rate
-	 
-	  geometry_msgs__msg__PoseStamped pose;
-	  geometry_msgs__msg__PoseStamped__init(&pose);
-
-  	  sensor_msgs__msg__Imu  imu;
-          sensor_msgs__msg__Imu__init(&imu);
-
-
-	  geometry_msgs__msg__Twist  msg_twist;
-          geometry_msgs__msg__Twist__init(&msg_twist);
-	  
-  	  imu.header.frame_id = imu_frame_id;
-
-		  
-  	  int packet_count = 0;
-	  float64 delta    = 0.0;
-
-  	  while( true ){ // ros::ok() did not work on Olimex with micro-ROS
-	    /*
-	        //ros::spinOnce();
-
-	        //ros::Time timestamp;
-	        uros_time_t timestamp;
-		printf("Receiving data...\n");
-	        robot.receiveData(timestamp);
-		printf("done\n");
-
-		/*if (packet_count < robot.packetCount()) {
-      		  packet_count = robot.packetCount();
-
-		  // send the odometry
-      		  float x,y,theta, vx, vtheta;
-      		  //robot.getOdometry(x,y,theta,vx,vtheta);
-		  //printf("x=%f, y=%f, theta=%f, vx=%f, vtheta=%f\n", x, y, theta, vx, vtheta);
-		  pose.header.frame_id = ODOM_HEADER_FRAME_ID;
-		  pose.header.stamp.sec = timestamp.sec;
-		  pose.header.stamp.nanosec = timestamp.nsec;
-		  pose.pose.position.x = x;
-		  pose.pose.position.y = y;
-		  pose.pose.position.z = 0;
-      		  //double s = sinf ((float) theta/2);//TODO use CONFIG_HAVE_DOUBLE
-      		  //double c = cosf ((float) theta/2);
-      		  //pose.pose.orientation.x = 0;
-      		  //pose.pose.orientation.y = 0;
-      		  //pose.pose.orientation.z = s;
-      		  //pose.pose.orientation.w = c;
-
-		  // FIXME
-      		  //odom.twist.twist.linear.x = vx;
-      		  //odom.twist.twist.angular.z = vtheta;
-      			
-		  rclc_publish( pub_odom, (const void *) &pose);
-		  printf("Sending odom\n");
+	//ros::Rate r(100);
+	//TODO set rate
 	
-      		  // imu data
-      		  double heading;
-      		  //robot.getImu(heading, vtheta);
-		  //imu.header.seq = seq; //header.seq does not exist
-      		  //imu.header.stamp = timestamp;
-      		  //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
-      		  //imu.angular_velocity.z = vtheta;
-      			
-		  //rclc_publish( pub_imu, (const void *) &imu); 
-		  //printf("Sending imu\n");
-		  // debug - sending a twist message - because odom and imu data produce error messages in nsh shell as well as in ros2-environment
-		  msg_twist.linear.x = 1.0 + delta;
-		  msg_twist.linear.y = 2.0;
-		  msg_twist.linear.z = 3.0;
-	    
-		  msg_twist.angular.x = 0.1;
-		  msg_twist.angular.y = 0.2;
-		  msg_twist.angular.z = 0.3 + delta;
-		  //rclc_publish ( pub_twist, (const void *) & msg_twist);
-		  //printf("Sending kobuki_twist\n");
+	geometry_msgs__msg__Vector3 pose;
+	geometry_msgs__msg__Vector3__init(&pose);
 
-		  delta += 0.1;
-		  if (delta > 100) { delta = 0.0; }
-		  
-	       }*/
+  	int packet_count = 0;
+	float64 delta    = 0.0;
+	int count = 0;
 
-	  //spin once
-	  printf("Spinning\n");
-	  //rclc_spin_node_once(node, 500);
-          }
+        display_mallinfo();
+  	while( true ){ // ros::ok() did not work on Olimex with micro-ROS
+		count++;
+	      uros_time_t timestamp;
+	      robot.receiveData(timestamp);
+
+	      if (packet_count < robot.packetCount()) {
+      	        packet_count = robot.packetCount();
+
+	        // send the odometry
+      	        float x,y,theta, vx, vtheta;
+      	        robot.getOdometry(x,y,theta,vx,vtheta);
+		/*if((count % 10) == 0) {
+	          printf("x=%f, y=%f, theta=%f, vx=%f, vtheta=%f\n",(double) x, (double)y, (double)theta, (double)vx, vtheta);
+		}*/
+	        pose.x = x;
+		pose.y = y;
+		pose.z = theta; // HACK!
+      	      	
+	        rclc_publish( pub_odom, (const void *) &pose);
+	
+      	        // imu data
+      	        //float heading;
+      	        //robot.getImu(heading, vtheta);
+	        //imu.header.seq = seq; //header.seq does not exist
+      	        //imu.header.stamp = timestamp;
+      	        //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
+      	        //imu.angular_velocity.z = vtheta;
+      	      	
+	        //rclc_publish( pub_imu, (const void *) &imu); 
+	        //printf("Sending imu\n");
+	        // debug - sending a twist message - because odom and imu data produce error messages in nsh shell as well as in ros2-environment
+	        //rclc_publish ( pub_twist, (const void *) & msg_twist);
+	        //printf("Sending kobuki_twist\n");
+	     }
+
+	//spin once
+	rclc_spin_node_once(node, 10);
         }        
    }
 } catch(const std::exception& ex) {

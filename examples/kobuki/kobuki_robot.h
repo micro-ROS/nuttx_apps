@@ -68,14 +68,14 @@ public:
   void sendControls();
   void playSequence(uint8_t sequence);
   void playSound(uint8_t duration, uint16_t note);
-  void setSpeed(double tv, double rv); // tv: meters/s, rv:radians/s
+  void setSpeed(float tv, float rv); // tv: meters/s, rv:radians/s
   int packetCount() const {return _packet_count;}
 
 
   /**  Accessor ,methods */
   void getOdometry(float& x, float& y, float& theta, float& vx,
     float& vtheta) const;
-  void getImu(double& heading, double& vtheta);
+  void getImu(float & heading, float& vtheta);
   bool bumper(Side s) const;
   bool cliff(Side s) const;
   bool wheelDrop(Side s) const;
@@ -127,10 +127,10 @@ protected:
   uint16_t _digital_input;
   uint32_t _udid[3];
   uint32_t _P,_I,_D;
-  double _x, _y, _theta;
-  double _velocity_x, _velocity_theta;
-  double _initial_heading, _heading;
-  double _baseline, _left_ticks_per_m, _right_ticks_per_m;
+  float _x, _y, _theta;
+  float _velocity_x, _velocity_theta;
+  float _initial_heading, _heading;
+  float _baseline, _left_ticks_per_m, _right_ticks_per_m;
   bool _first_round;
   int _packet_count;
 

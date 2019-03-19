@@ -18,7 +18,7 @@ endif
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
 	BUILD_TYPE = Debug
 else
-	BUILD_TYPE = Release
+	BUILD_TYPE = RelWithDebInfo
 endif
 
 all: .built

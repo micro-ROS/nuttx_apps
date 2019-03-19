@@ -203,8 +203,10 @@ try {
 	        pose.x = x;
 		pose.y = y;
 		pose.z = theta; // HACK!
-      	      	
-	        rclc_publish( pub_odom, (const void *) &pose);
+      	
+		if((count % 5) == 0) {	
+	          rclc_publish( pub_odom, (const void *) &pose);
+		}
 	
       	        // imu data
       	        //float heading;

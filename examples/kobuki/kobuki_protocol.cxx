@@ -395,18 +395,18 @@ struct PayloadCreator: public BasePayloadCreator{
 
 PacketParser::PacketParser(){
   printf("pp ctor\n");
-  _creators.resize(255,0);
+  _creators.resize(30,0);
   BasePayloadCreator* c;
   c= new PayloadCreator<BasicSensorDataPayload>;
   _creators[c->header] = c;
   
-  c= new PayloadCreator<DockingIRPayload>;
-  _creators[c->header] = c;
+  //c= new PayloadCreator<DockingIRPayload>;
+  //_creators[c->header] = c;
 
   c= new PayloadCreator<InertialSensorDataPayload>;
   _creators[c->header] = c;
-
-  c= new PayloadCreator<CliffSensorDataPayload>;
+/*
+  /c= new PayloadCreator<CliffSensorDataPayload>;
   _creators[c->header] = c;
 
   c= new PayloadCreator<CurrentPayload>;
@@ -420,17 +420,17 @@ PacketParser::PacketParser(){
 
   c= new PayloadCreator<GyroPayload>;
   _creators[c->header] = c;
-
+*/
   /*
   c= new PayloadCreator<GPIOPayload>;
   _creators[c->header] = c;
   */
 
-  c= new PayloadCreator<UUIDPayload>;
+ /* c= new PayloadCreator<UUIDPayload>;
   _creators[c->header] = c;
 
   c= new PayloadCreator<ControllerInfoPayload>;
-  _creators[c->header] = c;
+  _creators[c->header] = c;*/
 }
   
 SubPayload* PacketParser::createPayload(uint8_t header) {

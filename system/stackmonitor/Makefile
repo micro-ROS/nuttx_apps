@@ -42,7 +42,7 @@ STACKSIZE = 2048
 
 MAINSRC = stackmonitor.c
 
-CONFIG_XYZ_PROGNAME ?= ramtest$(EXEEXT)
+CONFIG_XYZ_PROGNAME ?= stackmon$(EXEEXT)
 PROGNAME = $(CONFIG_XYZ_PROGNAME)
 
 APPNAME = stackmonitor_start stackmonitor_stop

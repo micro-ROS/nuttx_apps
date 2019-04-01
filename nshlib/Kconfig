@@ -18,12 +18,6 @@ config NSH_LIBRARY
 
 if NSH_LIBRARY
 
-config NSH_PROMPT_STRING
-	string "Prompt String"
-	default "nsh> "
-	---help---
-		Provide the shell prompt string, default is "nsh> ".
-
 menuconfig NSH_MOTD
 	bool "Message of the Day (MOTD)"
 	default n
@@ -68,6 +62,12 @@ config NSH_MOTD_STRING
 endif # NSH_MOTD
 
 menu "Command Line Configuration"
+
+config NSH_PROMPT_STRING
+	string "Prompt String"
+	default "nsh> "
+	---help---
+		Provide the shell prompt string, default is "nsh> ".
 
 choice
 	prompt "Command Line Editor"
@@ -284,6 +284,10 @@ config NSH_DISABLE_ECHO
 	bool "Disable echo"
 	default n
 
+config NSH_DISABLE_ENV
+	bool "Disable env"
+	default n
+
 config NSH_DISABLE_EXEC
 	bool "Disable exec"
 	default y if DEFAULT_SMALL
@@ -293,6 +297,10 @@ config NSH_DISABLE_EXIT
 	bool "Disable exit"
 	default y if DEFAULT_SMALL && !NSH_TELNET
 	default n if !DEFAULT_SMALL || NSH_TELNET
+
+config NSH_DISABLE_EXPORT
+	bool "Disable export"
+	default n
 
 config NSH_DISABLE_FREE
 	bool "Disable free"
@@ -593,6 +601,39 @@ endif # MMCSD
 
 menu "Configure Command Options"
 
+config NSH_VARS
+	bool "NSH variables"
+	default n
+	---help---
+		By default, there are no internal NSH variables.  NSH will use OS
+		environment variables for all variable storage.  If this option, NSH
+		will also support local NSH variables.  These variables are, for the
+		most part, transparent and work just like the OS environment
+		variables.  The difference is that when you create new tasks, all of
+		environment variables are inherited by the created tasks.  NSH local
+		variables are not.
+
+		If this option is enabled (and CONFIG_DISABLE_ENVIRON is not), then a
+		new command called 'export' is enabled.  The export command works very
+		must like the set command except that is operates on environment
+		variables.  When CONFIG_NSH_VARS is enabled, there are changes in the
+		behavior of certains commands
+
+		============== =========================== ===========================
+		CMD             w/o CONFIG_NSH_VARS        w/CONFIG_NSH_VARS
+		============== =========================== ===========================
+		set <a> <b>    Set environment var a to b  Set NSH var a to b
+		unset <a>      Unsets environment var a    Unsets both environment var
+		                                           and NSH var a
+		export <a> <b> Causes an error             Unsets NSH var a.  Sets
+		                                           environment var a to b.
+		export <a>     Causes an error             Sets environment var a to
+		                                           NSH var b (or "").  Unsets
+		                                           local var a.
+		env            Lists all environment       Lists all environment
+		               variables                   variables
+		============== =========================== ===========================
+
 config NSH_CMDOPT_DD_STATS
 	bool "dd: Support transfer statistics"
 	default n
@@ -688,6 +729,14 @@ config NSH_ROMFSETC
 		a FAT FS RAMDISK at /tmp but the logic is easily extensible.
 
 if NSH_ROMFSETC
+
+config NSH_CROMFSETC
+	bool "Support CROMFS (compressed) start-up script"
+	default n
+	depends on NSH_ROMFSETC && FS_CROMFS
+	---help---
+		Mount a CROMFS filesystem at /etc and provide a compressed startup
+		script at /etc/init.d/rcS.
 
 config NSH_ROMFSRC
 	bool "Support ROMFS login script"
@@ -884,11 +933,13 @@ config NSH_ALTCONDEV
 		If CONFIG_NSH_CONSOLE is set to y, then CONFIG_NSH_ALTCONDEV may
 		also be selected to enable use of an alternate character device
 		to support the NSH console. If CONFIG_NSH_ALTCONDEV is selected,
-		then NSH_CONDEV must be set to select the serial device used to
-		support the NSH console.  This may be useful, for example, to
-		separate the NSH command line from the system console when the
-		system console is used to provide debug output.  Default: stdin
-		and stdout (probably "/dev/console")
+		then NSH_ALTSTDIN, NSH_ALTSTDOUT and NSH_ALTSTDERR must be set
+		to select the serial devices used to support the NSH console.
+		This may be useful, for example, to separate the NSH command
+		line from the system console when the system console is used to
+		provide debug output.
+
+		Default: stdin, stderr and stdout (probably "/dev/console")
 
 		NOTE 1: When any other device other than /dev/console is used
 		for a user interface, (1) linefeeds (\n) will not be expanded to
@@ -897,39 +948,59 @@ config NSH_ALTCONDEV
 		not automatically echoed so you will have to turn local echo on.
 
 		NOTE 2:  This option forces the console of all sessions to use
-		NSH_CONDEV.  Hence, this option only makes sense for a system
-		that supports only a single session.  This option is, in
-		particular, incompatible with Telnet sessions because each Telnet
-		session must use a different console device.
+		NSH_ALTSTD(IN/OUT/ERR).  Hence, this option only makes sense for
+		a system that supports only a single session.  This option is,
+		in particular, incompatible with Telnet sessions because each
+		Telnet session must use a different console device.
 
 if NSH_ALTCONDEV
 
-config NSH_CONDEV
-	string "Alternative console device name"
+config NSH_ALTSTDIN
+	string "Alternative console \"stdin\" device name"
 	default "/dev/console"
 	---help---
 		If CONFIG_NSH_CONSOLE is set to y, then CONFIG_NSH_ALTCONDEV may
 		also be selected to enable use of an alternate character device
 		to support the NSH console. If CONFIG_NSH_ALTCONDEV is selected,
-		then NSH_CONDEV must be set to select the serial device used to
+		then NSH_ALTSTDIN must be set to select the "stdin" device to
 		support the NSH console.   This should be set to the quoted name
-		of a readable/write-able character driver such as:
-		NSH_CONDEV="/dev/ttyS1".  This is useful, for example, to separate
-		the NSH command line from the system console when the system console
-		is used to provide debug output.  Default: stdin and stdout
-		(probably "/dev/console")
+		of a readable character driver such as:
 
-		NOTE 1: When any other device other than /dev/console is used
-		for a user interface, (1) linefeeds (\n) will not be expanded to
-		carriage return / linefeeds (\r\n).  You will need to set
-		your terminal program to account for this.  And (2) input is
-		not automatically echoed so you will have to turn local echo on.
+			NSH_ALTSTDIN="/dev/ttyS1".
 
-		NOTE 2:  This option forces the console of all sessions to use
-		NSH_CONDEV.  Hence, this option only makes sense for a system
-		that supports only a single session.  This option is, in
-		particular, incompatible with Telnet sessions because each Telnet
-		session must use a different console device.
+		This way the input will come from "/dev/ttyS1".
+
+config NSH_ALTSTDOUT
+	string "Alternative console \"stdout\" device name"
+	default "/dev/console" if !SLCD_CONSOLE
+	default "/dev/slcd0"   if SLCD_CONSOLE
+	---help---
+		If CONFIG_NSH_CONSOLE is set to y, then CONFIG_NSH_ALTCONDEV may
+		also be selected to enable use of an alternate character device
+		to support the NSH console. If CONFIG_NSH_ALTCONDEV is selected,
+		then NSH_ALTSTDOUT must be set to select the "stdout" device to
+		support the NSH console.   This should be set to the quoted name
+		of a write-able character driver such as:
+
+			NSH_ALTSTDIN="/dev/ttyS1".
+
+		This way the standard output will go to "/dev/ttyS1".
+
+config NSH_ALTSTDERR
+	string "Alternative console \"stderr\" device name"
+	default "/dev/console" if !SLCD_CONSOLE
+	default "/dev/slcd0"   if SLCD_CONSOLE
+	---help---
+		If CONFIG_NSH_CONSOLE is set to y, then CONFIG_NSH_ALTCONDEV may
+		also be selected to enable use of an alternate character device
+		to support the NSH console. If CONFIG_NSH_ALTCONDEV is selected,
+		then NSH_ALTSTDERR must be set to select the "stderr" device to
+		support the NSH console.   This should be set to the quoted name
+		of a write-able character driver such as:
+
+			NSH_ALTSTDIN="/dev/ttyS1".
+
+		This way the standard error output will go to "/dev/ttyS1".
 
 endif # NSH_ALTCONDEV
 

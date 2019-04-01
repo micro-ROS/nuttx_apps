@@ -297,6 +297,7 @@ o test <expression>
                       integer -lt integer | integer -ne integer
 
 o addroute <target> [<netmask>] <router>
+  addroute default <ipaddr> <interface>
 
   This command adds an entry in the routing table.  The new entry
   will map the IP address of a router on a local network(<router>)
@@ -313,6 +314,9 @@ o addroute <target> [<netmask>] <router>
   which is equivalent to
 
     nsh> addroute 11.0.0.0/24 10.0.0.2
+
+  The second form of the addroute command can be used to set the default
+  gateway.
 
 o arp [-a <ipaddr>|-d <ipaddr>|-s <ipaddr> <hwaddr>]
 
@@ -481,6 +485,26 @@ o echo [-n] [<string|$name> [<string|$name>...]]
 
   The -n option will suppress the trailing newline character.
 
+o env
+
+  Show the current name-value pairs in the environment.  Example:
+
+  nsh> env
+  PATH=/bin
+
+  nsh> set foo bar
+  nsh> env
+  PATH=/bin
+  foo=bar
+
+  nsh> unset PATH
+  nsh> env
+  foo=bar
+
+  nsh>
+
+  NOTE:  NSH variables are *not* shown by the env command.
+
 o exec <hex-address>
 
   Execute the user logic at address <hex-address>.  NSH will pause
@@ -492,6 +516,43 @@ o exit
   Exit NSH.  Only useful if you have started some other tasks (perhaps
   using the 'exec' command') and you would like to have NSH out of the
   way.
+
+o export <name> [<value>]
+
+  The 'export' command sets an environment variable, or promotes an
+  NSH variable to an environment variable.  As examples:
+
+  1. Using 'export' to promote an NSH variable to an environment variable.
+
+       nsh> env
+       PATH=/bin
+
+       nsh> set foo bar
+       nsh> env
+       PATH=/bin
+
+       nsh> export foo
+       nsh> env
+       PATH=/bin
+       foo=bar
+
+     A group-wide environment variable is created with the same value as the
+     local NSH variable; the local NSH variable is removed.
+
+     NOTE: This behavior differs from the Bash shell.  Bash will retain the
+     local Bash variable which will shadow the environment variable of the
+     same name and same value.
+
+  2. Using 'export' to set an environment variable
+
+       nsh> export dog poop
+       nsh> env
+       PATH=/bin
+       foo=bar
+       dog=poop
+
+  The export command is not supported by NSH unless both CONFIG_NSH_VARS=y
+  and CONFIG_DISABLE_ENVIRON is not set.
 
 o free
 
@@ -1054,8 +1115,10 @@ o route ipv4|ipv6
 
 o set [{+|-}{e|x|xe|ex}] [<name> <value>]
 
-  Set the environment variable <name> to the sting <value> and or set NSH
-  parser control options. For example,
+  Set the variable <name> to the string <value> and or set NSH parser control
+  options.
+
+  For example, a variable may be set like this:
 
     nsh> echo $foobar
 
@@ -1063,6 +1126,24 @@ o set [{+|-}{e|x|xe|ex}] [<name> <value>]
     nsh> echo $foobar
     foovalue
     nsh>
+
+  If CONFIG_NSH_VARS is selected, the effect of this 'set' command is to set
+  the local NSH variable.  Otherwise, the group-wide environment variable
+  will be set.
+
+  If the local NSH variable has already been 'promoted' to an environment
+  variable, then the 'set' command will set the value of the environment
+  variable rather than the local NSH variable.
+
+  NOTE:  The Bash shell does not work this way.  Bash would set the value of
+  both the local Bash variable and of the environment variable of the same
+  name to the same value.
+
+  If CONFIG_NSH_VARS is selected and no arguments are provided, then the
+  'set' command will list all list all NSH variables.
+
+    nsh> set
+    foolbar=foovalue
 
   Set the 'exit on error control' and/or 'print a trace' of commands when parsing
   scripts in NSH.  The settinngs are in effect from the point of exection, until
@@ -1094,7 +1175,6 @@ o set [{+|-}{e|x|xe|ex}] [<name> <value>]
     set -ex foobar foovalue
     nsh> echo $foobar
     foovalue
-
 
 o sh <script-path>
 
@@ -1209,8 +1289,9 @@ o umount <dir-path>
 
 o unset <name>
 
-  Remove the value associated with the environment variable
-  <name>.  Example:
+  Remove the value associated with the variable <name>.  This will remove
+  the name-value pair from both the NSH local variables and the group-wide
+  environment variables.  For example:
 
     nsh> echo $foobar
     foovalue
@@ -1339,70 +1420,72 @@ Command Dependencies on Configuration Settings
   base64enc  CONFIG_NETUTILS_CODECS && CONFIG_CODECS_BASE64
   basename   --
   break      !CONFIG_NSH_DISABLESCRIPT && !CONFIG_NSH_DISABLE_LOOPS
-  cat        CONFIG_NFILE_DESCRIPTORS > 0
-  cd         !CONFIG_DISABLE_ENVIRON && CONFIG_NFILE_DESCRIPTORS > 0
-  cp         CONFIG_NFILE_DESCRIPTORS > 0
-  dd         CONFIG_NFILE_DESCRIPTORS > 0
+  cat        --
+  cd         !CONFIG_DISABLE_ENVIRON
+  cp         --
+  dd         --
   delroute   CONFIG_NET && CONFIG_NET_ROUTE
-  df         !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_READABLE (see note 3)
+  df         !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_READABLE (see note 3)
   dirname    --
   echo       --
+  env        -- CONFIG_FS_PROCFS && !CONFIG_DISABLE_ENVIRON && !CONFIG_PROCFS_EXCLUDE_ENVIRON
   exec       --
   exit       --
+  export    CONFIG_NSH_VARS && !CONFIG_DISABLE_ENVIRON
   free       --
-  get        CONFIG_NET && CONFIG_NET_UDP && CONFIG_NFILE_DESCRIPTORS > 0 && MTU >= 558  (see note 1)
+  get        CONFIG_NET && CONFIG_NET_UDP && MTU >= 558  (see note 1)
   help       --
-  hexdump    CONFIG_NFILE_DESCRIPTORS > 0
+  hexdump    --
   ifconfig   CONFIG_NET && CONFIG_FS_PROCFS && !CONFIG_FS_PROCFS_EXCLUDE_NET
   ifdown     CONFIG_NET && CONFIG_FS_PROCFS && !CONFIG_FS_PROCFS_EXCLUDE_NET
   ifup       CONFIG_NET && CONFIG_FS_PROCFS && !CONFIG_FS_PROCFS_EXCLUDE_NET
   insmod     CONFIG_MODULE
   irqinfo    CONFIG_FS_PROCFS && CONFIG_SCHED_IRQMONITOR
   kill       !CONFIG_DISABLE_SIGNALS
-  losetup    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_DEV_LOOP
-  ln         CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_PSEUDOFS_SOFTLINK
-  ls         CONFIG_NFILE_DESCRIPTORS > 0
+  losetup    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_DEV_LOOP
+  ln         CONFIG_PSEUDOFS_SOFTLINK
+  ls         --
   lsmod      CONFIG_MODULE && CONFIG_FS_PROCFS && !CONFIG_FS_PROCFS_EXCLUDE_MODULE
   md5        CONFIG_NETUTILS_CODECS && CONFIG_CODECS_HASH_MD5
   mb,mh,mw   ---
-  mkdir      (((!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS) && CONFIG_NFILE_DESCRIPTORS > 0)
-  mkfatfs    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FSUTILS_MKFATFS
-  mkfifo     CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_PIPES && CONFIG_DEV_FIFO_SIZE > 0
-  mkrd       !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_WRITABLE (see note 4)
-  mount      !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_READABLE (see note 3)
-  mv         (((!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS) && CONFIG_NFILE_DESCRIPTORS > 0) (see note 4)
-  nfsmount   !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_NET && CONFIG_NFS
+  mkdir      (!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS
+  mkfatfs    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FSUTILS_MKFATFS
+  mkfifo     CONFIG_PIPES && CONFIG_DEV_FIFO_SIZE > 0
+  mkrd       !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE (see note 4)
+  mount      !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_READABLE (see note 3)
+  mv         (!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS  (see note 4)
+  nfsmount   !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NET && CONFIG_NFS
   nslookup   CONFIG_LIBC_NETDB && CONFIG_NETDB_DNSCLIENT
-  password   !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD
+  password   !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD
   poweroff   CONFIG_BOARDCTL_POWEROFF
   ps         CONFIG_FS_PROCFS && !CONFIG_FS_PROCFS_EXCLUDE_PROC
-  put        CONFIG_NET && CONFIG_NET_UDP && CONFIG_NFILE_DESCRIPTORS > 0 && MTU >= 558 (see note 1,2)
-  pwd        !CONFIG_DISABLE_ENVIRON && CONFIG_NFILE_DESCRIPTORS > 0
-  readlink   CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_PSEUDOFS_SOFTLINK
+  put        CONFIG_NET && CONFIG_NET_UDP && MTU >= 558 (see note 1,2)
+  pwd        !CONFIG_DISABLE_ENVIRON
+  readlink   CONFIG_PSEUDOFS_SOFTLINK
   reboot     CONFIG_BOARDCTL_RESET
-  rm         (((!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS) && CONFIG_NFILE_DESCRIPTORS > 0)
-  rmdir      (((!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS) && CONFIG_NFILE_DESCRIPTORS > 0)
+  rm         (!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS
+  rmdir      (!CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE) || !CONFIG_DISABLE_PSEUDOFS_OPERATIONS
   rmmod      CONFIG_MODULE
   route      CONFIG_FS_PROCFS && CONFIG_FS_PROCFS_EXCLUDE_NET &&
              !CONFIG_FS_PROCFS_EXCLUDE_ROUTE && CONFIG_NET_ROUTE &&
              !CONFIG_NSH_DISABLE_ROUTE && (CONFIG_NET_IPv4 || CONFIG_NET_IPv6)
-  set        !CONFIG_DISABLE_ENVIRON
-  sh         CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_NFILE_STREAMS > 0 && !CONFIG_NSH_DISABLESCRIPT
+  set        CONFIG_NSH_VARS || !CONFIG_DISABLE_ENVIRON
+  sh         CONFIG_NFILE_STREAMS > 0 && !CONFIG_NSH_DISABLESCRIPT
   shutdown   CONFIG_BOARDCTL_POWEROFF || CONFIG_BOARDCTL_RESET
   sleep      !CONFIG_DISABLE_SIGNALS
   test       !CONFIG_NSH_DISABLESCRIPT
   telnetd    CONFIG_NSH_TELNET && !CONFIG_NSH_DISABLE_TELNETD
   time       ---
-  truncate   !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0
-  umount     !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_READABLE
+  truncate   !CONFIG_DISABLE_MOUNTPOINT
+  umount     !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_READABLE
   uname      !CONFIG_NSH_DISABLE_UNAME
-  unset      !CONFIG_DISABLE_ENVIRON
+  unset      CONFIG_NSH_VARS || !CONFIG_DISABLE_ENVIRON
   urldecode  CONFIG_NETUTILS_CODECS && CONFIG_CODECS_URLCODE
   urlencode  CONFIG_NETUTILS_CODECS && CONFIG_CODECS_URLCODE
-  useradd    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD
-  userdel    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD
+  useradd    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD
+  userdel    !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD
   usleep     !CONFIG_DISABLE_SIGNALS
-  get        CONFIG_NET && CONFIG_NET_TCP && CONFIG_NFILE_DESCRIPTORS > 0
+  get        CONFIG_NET && CONFIG_NET_TCP
   xd         ---
 
 * NOTES:
@@ -1424,24 +1507,24 @@ also allow it to squeeze into very small memory footprints.
   CONFIG_NSH_DISABLE_BASENAME,  CONFIG_NSH_DISABLE_CAT,       CONFIG_NSH_DISABLE_CD,
   CONFIG_NSH_DISABLE_CP,        CONFIG_NSH_DISABLE_DD,        CONFIG_NSH_DISABLE_DELROUTE,
   CONFIG_NSH_DISABLE_DF,        CONFIG_NSH_DISABLE_DIRNAME,   CONFIG_NSH_DISABLE_ECHO,
-  CONFIG_NSH_DISABLE_EXEC,      CONFIG_NSH_DISABLE_EXIT,      CONFIG_NSH_DISABLE_FREE,
-  CONFIG_NSH_DISABLE_GET,       CONFIG_NSH_DISABLE_HELP,      CONFIG_NSH_DISABLE_HEXDUMP,
-  CONFIG_NSH_DISABLE_IFCONFIG,  CONFIG_NSH_DISABLE_IFUPDOWN,  CONFIG_NSH_DISABLE_KILL,
-  CONFIG_NSH_DISABLE_LOSETUP,   CONFIG_NSH_DISABLE_LN,        CONFIG_NSH_DISABLE_LS,
-  CONFIG_NSH_DISABLE_MD5,       CONFIG_NSH_DISABLE_MB,        CONFIG_NSH_DISABLE_MKDIR,
-  CONFIG_NSH_DISABLE_MKFATFS,   CONFIG_NSH_DISABLE_MKFIFO,    CONFIG_NSH_DISABLE_MKRD,
-  CONFIG_NSH_DISABLE_MH,        CONFIG_NSH_DISABLE_MODCMDS,   CONFIG_NSH_DISABLE_MOUNT,
-  CONFIG_NSH_DISABLE_MW,        CONFIG_NSH_DISABLE_MV,        CONFIG_NSH_DISABLE_NFSMOUNT,
-  CONFIG_NSH_DISABLE_NSLOOKUP,  CONFIG_NSH_DISABLE_PASSWD,    CONFIG_NSH_DISABLE_PING6,
-  CONFIG_NSH_DISABLE_POWEROFF,  CONFIG_NSH_DISABLE_PS,        CONFIG_NSH_DISABLE_PUT,
-  CONFIG_NSH_DISABLE_PWD,       CONFIG_NSH_DISABLE_READLINK,  CONFIG_NSH_DISABLE_REBOOT,
-  CONFIG_NSH_DISABLE_RM,        CONFIG_NSH_DISABLE_RMDIR,     CONFIG_NSH_DISABLE_ROUTE,
-  CONFIG_NSH_DISABLE_SET,       CONFIG_NSH_DISABLE_SH,        CONFIG_NSH_DISABLE_SHUTDOWN,
-  CONFIG_NSH_DISABLE_SLEEP,     CONFIG_NSH_DISABLE_TEST,      CONFIG_NSH_DIABLE_TIME,
-  CONFIG_NSH_DISABLE_TRUNCATE,  CONFIG_NSH_DISABLE_UMOUNT,    CONFIG_NSH_DISABLE_UNSET,
-  CONFIG_NSH_DISABLE_URLDECODE, CONFIG_NSH_DISABLE_URLENCODE, CONFIG_NSH_DISABLE_USERADD,
-  CONFIG_NSH_DISABLE_USERDEL,   CONFIG_NSH_DISABLE_USLEEP,    CONFIG_NSH_DISABLE_WGET,
-  CONFIG_NSH_DISABLE_XD
+  CONFIG_NSH_DISABLE_ENV,       CONFIG_NSH_DISABLE_EXEC,      CONFIG_NSH_DISABLE_EXIT,
+  CONFIG_NSH_DISABLE_EXPORT,    CONFIG_NSH_DISABLE_FREE,      CONFIG_NSH_DISABLE_GET,
+  CONFIG_NSH_DISABLE_HELP,      CONFIG_NSH_DISABLE_HEXDUMP,   CONFIG_NSH_DISABLE_IFCONFIG,
+  CONFIG_NSH_DISABLE_IFUPDOWN,  CONFIG_NSH_DISABLE_KILL,      CONFIG_NSH_DISABLE_LOSETUP,
+  CONFIG_NSH_DISABLE_LN,        CONFIG_NSH_DISABLE_LS,        CONFIG_NSH_DISABLE_MD5,
+  CONFIG_NSH_DISABLE_MB,        CONFIG_NSH_DISABLE_MKDIR,     CONFIG_NSH_DISABLE_MKFATFS,
+  CONFIG_NSH_DISABLE_MKFIFO,    CONFIG_NSH_DISABLE_MKRD,      CONFIG_NSH_DISABLE_MH,
+  CONFIG_NSH_DISABLE_MODCMDS,   CONFIG_NSH_DISABLE_MOUNT,     CONFIG_NSH_DISABLE_MW,
+  CONFIG_NSH_DISABLE_MV,        CONFIG_NSH_DISABLE_NFSMOUNT,  CONFIG_NSH_DISABLE_NSLOOKUP,
+  CONFIG_NSH_DISABLE_PASSWD,    CONFIG_NSH_DISABLE_PING6,     CONFIG_NSH_DISABLE_POWEROFF,
+  CONFIG_NSH_DISABLE_PS,        CONFIG_NSH_DISABLE_PUT,       CONFIG_NSH_DISABLE_PWD,
+  CONFIG_NSH_DISABLE_READLINK,  CONFIG_NSH_DISABLE_REBOOT,    CONFIG_NSH_DISABLE_RM,
+  CONFIG_NSH_DISABLE_RMDIR,     CONFIG_NSH_DISABLE_ROUTE,     CONFIG_NSH_DISABLE_SET,
+  CONFIG_NSH_DISABLE_SH,        CONFIG_NSH_DISABLE_SHUTDOWN,  CONFIG_NSH_DISABLE_SLEEP,
+  CONFIG_NSH_DISABLE_TEST,      CONFIG_NSH_DIABLE_TIME,       CONFIG_NSH_DISABLE_TRUNCATE,
+  CONFIG_NSH_DISABLE_UMOUNT,    CONFIG_NSH_DISABLE_UNSET,     CONFIG_NSH_DISABLE_URLDECODE,
+  CONFIG_NSH_DISABLE_URLENCODE, CONFIG_NSH_DISABLE_USERADD,   CONFIG_NSH_DISABLE_USERDEL,
+  CONFIG_NSH_DISABLE_USLEEP,    CONFIG_NSH_DISABLE_WGET,      CONFIG_NSH_DISABLE_XD
 
 Verbose help output can be suppressed by defining CONFIG_NSH_HELP_TERSE.  In that
 case, the help command is still available but will be slightly smaller.
@@ -1534,6 +1617,37 @@ NSH-Specific Configuration Settings
       to ABC_XYZ_123.  If NSH_ARGCAT is not selected, then a slightly small
       FLASH footprint results but then also only simple environment
       variables like $FOO can be used on the command line.
+
+  * CONFIG_NSH_VARS
+      By default, there are no internal NSH variables.  NSH will use OS
+      environment variables for all variable storage.  If this option, NSH
+      will also support local NSH variables.  These variables are, for the
+      most part, transparent and work just like the OS environment
+      variables.  The difference is that when you create new tasks, all of
+      environment variables are inherited by the created tasks.  NSH local
+      variables are not.
+
+      If this option is enabled (and CONFIG_DISABLE_ENVIRON is not), then a
+      new command called 'export' is enabled.  The export command works very
+      must like the set command except that is operates on environment
+      variables.  When CONFIG_NSH_VARS is enabled, there are changes in the
+      behavior of certain commands
+
+      ============== =========================== ===========================
+      CMD             w/o CONFIG_NSH_VARS        w/CONFIG_NSH_VARS
+      ============== =========================== ===========================
+      set <a> <b>    Set environment var a to b  Set NSH var a to b
+      set            Causes an error             Lists all NSH variables
+      unset <a>      Unsets environment var a    Unsets both environment var
+                                                 and NSH var a
+      export <a> <b> Causes an error             Unsets NSH var a.  Sets
+                                                 environment var a to b.
+      export <a>     Causes an error             Sets environment var a to
+                                                 NSH var b (or "").  Unsets
+                                                 local var a.
+      env            Lists all environment       Lists all environment
+                     variables                   variables (only)
+      ============== =========================== ===========================
 
   * CONFIG_NSH_QUOTE
       Enables back-slash quoting of certain characters within the command.
@@ -1714,9 +1828,6 @@ NSH-Specific Configuration Settings
   * CONFIG_NET=y
       Of course, networking must be enabled
 
-  * CONFIG_NSOCKET_DESCRIPTORS
-      And, of course, you must allocate some socket descriptors.
-
   * CONFIG_NET_TCP=y
       TCP/IP support is required for telnet (as well as various other TCP-related
       configuration settings).
@@ -1748,9 +1859,6 @@ NSH-Specific Configuration Settings
   * CONFIG_NET=y
       Of course, networking must be enabled
 
-  * CONFIG_NSOCKET_DESCRIPTORS
-      And, of course, you must allocate some socket descriptors.
-
   * CONFIG_NET_UDP=y
       UDP support is required for DHCP (as well as various other UDP-related
       configuration settings)
@@ -1758,7 +1866,7 @@ NSH-Specific Configuration Settings
   * CONFIG_NET_BROADCAST=y
       UDP broadcast support is needed.
 
-  * CONFIG_NET_ETH_MTU=650 (or larger)
+  * CONFIG_NET_ETH_PKTSIZE=650 (or larger)
       Per RFC2131 (p. 9), the DHCP client must be prepared to receive DHCP
       messages of up to 576 bytes (excluding Ethernet, IP, or UDP headers and FCS).
       NOTE: Note that the actual MTU setting will depend upon the specific

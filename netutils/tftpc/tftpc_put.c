@@ -424,7 +424,6 @@ errout:
   return result;
 }
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
 /****************************************************************************
  * Name: tftp_read
  ****************************************************************************/
@@ -513,13 +512,12 @@ int tftpput(FAR const char *local, FAR const char *remote, in_addr_t addr,
       goto errout;
     }
 
-  result = tftpput_cb(remote, addr, binary, tftp_read, (void *)fd);
+  result = tftpput_cb(remote, addr, binary, tftp_read, (FAR void *)fd);
 
   close(fd);
 
 errout:
   return result;
 }
-#endif
 
-#endif /* CONFIG_NET && CONFIG_NET_UDP && CONFIG_NFILE_DESCRIPTORS > 0 */
+#endif /* CONFIG_NET && CONFIG_NET_UDP */

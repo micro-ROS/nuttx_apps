@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/nxterm/nxterm_wndo.c
  *
- *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2012, 2019 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 
 #include <nuttx/config.h>
 
+#include <sys/boardctl.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -50,17 +51,10 @@
 #include <debug.h>
 
 #include <nuttx/nx/nx.h>
+#include <nuttx/nx/nxglib.h>
 #include <nuttx/nx/nxfonts.h>
 
 #include "nxterm_internal.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-/****************************************************************************
- * Private Types
- ****************************************************************************/
 
 /****************************************************************************
  * Private Function Prototypes
@@ -83,10 +77,6 @@ static void nxwndo_kbdin(NXWINDOW hwnd, uint8_t nch, FAR const uint8_t *ch,
 #endif
 
 /****************************************************************************
- * Private Data
- ****************************************************************************/
-
-/****************************************************************************
  * Public Data
  ****************************************************************************/
 
@@ -100,8 +90,9 @@ const struct nx_callback_s g_nxtermcb =
   , nxwndo_mousein /* mousein */
 #endif
 #ifdef CONFIG_NX_KBD
-  , nxwndo_kbdin   /* my kbdin */
+  , nxwndo_kbdin   /* kbdin */
 #endif
+  , NULL           /* event */
 };
 
 /****************************************************************************
@@ -125,9 +116,15 @@ static void nxwndo_redraw(NXWINDOW hwnd, FAR const struct nxgl_rect_s *rect,
 
   if (g_nxterm_vars.hdrvr)
     {
+      struct boardioc_nxterm_redraw_s redraw;
+
       /* Inform the NX console of the redraw request */
 
-      nxterm_redraw(g_nxterm_vars.hdrvr, rect, more);
+      redraw.handle = g_nxterm_vars.hdrvr;
+      redraw.more   = more;
+      nxgl_rectcopy(&redraw.rect, rect);
+
+      (void)boardctl(BOARDIOC_NXTERM_REDRAW, (uintptr_t)&redraw);
     }
   else
     {
@@ -166,7 +163,9 @@ static void nxwndo_position(NXWINDOW hwnd, FAR const struct nxgl_size_s *size,
       g_nxterm_vars.wndo.wsize.w = size->w;
       g_nxterm_vars.wndo.wsize.h = size->h;
 
-      /* Save the window limits (these should be the same for all places and all windows */
+      /* Save the window limits (these should be the same for all places and
+       * all windows)
+       */
 
       g_nxterm_vars.xres = bounds->pt2.x + 1;
       g_nxterm_vars.yres = bounds->pt2.y + 1;

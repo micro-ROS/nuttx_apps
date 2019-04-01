@@ -47,7 +47,8 @@
 #include "nsh.h"
 #include "nsh_console.h"
 
-#if !defined(HAVE_USB_CONSOLE) && !defined(HAVE_USB_KEYBOARD)
+#if !defined(CONFIG_NSH_ALTCONDEV) && !defined(HAVE_USB_CONSOLE) && \
+    !defined(HAVE_USB_KEYBOARD)
 
 /****************************************************************************
  * Public Functions
@@ -117,4 +118,4 @@ int nsh_consolemain(int argc, char *argv[])
   return ret;
 }
 
-#endif /* !HAVE_USB_CONSOLE && !HAVE_USB_KEYBOARD */
+#endif /* !HAVE_USB_CONSOLE && !HAVE_USB_KEYBOARD !HAVE_SLCD_CONSOLE */

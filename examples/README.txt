@@ -8,9 +8,9 @@ examples
     configs/<board-name>/defconfig file via the CONFIG_EXAMPLES_xyz
     setting where xyz is the name of the example. For example,
 
-      CONFIG_EXAMPLES_OSTEST=y
+      CONFIG_EXAMPLES_HELLO=y
 
-    Selects the examples/ostest example.
+    Selects the examples/hello "Hello, World!" example.
 
   Built-In functions
 
@@ -228,40 +228,6 @@ examples/cpuhog
   back mode.  This may be useful if you are trying run down other problems
   that you think might only occur when the system is very busy.
 
-examples/cxxtest
-^^^^^^^^^^^^^^^^
-
-  This is a test of the C++ standard library.  At present a port of the uClibc++
-  C++ library is available.  Due to licensing issues, the uClibc++ C++ library
-  is not included in the NuttX source tree by default, but must be installed
-  (see the README.txt file in the uClibc++ download package for installation).
-
-  The uClibc++ test includes simple test of:
-
-    - iostreams,
-    - STL,
-    - RTTI, and
-    - Exceptions
-
-  Example Configuration Options
-  -----------------------------
-    CONFIG_EXAMPLES_CXXTEST=y - Eanbles the example
-    CONFIG_EXAMPLES_CXXTEST_CXXINITIALIZE=y - By default, if CONFIG_HAVE_CXX
-      and CONFIG_HAVE_CXXINITIALIZE are defined, then this example
-      will call the NuttX function to initialize static C++ constructors.
-      This option may be disabled, however, if that static initialization
-      was performed elsewhere.
-
-  Other Required Configuration Settings
-  -------------------------------------
-  Other NuttX setting that are required include:
-
-    CONFIG_HAVE_CXX=y
-    CONFIG_HAVE_CXXINITIALIZE=y
-    CONFIG_UCLIBCXX=y
-
-  Additional uClibc++ settings may be required in your build environment.
-
 examples/dac
 ^^^^^^^^^^^^
 
@@ -281,8 +247,6 @@ examples/dhcpd
   NuttX configuration settings:
 
     CONFIG_NET=y                   - Of course
-    CONFIG_NSOCKET_DESCRIPTORS     - And, of course, you must allocate some
-                                     socket descriptors.
     CONFIG_NET_UDP=y               - UDP support is required for DHCP
                                      (as well as various other UDP-related
                                      configuration settings)
@@ -450,24 +414,6 @@ examples/ft80x
   This examples has ports of several FTDI demos for the FTDI/BridgeTek FT80x
   GUI chip.  As an example configuration, see
   nuttx/configs/viewtool-stm32f107/ft80x/defconfig.
-
-examples/fstest
-^^^^^^^^^^^^^^
-
-  This is a generic file system test that derives from examples/nxffs.  It
-  was created to test the tmpfs file system, but should work with any file
-  system provided that all initialization has already been performed prior
-  to starting the test.
-
-  * CONFIG_EXAMPLES_FSTEST: Enable the file system example
-  * CONFIG_EXAMPLES_FSTEST_MAXNAME: Determines the maximum size of names used
-    in the filesystem
-  * CONFIG_EXAMPLES_FSTEST_MAXFILE: Determines the maximum size of a file
-  * CONFIG_EXAMPLES_FSTEST_MAXIO: Max I/O, default 347.
-  * CONFIG_EXAMPLES_FSTEST_MAXOPEN: Max open files.
-  * CONFIG_EXAMPLES_FSTEST_MOUNTPT: Path where the file system is mounted.
-  * CONFIG_EXAMPLES_FSTEST_NLOOPS: Number of test loops. default 100
-  * CONFIG_EXAMPLES_FSTEST_VERBOSE: Verbose output
 
 examples/ftpc
 ^^^^^^^^^^^^^
@@ -1090,14 +1036,6 @@ examples/nxterm
     CONFIG_EXAMPLES_NXTERM_NOTIFYSIGNO -- The signal number to use with
       nx_eventnotify().  Default: 4
 
-examples/nxffs
-^^^^^^^^^^^^^^
-
-  This is a test of the NuttX NXFFS FLASH file system.  This is an NXFFS
-  stress test and beats on the file system very hard.  It should only
-  be used in a simulation environment!  Putting this NXFFS test on real
-  hardware will most likely destroy your FLASH.  You have been warned.
-
 examples/nxflat
 ^^^^^^^^^^^^^^^
 
@@ -1276,40 +1214,6 @@ examples/oneshot
 
   Simple test of a oneshot driver.
 
-examples/ostest
-^^^^^^^^^^^^^^^
-
-  This is the NuttX 'qualification' suite.  It attempts to exercise
-  a broad set of OS functionality.  Its coverage is not very extensive
-  as of this writing, but it is used to qualify each NuttX release.
-
-  The behavior of the ostest can be modified with the following
-  settings in the configs/<board-name>/defconfig file:
-
-  * CONFIG_NSH_BUILTIN_APPS
-      Build the OS test example as an NSH built-in application.
-  * CONFIG_EXAMPLES_OSTEST_LOOPS
-      Used to control the number of executions of the test.  If
-      undefined, the test executes one time.  If defined to be
-      zero, the test runs forever.
-  * CONFIG_EXAMPLES_OSTEST_STACKSIZE
-      Used to create the ostest task.  Default is 8192.
-  * CONFIG_EXAMPLES_OSTEST_NBARRIER_THREADS
-      Specifies the number of threads to create in the barrier
-      test.  The default is 8 but a smaller number may be needed on
-      systems without sufficient memory to start so many threads.
-  * CONFIG_EXAMPLES_OSTEST_RR_RANGE
-      During round-robin scheduling test two threads are created. Each of the threads
-      searches for prime numbers in the configurable range, doing that configurable
-      number of times.
-      This value specifies the end of search range and together with number of runs
-      allows to configure the length of this test - it should last at least a few
-      tens of seconds. Allowed values [1; 32767], default 10000
-  * CONFIG_EXAMPLES_OSTEST_RR_RUNS
-      During round-robin scheduling test two threads are created. Each of the threads
-      searches for prime numbers in the configurable range, doing that configurable
-      number of times.
-
 examples/pashello
 ^^^^^^^^^^^^^^^^^
 
@@ -1348,7 +1252,6 @@ examples/poll
   stdin, and a TCP/IP socket.  In order to build this test, you must the
   following selected in your NuttX configuration file:
 
-  CONFIG_NFILE_DESCRIPTORS          - Defined to be greater than 0
   CONFIG_DISABLE_POLL               - NOT defined
 
   In order to use the TCP/IP select test, you have also the following
@@ -1356,7 +1259,6 @@ examples/poll
 
   CONFIG_NET                        - Defined for general network support
   CONFIG_NET_TCP                    - Defined for TCP/IP support
-  CONFIG_NSOCKET_DESCRIPTORS        - Defined to be greater than 0
   CONFIG_NET_TCP_READAHEAD          - Defined
   CONFIG_NET_NTCP_READAHEAD_BUFFERS - Defined to be greater than zero
 
@@ -1491,6 +1393,25 @@ examples/pty_test
 ^^^^^^^^^^^^^^^^^
 
   A test of NuttX pseudo-terminals.  Provided by Alan Carvalho de Assis.
+
+examples/pwfb
+^^^^^^^^^^^^^
+
+  A graphics example using pre-window frame buffers.  The example shows
+  three windows containing text moving around, crossing each other from
+  "above" and from "below".  The example application is NOT updating the
+  windows any anyway!  The application is only changing the window
+  position.  The windows are being updated from the per-winidow
+  framebuffers automatically.
+
+  This example is reminescent of Pong:  Each window travels in straight
+  line until it hits an edge, then it bounces off.  The window is also
+  raised when it hits the edge (gets "focus").  This tests all
+  combinations of overap.
+
+  NOTE:  A significant amount of RAM, usually external SDRAM, is required
+  to run this demo.  At 16bpp and a 480x272 display, each window requires
+  about 70Kb of RAM for its framebuffer.
 
 examples/pwm
 ^^^^^^^^^^^^
@@ -1679,50 +1600,6 @@ examples/slcd
 
   * CONFIG_EXAMPLES_SLCD - Enable the SLCD test
 
-examples/smart
-^^^^^^^^^^^^^^
-
-  This is a test of the SMART file system that derives from
-  examples/nxffs.
-
-  * CONFIG_EXAMPLES_SMART: - Enable the SMART file system example
-  * CONFIG_EXAMPLES_SMART_ARCHINIT: The default is to use the RAM MTD
-    device at drivers/mtd/rammtd.c.  But an architecture-specific MTD
-    driver can be used instead by defining CONFIG_EXAMPLES_SMART_ARCHINIT.  In
-    this case, the initialization logic will call smart_archinitialize()
-    to obtain the MTD driver instance.
-  * CONFIG_EXAMPLES_SMART_NEBLOCKS: When CONFIG_EXAMPLES_SMART_ARCHINIT is not
-    defined, this test will use the RAM MTD device at drivers/mtd/rammtd.c
-    to simulate FLASH.  In this case, this value must be provided to give
-    the nubmer of erase blocks in MTD RAM device.  The size of the allocated
-    RAM drive will be: CONFIG_RAMMTD_ERASESIZE * CONFIG_EXAMPLES_SMART_NEBLOCKS
-  * CONFIG_EXAMPLES_SMART_MAXNAME: Determines the maximum size of names used
-    in the filesystem
-  * CONFIG_EXAMPLES_SMART_MAXFILE: Determines the maximum size of a file
-  * CONFIG_EXAMPLES_SMART_MAXIO: Max I/O, default 347.
-  * CONFIG_EXAMPLES_SMART_MAXOPEN: Max open files.
-  * CONFIG_EXAMPLES_SMART_MOUNTPT: SMART mountpoint
-  * CONFIG_EXAMPLES_SMART_NLOOPS: Number of test loops. default 100
-  * CONFIG_EXAMPLES_SMART_VERBOSE: Verbose output
-
-examples/smart_test
-^^^^^^^^^^^^^^^^^^^
-
-  Performs a file-based test on a SMART (or any) filesystem. Validates
-  seek, append and seek-with-write operations.
-
-    * CONFIG_EXAMPLES_SMART_TEST=y
-
-  Dependencies:
-
-    * CONFIG_NSH_BUILTIN_APPS=y: This test can be built only as an NSH
-      command
-
-examples/smp
-^^^^^^^^^^^^
-
-  This is a simple test for SMP functionality.  It is basically just the
-  pthread barrier test with some custom instrumentation.
 
 examples/smps
 ^^^^^^^^^^^^^
@@ -1734,7 +1611,8 @@ examples/sotest
 
   This example builds a small shared library module test case.  The test
   shared library is built using the relocatable ELF format and installed
-  in a ROMFS file system.  At run time, the shared library is installed and exercised.  Requires CONFIG_LIBC_DLLFCN.  Other configuration options:
+  in a ROMFS file system.  At run time, the shared library is installed
+  and exercised.  Requires CONFIG_LIBC_DLFCN.  Other configuration options:
 
     CONFIG_EXAMPLES_SOTEST_DEVMINOR - The minor device number of the ROMFS block
       driver. For example, the N in /dev/ramN. Used for registering the RAM
@@ -1794,6 +1672,11 @@ examples/stat
 
   A simple test of stat(), fstat(), and statfs().  This is useful primarily for
   bringing up a new file system and verifying the correctness of these operations.
+
+examples/sx127x_demo
+^^^^^^^^^^^^^
+
+  This example demonstrates the use of the SX127X radio/
 
 examples/system
 ^^^^^^^^^^^^^^^
@@ -2001,7 +1884,7 @@ examples/unionfs
   nuttx/fs/unionfs/README.txt.  Dependencies:
 
     CONFIG_DISABLE_MOUNTPOINT          - Mountpoint support must not be disabled
-    CONFIG_NFILE_DESCRIPTORS < 4       - Some file descriptors must be allocated
+    CONFIG_NFILE_DESCRIPTORS > 4       - Some file descriptors must be allocated
     CONFIG_FS_ROMFS                    - ROMFS support is required
     CONFIG_FS_UNIONFS                  - Union File System support is required
 
@@ -2170,13 +2053,11 @@ examples/webserver
   required.  These include:
 
     CONFIG_NET=y                 - Of course
-    CONFIG_NSOCKET_DESCRIPTORS   - And, of course, you must allocate some
-                                   socket descriptors.
     CONFIG_NET_UDP=y             - UDP support is required for DHCP
                                    (as well as various other UDP-related
                                    configuration settings).
     CONFIG_NET_BROADCAST=y       - UDP broadcast support is needed.
-    CONFIG_NET_ETH_MTU=650       - Per RFC2131 (p. 9), the DHCP client must be
+    CONFIG_NET_ETH_PKTSIZE=650   - Per RFC2131 (p. 9), the DHCP client must be
     (or larger)                    prepared to receive DHCP messages of up to
                                    576 bytes (excluding Ethernet, IP, or UDP
                                    headers and FCS).

@@ -76,6 +76,7 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
                 FAR const char *filepath)
 {
   FAR char *buffer;
+  char last = 0;
   int fd;
   int ret = OK;
 
@@ -84,7 +85,7 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
   fd = open(filepath, O_RDONLY);
   if (fd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, cmd, "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, cmd, "open", NSH_ERRNO);
       return ERROR;
     }
 
@@ -92,7 +93,7 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
   if(buffer == NULL)
     {
       (void)close(fd);
-      nsh_output(vtbl, g_fmtcmdfailed, cmd, "malloc", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, cmd, "malloc", NSH_ERRNO);
       return ERROR;
     }
 
@@ -113,12 +114,12 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
 #ifndef CONFIG_DISABLE_SIGNALS
           if (errval == EINTR)
             {
-              nsh_output(vtbl, g_fmtsignalrecvd, cmd);
+              nsh_error(vtbl, g_fmtsignalrecvd, cmd);
             }
           else
 #endif
             {
-              nsh_output(vtbl, g_fmtcmdfailed, cmd, "read", NSH_ERRNO_OF(errval));
+              nsh_error(vtbl, g_fmtcmdfailed, cmd, "read", NSH_ERRNO_OF(errval));
             }
 
           ret = ERROR;
@@ -131,9 +132,10 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
         {
           int nbyteswritten = 0;
 
+          last = buffer[nbytesread - 1];
           while (nbyteswritten < nbytesread)
             {
-              ssize_t n = nsh_write(vtbl, buffer, nbytesread);
+              ssize_t n = nsh_write(vtbl, buffer + nbyteswritten, nbytesread - nbyteswritten);
               if (n < 0)
                 {
                   int errcode = errno;
@@ -143,12 +145,12 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
 #ifndef CONFIG_DISABLE_SIGNALS
                   if (errcode == EINTR)
                     {
-                      nsh_output(vtbl, g_fmtsignalrecvd, cmd);
+                      nsh_error(vtbl, g_fmtsignalrecvd, cmd);
                     }
                   else
 #endif
                     {
-                      nsh_output(vtbl, g_fmtcmdfailed, cmd, "write",
+                      nsh_error(vtbl, g_fmtcmdfailed, cmd, "write",
                                  NSH_ERRNO_OF(errcode));
                     }
 
@@ -177,7 +179,10 @@ int nsh_catfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
     * file.
     */
 
-   nsh_output(vtbl, "\n");
+   if (ret == OK && last != '\n')
+     {
+       nsh_output(vtbl, "\n");
+     }
 
    /* Close the input file and return the result */
 
@@ -223,7 +228,7 @@ int nsh_readfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
   fd = open(filepath, O_RDONLY);
   if (fd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, cmd, "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, cmd, "open", NSH_ERRNO);
       return ERROR;
     }
 
@@ -255,7 +260,7 @@ int nsh_readfile(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
             {
               /* Fatal error */
 
-              nsh_output(vtbl, g_fmtcmdfailed, cmd, "read", NSH_ERRNO);
+              nsh_error(vtbl, g_fmtcmdfailed, cmd, "read", NSH_ERRNO);
               break;
             }
         }
@@ -325,7 +330,7 @@ int nsh_foreach_direntry(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
     {
       /* Failed to open the directory */
 
-      nsh_output(vtbl, g_fmtnosuch, cmd, "directory", dirpath);
+      nsh_error(vtbl, g_fmtnosuch, cmd, "directory", dirpath);
       return ERROR;
     }
 

@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_IGMP_H
-#define __EXAMPLES_IGMP_H
+#ifndef __APPS_EXAMPLES_IGMP_IGMP_H
+#define __APPS_EXAMPLES_IGMP_IGMP_H
 
 /****************************************************************************
  * Included Files
@@ -50,4 +50,4 @@
  * Public Function Prototypes
  ****************************************************************************/
 
-#endif /* __EXAMPLES_IGMP_H */
+#endif /* __APPS_EXAMPLES_IGMP_IGMP_H */

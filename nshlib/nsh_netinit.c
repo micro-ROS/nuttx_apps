@@ -387,13 +387,7 @@ static void nsh_set_ipaddrs(void)
 #endif
 
 #ifdef CONFIG_NET_IPv6
-#ifdef CONFIG_NET_ICMPv6_AUTOCONF
-  /* Perform ICMPv6 auto-configuration */
-
-  netlib_icmpv6_autoconfiguration(NET_DEVNAME);
-
-#else /* CONFIG_NET_ICMPv6_AUTOCONF */
-
+#ifndef CONFIG_NET_ICMPv6_AUTOCONF
   /* Set up our fixed host address */
 
   netlib_set_ipv6addr(NET_DEVNAME,
@@ -445,6 +439,12 @@ static void nsh_net_bringup(void)
   /* Associate the wlan with an access point. */
 
   nsh_associate(NET_DEVNAME);
+#endif
+
+#ifdef CONFIG_NET_ICMPv6_AUTOCONF
+  /* Perform ICMPv6 auto-configuration */
+
+  netlib_icmpv6_autoconfiguration(NET_DEVNAME);
 #endif
 
 #ifdef CONFIG_NSH_DHCPC
@@ -614,11 +614,11 @@ static int nsh_netinit_monitor(void)
     {
       /* Configure to receive a signal on changes in link status */
 
+      memset(&ifr, 0, sizeof(struct ifreq));
       strncpy(ifr.ifr_name, NET_DEVNAME, IFNAMSIZ);
 
-      ifr.ifr_mii_notify_pid   = 0; /* PID=0 means this task */
-      ifr.ifr_mii_notify_signo = CONFIG_NSH_NETINIT_SIGNO;
-      ifr.ifr_mii_notify_arg   = NULL;
+      ifr.ifr_mii_notify_event.sigev_notify = SIGEV_SIGNAL;
+      ifr.ifr_mii_notify_event.sigev_signo  = CONFIG_NSH_NETINIT_SIGNO;
 
       ret = ioctl(sd, SIOCMIINOTIFY, (unsigned long)&ifr);
       if (ret < 0)

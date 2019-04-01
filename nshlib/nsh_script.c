@@ -42,8 +42,7 @@
 #include "nsh.h"
 #include "nsh_console.h"
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_NFILE_STREAMS > 0 && \
-    !defined(CONFIG_NSH_DISABLESCRIPT)
+#if CONFIG_NFILE_STREAMS > 0 && !defined(CONFIG_NSH_DISABLESCRIPT)
 
 /****************************************************************************
  * Public Functions
@@ -88,7 +87,7 @@ int nsh_script(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
       vtbl->np.np_stream = fopen(fullpath, "r");
       if (!vtbl->np.np_stream)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, cmd, "fopen", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, cmd, "fopen", NSH_ERRNO);
 
           /* Free the allocated path */
 
@@ -122,7 +121,7 @@ int nsh_script(FAR struct nsh_vtbl_s *vtbl, FAR const char *cmd,
 
           if (vtbl->np.np_foffs < 0)
             {
-              nsh_output(vtbl, g_fmtcmdfailed, "loop", "ftell", NSH_ERRNO);
+              nsh_error(vtbl, g_fmtcmdfailed, "loop", "ftell", NSH_ERRNO);
             }
 #endif
 
@@ -213,4 +212,4 @@ int nsh_loginscript(FAR struct nsh_vtbl_s *vtbl)
 #endif
 #endif /* CONFIG_NSH_ROMFSETC */
 
-#endif /* CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_NFILE_STREAMS > 0 && !CONFIG_NSH_DISABLESCRIPT */
+#endif /* CONFIG_NFILE_STREAMS > 0 && !CONFIG_NSH_DISABLESCRIPT */

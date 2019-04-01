@@ -123,9 +123,14 @@ static const struct btsak_command_s g_btsak_gatt_commands[] =
     "[-h] <addr> public|private"
   },
   {
-    "mget",
-    (CODE void *)btsak_cmd_gatt_exchange_mtu_result,
-    "[-h]"
+    "connect",
+    (CODE void *)btsak_cmd_connect,
+    "[-h] <addr> public|private"
+  },
+  {
+    "disconnect",
+    (CODE void *)btsak_cmd_disconnect,
+    "[-h] <addr> public|private"
   },
   {
     "discover",
@@ -143,11 +148,6 @@ static const struct btsak_command_s g_btsak_gatt_commands[] =
     "[-h] <addr> public|private [<start> [<end>]]"
   },
   {
-    "dget",
-    (CODE void *)btsak_cmd_gatt_discover_get,
-    "[-h]"
-  },
-  {
     "read",
     (CODE void *)btsak_cmd_gatt_read,
     "[-h] <addr> public|private <handle> [<offset>]"
@@ -158,19 +158,9 @@ static const struct btsak_command_s g_btsak_gatt_commands[] =
     "[-h] <addr> public|private <handle> [<handle> [<handle>]..]"
   },
   {
-    "rget",
-    (CODE void *)btsak_cmd_gatt_read_get,
-    "[-h]"
-  },
-  {
     "write",
     (CODE void *)btsak_cmd_gatt_write,
     "[-h] <addr> public|private <handle> <byte> [<byte> [<byte>]..]"
-  },
-  {
-    "wget",
-    (CODE void *)btsak_cmd_gatt_write_get,
-    "[-h]"
   }
 };
 
@@ -530,7 +520,7 @@ int btsak_str2addr(FAR const char *str, FAR uint8_t *addr)
   for (i = 0; i < 6; i++)
     {
       ch = (char)*src++;
-      nibble = btsak_char2nibble(ch) << 4;
+      nibble = btsak_char2nibble(ch);
       if (nibble < 0)
         {
           return nibble;
@@ -545,8 +535,8 @@ int btsak_str2addr(FAR const char *str, FAR uint8_t *addr)
           return nibble;
         }
 
-      hex |= (uint8_t)nibble;
-      *addr++ = hex;
+      hex        |= (uint8_t)nibble;
+      addr[5 - i] = hex;
 
       if (i < 5)
         {
@@ -572,7 +562,7 @@ int btsak_str2addr(FAR const char *str, FAR uint8_t *addr)
 
 int btsak_str2addrtype(FAR const char *str, FAR uint8_t *addrtype)
 {
-  if (!strcasecmp(str, "public") == 0)
+  if (!strcasecmp(str, "public"))
     {
       *addrtype = BT_ADDR_LE_PUBLIC;
     }
@@ -599,7 +589,7 @@ int btsak_str2addrtype(FAR const char *str, FAR uint8_t *addrtype)
 
 int btsak_str2seclevel(FAR const char *str, FAR enum bt_security_e *level)
 {
-  if (!strcasecmp(str, "low") == 0)
+  if (!strcasecmp(str, "low"))
     {
       *level = BT_SECURITY_LOW;
     }

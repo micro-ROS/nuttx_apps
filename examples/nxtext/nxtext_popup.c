@@ -97,8 +97,9 @@ static const struct nx_callback_s g_pucb =
   , nxpu_mousein /* mousein */
 #endif
 #ifdef CONFIG_NX_KBD
-  , nxpu_kbdin   /* my kbdin */
+  , nxpu_kbdin   /* kbdin */
 #endif
+  , NULL         /* event */
 };
 
 /* Pop-up state information */
@@ -344,7 +345,7 @@ NXWINDOW nxpu_open(void)
   printf("nxpu_open: Create pop-up\n");
   nxpu_initstate();
 
-  hwnd = nx_openwindow(g_hnx, &g_pucb, (FAR void *)&g_pustate);
+  hwnd = nx_openwindow(g_hnx, 0, &g_pucb, (FAR void *)&g_pustate);
   ginfo("hwnd=%p\n", hwnd);
 
   if (!hwnd)

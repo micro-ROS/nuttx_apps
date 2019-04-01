@@ -89,14 +89,14 @@
 #  include "netutils/netlib.h"
 #endif
 
-#if defined(CONFIG_NET_UDP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_UDP
 #  include "netutils/netlib.h"
 #  if !defined(CONFIG_NSH_DISABLE_GET) || !defined(CONFIG_NSH_DISABLE_PUT)
 #    include "netutils/tftp.h"
 #  endif
 #endif
 
-#if defined(CONFIG_NET_TCP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_TCP
 #  ifndef CONFIG_NSH_DISABLE_WGET
 #    include "netutils/webclient.h"
 #  endif
@@ -151,7 +151,7 @@ typedef struct pktradio_addr_s mac_addr_t;
 #endif
 #endif
 
-#if defined(CONFIG_NET_UDP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_UDP
 struct tftpc_args_s
 {
   bool            binary;    /* true:binary ("octet") false:text ("netascii") */
@@ -212,7 +212,7 @@ static int ifconfig_callback(FAR struct nsh_vtbl_s *vtbl, FAR char *devname)
  * Name: tftpc_parseargs
  ****************************************************************************/
 
-#if defined(CONFIG_NET_UDP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_UDP
 int tftpc_parseargs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv,
                     struct tftpc_args_s *args)
 {
@@ -242,19 +242,19 @@ int tftpc_parseargs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv,
           case 'h':
             if (!netlib_ipv4addrconv(optarg, (FAR unsigned char*)&args->ipaddr))
               {
-                nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+                nsh_error(vtbl, g_fmtarginvalid, argv[0]);
                 badarg = true;
               }
             break;
 
           case ':':
-            nsh_output(vtbl, g_fmtargrequired, argv[0]);
+            nsh_error(vtbl, g_fmtargrequired, argv[0]);
             badarg = true;
             break;
 
           case '?':
           default:
-            nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+            nsh_error(vtbl, g_fmtarginvalid, argv[0]);
             badarg = true;
             break;
         }
@@ -349,7 +349,7 @@ errout:
  * Name: wget_callback
  ****************************************************************************/
 
-#if defined(CONFIG_NET_TCP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_TCP
 #ifndef CONFIG_NSH_DISABLE_WGET
 static void wget_callback(FAR char **buffer, int offset, int datend,
                           FAR int *buflen, FAR void *arg)
@@ -377,7 +377,7 @@ static int nsh_foreach_netdev(nsh_netdev_callback_t callback,
   dir = opendir(CONFIG_NSH_PROC_MOUNTPOINT "/net");
   if (dir == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, cmd, "opendir", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, cmd, "opendir", NSH_ERRNO);
       return ERROR;
     }
 
@@ -457,7 +457,7 @@ static inline void nsh_sethwaddr(FAR const char *ifname, FAR mac_addr_t *macaddr
  * Name: cmd_get
  ****************************************************************************/
 
-#if defined(CONFIG_NET_UDP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_UDP
 #ifndef CONFIG_NSH_DISABLE_GET
 int cmd_get(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -479,7 +479,7 @@ int cmd_get(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (tftpget(args.srcpath, fullpath, args.ipaddr, args.binary) != OK)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "tftpget", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "tftpget", NSH_ERRNO);
     }
 
   /* Release any allocated memory */
@@ -707,13 +707,13 @@ int cmd_ifconfig(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (missingarg)
     {
-      nsh_output(vtbl, g_fmtargrequired, argv[0]);
+      nsh_error(vtbl, g_fmtargrequired, argv[0]);
       return ERROR;
     }
 
   if (badarg)
     {
-      nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+      nsh_error(vtbl, g_fmtarginvalid, argv[0]);
       return ERROR;
     }
 
@@ -980,7 +980,7 @@ int cmd_nslookup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
     {
       /* REVISIT: gethostbyname() does not set errno, but h_errno */
 
-       nsh_output(vtbl, g_fmtcmdfailed, argv[0], "gethostbyname", NSH_ERRNO);
+       nsh_error(vtbl, g_fmtcmdfailed, argv[0], "gethostbyname", NSH_ERRNO);
        return ERROR;
     }
 
@@ -991,7 +991,7 @@ int cmd_nslookup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
     {
       if (inet_ntop(AF_INET, host->h_addr, buffer, 48) == NULL)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "inet_ntop", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "inet_ntop", NSH_ERRNO);
           return ERROR;
         }
 
@@ -1006,7 +1006,7 @@ int cmd_nslookup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
       if (inet_ntop(AF_INET6, host->h_addr, buffer, 48) == NULL)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "inet_ntop", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "inet_ntop", NSH_ERRNO);
           return ERROR;
         }
 
@@ -1132,25 +1132,25 @@ int cmd_arp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 errout_cmdfaild:
   if (ret == -ENOENT)
     {
-      nsh_output(vtbl, g_fmtnosuch, argv[0], "ARP entry", argv[2]);
+      nsh_error(vtbl, g_fmtnosuch, argv[0], "ARP entry", argv[2]);
     }
   else
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
     }
 
   return ERROR;
 
 errout_missing:
-  nsh_output(vtbl, g_fmttoomanyargs, argv[0]);
+  nsh_error(vtbl, g_fmttoomanyargs, argv[0]);
   return ERROR;
 
 errout_toomany:
-  nsh_output(vtbl, g_fmtargrequired, argv[0]);
+  nsh_error(vtbl, g_fmtargrequired, argv[0]);
   return ERROR;
 
 errout_invalid:
-  nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+  nsh_error(vtbl, g_fmtarginvalid, argv[0]);
   return ERROR;
 }
 #endif
@@ -1159,7 +1159,7 @@ errout_invalid:
  * Name: cmd_put
  ****************************************************************************/
 
-#if defined(CONFIG_NET_UDP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_UDP
 #ifndef CONFIG_NSH_DISABLE_PUT
 int cmd_put(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1181,7 +1181,7 @@ int cmd_put(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (tftpput(fullpath, args.destpath, args.ipaddr, args.binary) != OK)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "tftpput", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "tftpput", NSH_ERRNO);
     }
 
   /* Release any allocated memory */
@@ -1201,7 +1201,7 @@ int cmd_put(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_wget
  ****************************************************************************/
 
-#if defined(CONFIG_NET_TCP) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifdef CONFIG_NET_TCP
 #ifndef CONFIG_NSH_DISABLE_WGET
 int cmd_wget(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1227,13 +1227,13 @@ int cmd_wget(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
             break;
 
           case ':':
-            nsh_output(vtbl, g_fmtargrequired, argv[0]);
+            nsh_error(vtbl, g_fmtargrequired, argv[0]);
             badarg = true;
             break;
 
           case '?':
           default:
-            nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+            nsh_error(vtbl, g_fmtarginvalid, argv[0]);
             badarg = true;
             break;
         }
@@ -1282,7 +1282,7 @@ int cmd_wget(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fd = open(fullpath, O_WRONLY|O_CREAT|O_TRUNC, 0644);
   if (fd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       ret = ERROR;
       goto exit;
     }
@@ -1301,7 +1301,7 @@ int cmd_wget(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = wget(url, buffer, 512, wget_callback, (FAR void *)((intptr_t)fd));
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "wget", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "wget", NSH_ERRNO);
       goto exit;
     }
 
@@ -1331,7 +1331,7 @@ exit:
   return ret;
 
 errout:
-  nsh_output(vtbl, fmt, argv[0]);
+  nsh_error(vtbl, fmt, argv[0]);
   ret = ERROR;
   goto exit;
 }
@@ -1339,3 +1339,4 @@ errout:
 #endif
 
 #endif /* CONFIG_NET */
+

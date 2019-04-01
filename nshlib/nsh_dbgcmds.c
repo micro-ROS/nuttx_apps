@@ -46,10 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-#if CONFIG_NFILE_DESCRIPTORS > 0
-# include <fcntl.h>
-#endif
+#include <fcntl.h>
 
 #include "nsh.h"
 #include "nsh_console.h"
@@ -169,7 +166,7 @@ int cmd_mb(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
 
               if (mem.dm_value > 0x000000ff)
                 {
-                  nsh_output(vtbl, g_fmtargrange, argv[0]);
+                  nsh_error(vtbl, g_fmtargrange, argv[0]);
                   return ERROR;
                 }
 
@@ -225,7 +222,7 @@ int cmd_mh(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
 
               if (mem.dm_value > 0x0000ffff)
                 {
-                  nsh_output(vtbl, g_fmtargrange, argv[0]);
+                  nsh_error(vtbl, g_fmtargrange, argv[0]);
                   return ERROR;
                 }
 
@@ -368,7 +365,6 @@ int cmd_xd(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
  * Name: cmd_hexdump, hex dump of files
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
 #ifndef CONFIG_NSH_DISABLE_HEXDUMP
 int cmd_hexdump(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
 {
@@ -389,7 +385,7 @@ int cmd_hexdump(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
   fd = open(argv[1], O_RDONLY);
   if (fd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, "hexdump", "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, "hexdump", "open", NSH_ERRNO);
       return ERROR;
     }
 
@@ -397,7 +393,7 @@ int cmd_hexdump(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
   if(buffer == NULL)
     {
       (void)close(fd);
-      nsh_output(vtbl, g_fmtcmdfailed, "hexdump", "malloc", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, "hexdump", "malloc", NSH_ERRNO);
       return ERROR;
     }
 
@@ -425,7 +421,7 @@ int cmd_hexdump(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
       if (nbytesread < 0)
         {
           int errval = errno;
-          nsh_output(vtbl, g_fmtcmdfailed, "hexdump", "read",
+          nsh_error(vtbl, g_fmtcmdfailed, "hexdump", "read",
                      NSH_ERRNO_OF(errval));
           ret = ERROR;
           break;
@@ -491,7 +487,7 @@ int cmd_hexdump(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
         }
       else
         {
-          break; // EOF
+          break; /* EOF */
         }
     }
 
@@ -499,7 +495,6 @@ int cmd_hexdump(FAR struct nsh_vtbl_s *vtbl, int argc, FAR char **argv)
   free(buffer);
   return ret;
 }
-#endif
 #endif
 
 /****************************************************************************

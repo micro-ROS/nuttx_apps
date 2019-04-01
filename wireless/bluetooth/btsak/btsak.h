@@ -252,7 +252,9 @@ void btsak_cmd_security(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
 void btsak_cmd_gatt_exchange_mtu(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
-void btsak_cmd_gatt_exchange_mtu_result(FAR struct btsak_s *btsak, int argc,
+void btsak_cmd_connect(FAR struct btsak_s *btsak, int argc,
+       FAR char *argv[]);
+void btsak_cmd_disconnect(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
 void btsak_cmd_discover(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
@@ -260,17 +262,11 @@ void btsak_cmd_gatt_discover_characteristic(FAR struct btsak_s *btsak,
        int argc, FAR char *argv[]);
 void btsak_cmd_gatt_discover_descriptor(FAR struct btsak_s *btsak,
        int argc, FAR char *argv[]);
-void btsak_cmd_gatt_discover_get(FAR struct btsak_s *btsak,
-       int argc, FAR char *argv[]);
 void btsak_cmd_gatt_read(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
 void btsak_cmd_gatt_read_multiple(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
-void btsak_cmd_gatt_read_get(FAR struct btsak_s *btsak, int argc,
-       FAR char *argv[]);
 void btsak_cmd_gatt_write(FAR struct btsak_s *btsak, int argc,
-       FAR char *argv[]);
-void btsak_cmd_gatt_write_get(FAR struct btsak_s *btsak, int argc,
        FAR char *argv[]);
 
 #endif /* __APPS_EXAMPLES_WIRELESS_BLUETOOTH_BTSAK_BTSAK_H */

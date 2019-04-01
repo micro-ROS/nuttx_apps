@@ -63,28 +63,34 @@
 #define nsh_exit(v,s)          (v)->exit(v,s)
 
 #ifdef CONFIG_CPP_HAVE_VARARGS
+# define nsh_error(v, ...)     (v)->error(v, ##__VA_ARGS__)
 # define nsh_output(v, ...)    (v)->output(v, ##__VA_ARGS__)
 #else
+# define nsh_error             vtbl->error
 # define nsh_output            vtbl->output
 #endif
 
 /* Size of info to be saved in call to nsh_redirect */
+/* See struct serialsave_s in nsh_console.c */
 
-#define SAVE_SIZE (sizeof(int) + sizeof(FILE*) + sizeof(bool))
+#define SAVE_SIZE (2 * sizeof(int) + 2 * sizeof(FILE*))
 
 /* Are we using the NuttX console for I/O?  Or some other character device? */
 
 #if CONFIG_NFILE_STREAMS > 0
 #  ifdef CONFIG_NSH_ALTCONDEV
 
-#    ifndef CONFIG_NSH_CONDEV
-#      error CONFIG_NSH_ALTCONDEV selected but CONFIG_NSH_CONDEV not provided
+#    if !defined(CONFIG_NSH_ALTSTDIN) && !defined(CONFIG_NSH_ALTSTDOUT) && \
+        !defined(CONFIG_NSH_ALTSTDERR)
+#      error CONFIG_NSH_ALTCONDEV selected but CONFIG_NSH_ALTSTDxxx not provided
 #    endif
 
 #    define INFD(p)      ((p)->cn_confd)
 #    define INSTREAM(p)  ((p)->cn_constream)
-#    define OUTFD(p)     ((p)->cn_confd)
-#    define OUTSTREAM(p) ((p)->cn_constream)
+#    define OUTFD(p)     ((p)->cn_outfd)
+#    define OUTSTREAM(p) ((p)->cn_outstream)
+#    define ERRFD(p)     ((p)->cn_errfd)
+#    define ERRSTREAM(p) ((p)->cn_errstream)
 
 #  else
 
@@ -92,6 +98,8 @@
 #    define INSTREAM(p)  stdin
 #    define OUTFD(p)     1
 #    define OUTSTREAM(p) stdout
+#    define ERRFD(p)     2
+#    define ERRSTREAM(p) stderr
 
 #  endif
 #endif
@@ -116,12 +124,11 @@ struct nsh_vtbl_s
 #endif
   ssize_t (*write)(FAR struct nsh_vtbl_s *vtbl, FAR const void *buffer,
                    size_t nbytes);
+  int (*error)(FAR struct nsh_vtbl_s *vtbl, FAR const char *fmt, ...);
   int (*output)(FAR struct nsh_vtbl_s *vtbl, FAR const char *fmt, ...);
   FAR char *(*linebuffer)(FAR struct nsh_vtbl_s *vtbl);
-#if CONFIG_NFILE_DESCRIPTORS > 0
   void (*redirect)(FAR struct nsh_vtbl_s *vtbl, int fd, FAR uint8_t *save);
   void (*undirect)(FAR struct nsh_vtbl_s *vtbl, FAR uint8_t *save);
-#endif
   void (*exit)(FAR struct nsh_vtbl_s *vtbl, int exitstatus) noreturn_function;
 
 #ifdef NSH_HAVE_IOBUFFER
@@ -152,10 +159,19 @@ struct console_stdio_s
   int    cn_confd;     /* Console I/O file descriptor */
 #endif
   int    cn_outfd;     /* Output file descriptor (possibly redirected) */
+  int    cn_errfd;     /* Error Output file descriptor (possibly redirected) */
 #ifdef CONFIG_NSH_ALTCONDEV
   FILE  *cn_constream; /* Console I/O stream (possibly redirected) */
 #endif
   FILE  *cn_outstream; /* Output stream */
+  FILE  *cn_errstream; /* Error Output stream */
+#endif
+
+#ifdef CONFIG_NSH_VARS
+  /* Allocation and size of NSH variables */
+
+  FAR char *varp;
+  size_t varsz;
 #endif
 
   /* Line input buffer */

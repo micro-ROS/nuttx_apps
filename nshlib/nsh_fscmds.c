@@ -44,34 +44,32 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
-# include <sys/stat.h>
-# include <fcntl.h>
-# if !defined(CONFIG_DISABLE_MOUNTPOINT)
-#   ifdef CONFIG_FS_READABLE /* Need at least one filesytem in configuration */
-#     include <sys/mount.h>
-#     include <nuttx/drivers/ramdisk.h>
-#   endif
-#   ifdef CONFIG_DEV_LOOP
-#     include <sys/ioctl.h>
-#     include <nuttx/fs/loop.h>
-#   endif
-#   ifdef CONFIG_FS_SMARTFS
-#     include "fsutils/mksmartfs.h"
-#   endif
-#   ifdef CONFIG_SMART_DEV_LOOP
-#     include <sys/ioctl.h>
-#     include <nuttx/fs/smart.h>
-#   endif
-#   ifdef CONFIG_NFS
-#     include <sys/socket.h>
-#     include <netinet/in.h>
-#     include <nuttx/fs/nfs.h>
-#   endif
-#   ifdef CONFIG_RAMLOG_SYSLOG
-#     include <nuttx/syslog/ramlog.h>
-#   endif
-#endif
+#include <sys/stat.h>
+#include <fcntl.h>
+#if !defined(CONFIG_DISABLE_MOUNTPOINT)
+#  ifdef CONFIG_FS_READABLE /* Need at least one filesytem in configuration */
+#    include <sys/mount.h>
+#    include <nuttx/drivers/ramdisk.h>
+#  endif
+#  ifdef CONFIG_DEV_LOOP
+#    include <sys/ioctl.h>
+#    include <nuttx/fs/loop.h>
+#  endif
+#  ifdef CONFIG_FS_SMARTFS
+#    include "fsutils/mksmartfs.h"
+#  endif
+#  ifdef CONFIG_SMART_DEV_LOOP
+#    include <sys/ioctl.h>
+#    include <nuttx/fs/smart.h>
+#  endif
+#  ifdef CONFIG_NFS
+#    include <sys/socket.h>
+#    include <netinet/in.h>
+#    include <nuttx/fs/nfs.h>
+#  endif
+#  ifdef CONFIG_RAMLOG_SYSLOG
+#    include <nuttx/syslog/ramlog.h>
+#  endif
 #endif
 
 #include <stdio.h>
@@ -107,8 +105,7 @@
  * Name: nsh_getdirpath
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && \
-    (!defined(CONFIG_NSH_DISABLE_LS) || !defined(CONFIG_NSH_DISABLE_CP))
+#if !defined(CONFIG_NSH_DISABLE_LS) || !defined(CONFIG_NSH_DISABLE_CP)
 static char *nsh_getdirpath(FAR struct nsh_vtbl_s *vtbl,
                             FAR const char *path, FAR const char *file)
 {
@@ -143,7 +140,7 @@ static inline int ls_specialdir(const char *dir)
  * Name: ls_handler
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && !defined(CONFIG_NSH_DISABLE_LS)
+#if !defined(CONFIG_NSH_DISABLE_LS)
 static int ls_handler(FAR struct nsh_vtbl_s *vtbl, FAR const char *dirpath,
                       FAR struct dirent *entryp, FAR void *pvarg)
 {
@@ -176,7 +173,7 @@ static int ls_handler(FAR struct nsh_vtbl_s *vtbl, FAR const char *dirpath,
 
       if (ret != 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, "ls", "stat", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, "ls", "stat", NSH_ERRNO);
           return ERROR;
         }
 
@@ -192,18 +189,48 @@ static int ls_handler(FAR struct nsh_vtbl_s *vtbl, FAR const char *dirpath,
             }
           else
 #endif
-          if (S_ISDIR(buf.st_mode))
+          if (S_ISBLK(buf.st_mode))
             {
-              details[0] = 'd';
+              details[0] = 'b';
             }
           else if (S_ISCHR(buf.st_mode))
             {
               details[0] = 'c';
             }
-          else if (S_ISBLK(buf.st_mode))
+          else if (S_ISDIR(buf.st_mode))
             {
-              details[0] = 'b';
+              details[0] = 'd';
             }
+#ifdef CONFIG_MTD
+          else if (S_ISMTD(buf.st_mode))
+            {
+              details[0] = 'f';
+            }
+#endif
+#ifdef CONFIG_FS_SHM
+          else if (S_ISSHM(buf.st_mode))
+            {
+              details[0] = 'h';
+            }
+#endif
+#ifndef CONFIG_DISABLE_MQUEUE
+          else if (S_ISMQ(buf.st_mode))
+            {
+              details[0] = 'm';
+            }
+#endif
+#ifdef CONFIG_NET
+          else if (S_ISSOCK(buf.st_mode))
+            {
+              details[0] = 'n';
+            }
+#endif
+#ifdef CONFIG_FS_NAMED_SEMAPHORES
+          else if (S_ISSEM(buf.st_mode))
+            {
+              details[0] = 's';
+            }
+#endif
           else if (!S_ISREG(buf.st_mode))
             {
               details[0] = '?';
@@ -283,7 +310,7 @@ static int ls_handler(FAR struct nsh_vtbl_s *vtbl, FAR const char *dirpath,
 
           if (len < 0)
             {
-              nsh_output(vtbl, g_fmtcmdfailed, "ls", "readlink", NSH_ERRNO);
+              nsh_error(vtbl, g_fmtcmdfailed, "ls", "readlink", NSH_ERRNO);
               return ERROR;
             }
 
@@ -323,7 +350,7 @@ static int ls_handler(FAR struct nsh_vtbl_s *vtbl, FAR const char *dirpath,
  * Name: ls_recursive
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && !defined(CONFIG_NSH_DISABLE_LS)
+#if !defined(CONFIG_NSH_DISABLE_LS)
 static int ls_recursive(FAR struct nsh_vtbl_s *vtbl, const char *dirpath,
                         struct dirent *entryp, void *pvarg)
 {
@@ -358,7 +385,7 @@ static int ls_recursive(FAR struct nsh_vtbl_s *vtbl, const char *dirpath,
   return ret;
 }
 
-#endif /* CONFIG_NFILE_DESCRIPTORS > 0 && !CONFIG_NSH_DISABLE_LS */
+#endif /* !CONFIG_NSH_DISABLE_LS */
 
 /****************************************************************************
  * Public Functions
@@ -428,7 +455,6 @@ int cmd_dirname(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_cat
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
 #ifndef CONFIG_NSH_DISABLE_CAT
 int cmd_cat(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -445,7 +471,7 @@ int cmd_cat(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       fullpath = nsh_getfullpath(vtbl, argv[i]);
       if (fullpath == NULL)
         {
-          nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+          nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
           ret = ERROR;
         }
       else
@@ -463,14 +489,12 @@ int cmd_cat(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   return ret;
 }
 #endif
-#endif
 
 /****************************************************************************
  * Name: cmd_dmesg
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && defined(CONFIG_RAMLOG_SYSLOG) && \
-   !defined(CONFIG_NSH_DISABLE_DMESG)
+#if defined(CONFIG_RAMLOG_SYSLOG) && !defined(CONFIG_NSH_DISABLE_DMESG)
 int cmd_dmesg(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
   return nsh_catfile(vtbl, argv[0], CONFIG_SYSLOG_DEVPATH);
@@ -481,7 +505,6 @@ int cmd_dmesg(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_cp
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
 #ifndef CONFIG_NSH_DISABLE_CP
 int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -499,7 +522,7 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   srcpath = nsh_getfullpath(vtbl, argv[1]);
   if (srcpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       goto errout;
     }
 
@@ -508,7 +531,7 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   rdfd = open(srcpath, O_RDONLY);
   if (rdfd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       goto errout_with_srcpath;
     }
 
@@ -517,7 +540,7 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   destpath = nsh_getfullpath(vtbl, argv[2]);
   if (destpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       goto errout_with_rdfd;
     }
 
@@ -539,7 +562,7 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
           allocpath = nsh_getdirpath(vtbl, destpath, basename(argv[1]) );
           if (!allocpath)
             {
-              nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+              nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
               goto errout_with_destpath;
             }
 
@@ -561,7 +584,7 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   wrfd = open(destpath, oflags, 0666);
   if (wrfd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       goto errout_with_allocpath;
     }
 
@@ -589,14 +612,14 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 #ifndef CONFIG_DISABLE_SIGNALS
               if (errno == EINTR)
                 {
-                  nsh_output(vtbl, g_fmtsignalrecvd, argv[0]);
+                  nsh_error(vtbl, g_fmtsignalrecvd, argv[0]);
                 }
               else
 #endif
                 {
                   /* Read error */
 
-                  nsh_output(vtbl, g_fmtcmdfailed, argv[0], "read", NSH_ERRNO);
+                  nsh_error(vtbl, g_fmtcmdfailed, argv[0], "read", NSH_ERRNO);
                 }
               goto errout_with_wrfd;
             }
@@ -617,14 +640,14 @@ int cmd_cp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 #ifndef CONFIG_DISABLE_SIGNALS
               if (errno == EINTR)
                 {
-                  nsh_output(vtbl, g_fmtsignalrecvd, argv[0]);
+                  nsh_error(vtbl, g_fmtsignalrecvd, argv[0]);
                 }
               else
 #endif
                 {
                  /* Read error */
 
-                  nsh_output(vtbl, g_fmtcmdfailed, argv[0], "write", NSH_ERRNO);
+                  nsh_error(vtbl, g_fmtcmdfailed, argv[0], "write", NSH_ERRNO);
                 }
               goto errout_with_wrfd;
             }
@@ -659,13 +682,12 @@ errout:
   return ret;
 }
 #endif
-#endif
 
 /****************************************************************************
  * Name: cmd_losetup
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && !defined(CONFIG_DISABLE_MOUNTPOINT)
+#ifndef CONFIG_DISABLE_MOUNTPOINT
 #   if defined(CONFIG_DEV_LOOP) && !defined(CONFIG_NSH_DISABLE_LOSETUP)
 int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -708,7 +730,7 @@ int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
         case '?':
         default:
-          nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+          nsh_error(vtbl, g_fmtarginvalid, argv[0]);
           badarg = true;
           break;
         }
@@ -739,7 +761,7 @@ int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
         }
       else
         {
-          nsh_output(vtbl, g_fmtargrequired, argv[0]);
+          nsh_error(vtbl, g_fmtargrequired, argv[0]);
           goto errout_with_paths;
         }
     }
@@ -748,7 +770,7 @@ int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (optind < argc)
     {
-      nsh_output(vtbl, g_fmttoomanyargs, argv[0]);
+      nsh_error(vtbl, g_fmttoomanyargs, argv[0]);
       goto errout_with_paths;
     }
 
@@ -757,7 +779,7 @@ int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fd = open("/dev/loop", O_RDONLY);
   if (fd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       goto errout_with_paths;
     }
 
@@ -770,7 +792,7 @@ int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = ioctl(fd, LOOPIOC_TEARDOWN, (unsigned long)((uintptr_t)loopdev));
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
           goto errout_with_fd;
         }
     }
@@ -787,7 +809,7 @@ int cmd_losetup(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = ioctl(fd, LOOPIOC_SETUP, (unsigned long)((uintptr_t)&setup));
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
           goto errout_with_fd;
         }
     }
@@ -819,7 +841,7 @@ errout_with_paths:
  * Name: cmd_losmart
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0 && !defined(CONFIG_DISABLE_MOUNTPOINT)
+#ifndef CONFIG_DISABLE_MOUNTPOINT
 #   if defined(CONFIG_SMART_DEV_LOOP) && !defined(CONFIG_NSH_DISABLE_LOSMART)
 int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -877,7 +899,7 @@ int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
         case '?':
         default:
-          nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+          nsh_error(vtbl, g_fmtarginvalid, argv[0]);
           badarg = true;
           break;
         }
@@ -905,7 +927,7 @@ int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
         }
       else
         {
-          nsh_output(vtbl, g_fmtargrequired, argv[0]);
+          nsh_error(vtbl, g_fmtargrequired, argv[0]);
           goto errout_with_paths;
         }
     }
@@ -914,7 +936,7 @@ int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (optind < argc)
     {
-      nsh_output(vtbl, g_fmttoomanyargs, argv[0]);
+      nsh_error(vtbl, g_fmttoomanyargs, argv[0]);
       goto errout_with_paths;
     }
 
@@ -923,7 +945,7 @@ int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fd = open("/dev/smart", O_RDONLY);
   if (fd < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       goto errout_with_paths;
     }
 
@@ -936,7 +958,7 @@ int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = ioctl(fd, SMART_LOOPIOC_TEARDOWN, (unsigned long)((uintptr_t) loopdev));
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
           goto errout_with_fd;
         }
     }
@@ -954,7 +976,7 @@ int cmd_losmart(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = ioctl(fd, SMART_LOOPIOC_SETUP, (unsigned long)((uintptr_t)&setup));
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ioctl", NSH_ERRNO);
           goto errout_with_fd;
         }
     }
@@ -986,8 +1008,7 @@ errout_with_paths:
  * Name: cmd_ln
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
-#  if !defined(CONFIG_NSH_DISABLE_LN) && defined(CONFIG_PSEUDOFS_SOFTLINKS)
+#if !defined(CONFIG_NSH_DISABLE_LN) && defined(CONFIG_PSEUDOFS_SOFTLINKS)
 int cmd_ln(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
   FAR char *linkpath;
@@ -1001,7 +1022,7 @@ int cmd_ln(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
     {
       if (strcmp(argv[1], "-s") != 0)
         {
-          nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+          nsh_error(vtbl, g_fmtarginvalid, argv[0]);
           return ERROR;
         }
 
@@ -1031,7 +1052,7 @@ int cmd_ln(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = link(tgtpath, linkpath);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "link", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "link", NSH_ERRNO);
       ret = ERROR;
     }
 
@@ -1042,17 +1063,15 @@ int cmd_ln(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 errout_with_tgtpath:
   nsh_freefullpath(tgtpath);
 errout_with_nomemory:
-  nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+  nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
   return ERROR;
 }
-#endif
 #endif
 
 /****************************************************************************
  * Name: cmd_ls
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
 #ifndef CONFIG_NSH_DISABLE_LS
 int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1085,7 +1104,7 @@ int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
           case '?':
           default:
-            nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+            nsh_error(vtbl, g_fmtarginvalid, argv[0]);
             badarg = true;
             break;
         }
@@ -1102,7 +1121,7 @@ int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (optind + 1 < argc)
     {
-      nsh_output(vtbl, g_fmttoomanyargs, argv[0]);
+      nsh_error(vtbl, g_fmttoomanyargs, argv[0]);
       return ERROR;
     }
   else if (optind >= argc)
@@ -1110,7 +1129,7 @@ int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 #ifndef CONFIG_DISABLE_ENVIRON
       relpath = nsh_getcwd();
 #else
-      nsh_output(vtbl, g_fmtargrequired, argv[0]);
+      nsh_error(vtbl, g_fmtargrequired, argv[0]);
       return ERROR;
 #endif
     }
@@ -1124,7 +1143,7 @@ int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fullpath = nsh_getfullpath(vtbl, relpath);
   if (fullpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       return ERROR;
     }
 
@@ -1141,7 +1160,7 @@ int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (stat(fullpath, &st) < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "stat", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "stat", NSH_ERRNO);
       ret = ERROR;
     }
   else if (!S_ISDIR(st.st_mode))
@@ -1173,7 +1192,6 @@ int cmd_ls(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   return ret;
 }
 #endif
-#endif
 
 /****************************************************************************
  * Name: cmd_mkdir
@@ -1191,7 +1209,7 @@ int cmd_mkdir(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = mkdir(fullpath, 0777);
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "mkdir", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "mkdir", NSH_ERRNO);
         }
 
       nsh_freefullpath(fullpath);
@@ -1206,8 +1224,7 @@ int cmd_mkdir(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_mkfatfs
  ****************************************************************************/
 
-#if !defined(CONFIG_DISABLE_MOUNTPOINT) && CONFIG_NFILE_DESCRIPTORS > 0 && \
-     defined(CONFIG_FSUTILS_MKFATFS)
+#if !defined(CONFIG_DISABLE_MOUNTPOINT) && defined(CONFIG_FSUTILS_MKFATFS)
 #ifndef CONFIG_NSH_DISABLE_MKFATFS
 int cmd_mkfatfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1229,7 +1246,7 @@ int cmd_mkfatfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
             if (fmt.ff_fattype != 0  && fmt.ff_fattype != 12 &&
                 fmt.ff_fattype != 16 && fmt.ff_fattype != 32)
               {
-                nsh_output(vtbl, g_fmtargrange, argv[0]);
+                nsh_error(vtbl, g_fmtargrange, argv[0]);
                 badarg = true;
               }
             break;
@@ -1238,19 +1255,19 @@ int cmd_mkfatfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
             fmt.ff_rootdirentries = atoi(optarg);
             if (fmt.ff_rootdirentries < 0)
               {
-                nsh_output(vtbl, g_fmtargrange, argv[0]);
+                nsh_error(vtbl, g_fmtargrange, argv[0]);
                 badarg = true;
               }
             break;
 
          case ':':
-            nsh_output(vtbl, g_fmtargrequired, argv[0]);
+            nsh_error(vtbl, g_fmtargrequired, argv[0]);
             badarg = true;
             break;
 
           case '?':
           default:
-            nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+            nsh_error(vtbl, g_fmtarginvalid, argv[0]);
             badarg = true;
             break;
         }
@@ -1270,18 +1287,18 @@ int cmd_mkfatfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       fullpath = nsh_getfullpath(vtbl, argv[optind]);
       if (fullpath == NULL)
         {
-          nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+          nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
           return ERROR;
         }
     }
   else if (optind >= argc)
     {
-      nsh_output(vtbl, g_fmttoomanyargs, argv[0]);
+      nsh_error(vtbl, g_fmttoomanyargs, argv[0]);
       return ERROR;
     }
   else
     {
-      nsh_output(vtbl, g_fmtargrequired, argv[0]);
+      nsh_error(vtbl, g_fmtargrequired, argv[0]);
       return ERROR;
     }
 
@@ -1290,7 +1307,7 @@ int cmd_mkfatfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = mkfatfs(fullpath, &fmt);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "mkfatfs", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "mkfatfs", NSH_ERRNO);
     }
 
   nsh_freefullpath(fullpath);
@@ -1303,8 +1320,7 @@ int cmd_mkfatfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_mkfifo
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
-# if defined(CONFIG_PIPES) && CONFIG_DEV_FIFO_SIZE > 0 && \
+#if defined(CONFIG_PIPES) && CONFIG_DEV_FIFO_SIZE > 0 && \
     !defined(CONFIG_NSH_DISABLE_MKFIFO)
 int cmd_mkfifo(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1316,7 +1332,7 @@ int cmd_mkfifo(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = mkfifo(fullpath, 0777);
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "mkfifo", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "mkfifo", NSH_ERRNO);
         }
 
       nsh_freefullpath(fullpath);
@@ -1325,7 +1341,6 @@ int cmd_mkfifo(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   return ret;
 }
 #endif /* CONFIG_PIPES && CONFIG_DEV_FIFO_SIZE > 0 && !CONFIG_NSH_DISABLE_MKFIFO */
-#endif /* CONFIG_NFILE_DESCRIPTORS > 0 */
 
 /****************************************************************************
  * Name: cmd_mkrd
@@ -1354,7 +1369,7 @@ int cmd_mkrd(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
             minor = atoi(optarg);
             if (minor < 0 || minor > 255)
               {
-                nsh_output(vtbl, g_fmtargrange, argv[0]);
+                nsh_error(vtbl, g_fmtargrange, argv[0]);
                 badarg = true;
               }
             break;
@@ -1363,19 +1378,19 @@ int cmd_mkrd(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
             sectsize = atoi(optarg);
             if (minor < 0 || minor > 16384)
               {
-                nsh_output(vtbl, g_fmtargrange, argv[0]);
+                nsh_error(vtbl, g_fmtargrange, argv[0]);
                 badarg = true;
               }
             break;
 
          case ':':
-            nsh_output(vtbl, g_fmtargrequired, argv[0]);
+            nsh_error(vtbl, g_fmtargrequired, argv[0]);
             badarg = true;
             break;
 
           case '?':
           default:
-            nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+            nsh_error(vtbl, g_fmtarginvalid, argv[0]);
             badarg = true;
             break;
         }
@@ -1425,7 +1440,7 @@ int cmd_mkrd(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
                          RDFLAG_WRENABLED | RDFLAG_FUNLINK);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ramdisk_register", NSH_ERRNO_OF(-ret));
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ramdisk_register", NSH_ERRNO_OF(-ret));
       free(buffer);
       return ERROR;
     }
@@ -1443,8 +1458,8 @@ errout_with_fmt:
  * Name: cmd_mksmartfs
  ****************************************************************************/
 
-#if !defined(CONFIG_DISABLE_MOUNTPOINT) && CONFIG_NFILE_DESCRIPTORS > 0 && \
-     defined(CONFIG_FS_SMARTFS) && defined(CONFIG_FSUTILS_MKSMARTFS)
+#if !defined(CONFIG_DISABLE_MOUNTPOINT) && defined(CONFIG_FS_SMARTFS) && \
+    defined(CONFIG_FSUTILS_MKSMARTFS)
 #ifndef CONFIG_NSH_DISABLE_MKSMARTFS
 int cmd_mksmartfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1472,12 +1487,12 @@ int cmd_mksmartfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
             sectorsize = atoi(optarg);
             if (sectorsize < 256 || sectorsize > 16384)
               {
-                nsh_output(vtbl, "Sector size must be 256-16384\n");
+                nsh_error(vtbl, "Sector size must be 256-16384\n");
                 return EINVAL;
               }
             if (sectorsize & (sectorsize-1))
               {
-                nsh_output(vtbl, "Sector size must be power of 2\n");
+                nsh_error(vtbl, "Sector size must be power of 2\n");
                 return EINVAL;
               }
 
@@ -1505,7 +1520,7 @@ int cmd_mksmartfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
       if (nrootdirs > 8 || nrootdirs < 1)
         {
-          nsh_output(vtbl, "Invalid number of root directories specified\n");
+          nsh_error(vtbl, "Invalid number of root directories specified\n");
         }
       else
 #endif
@@ -1518,7 +1533,7 @@ int cmd_mksmartfs(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 #endif
           if (ret < 0)
             {
-              nsh_output(vtbl, g_fmtcmdfailed, argv[0], "mksmartfs", NSH_ERRNO);
+              nsh_error(vtbl, g_fmtcmdfailed, argv[0], "mksmartfs", NSH_ERRNO);
             }
         }
 
@@ -1547,14 +1562,14 @@ int cmd_mv(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   oldpath = nsh_getfullpath(vtbl, argv[1]);
   if (oldpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       return ERROR;
     }
 
   newpath = nsh_getfullpath(vtbl, argv[2]);
   if (newpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       ret = ERROR;
       goto errout_with_oldpath;
     }
@@ -1564,7 +1579,7 @@ int cmd_mv(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = rename(oldpath, newpath);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "rename", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "rename", NSH_ERRNO);
     }
 
   /* Free the file paths */
@@ -1582,8 +1597,7 @@ errout_with_oldpath:
  * Name: cmd_readlink
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
-#  if !defined(CONFIG_NSH_DISABLE_READLINK) && defined(CONFIG_PSEUDOFS_SOFTLINKS)
+#if !defined(CONFIG_NSH_DISABLE_READLINK) && defined(CONFIG_PSEUDOFS_SOFTLINKS)
 int cmd_readlink(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
   FAR char *fullpath;
@@ -1595,7 +1609,7 @@ int cmd_readlink(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fullpath = nsh_getfullpath(vtbl, argv[1]);
   if (fullpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       return ERROR;
     }
 
@@ -1604,14 +1618,13 @@ int cmd_readlink(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (len < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, "ls", "readlink", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, "ls", "readlink", NSH_ERRNO);
       return ERROR;
     }
 
   nsh_output(vtbl, "%s\n", vtbl->iobuffer);
   return OK;
 }
-#endif
 #endif
 
 /****************************************************************************
@@ -1630,7 +1643,7 @@ int cmd_rm(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = unlink(fullpath);
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "unlink", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "unlink", NSH_ERRNO);
         }
 
       nsh_freefullpath(fullpath);
@@ -1657,7 +1670,7 @@ int cmd_rmdir(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = rmdir(fullpath);
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "rmdir", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "rmdir", NSH_ERRNO);
         }
 
       nsh_freefullpath(fullpath);
@@ -1672,7 +1685,7 @@ int cmd_rmdir(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_sh
  ****************************************************************************/
 
-#if  CONFIG_NFILE_DESCRIPTORS > 0 && CONFIG_NFILE_STREAMS > 0 && !defined(CONFIG_NSH_DISABLESCRIPT)
+#if CONFIG_NFILE_STREAMS > 0 && !defined(CONFIG_NSH_DISABLESCRIPT)
 #ifndef CONFIG_NSH_DISABLE_SH
 int cmd_sh(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1685,7 +1698,6 @@ int cmd_sh(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
  * Name: cmd_cmp
  ****************************************************************************/
 
-#if CONFIG_NFILE_DESCRIPTORS > 0
 #ifndef CONFIG_NSH_DISABLE_CMP
 int cmd_cmp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1701,14 +1713,14 @@ int cmd_cmp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   path1 = nsh_getfullpath(vtbl, argv[1]);
   if (path1 == NULL)
     {
-      nsh_output(vtbl, g_fmtargrequired, argv[0]);
+      nsh_error(vtbl, g_fmtargrequired, argv[0]);
       goto errout;
     }
 
   path2 = nsh_getfullpath(vtbl, argv[2]);
   if (path2 == NULL)
     {
-      nsh_output(vtbl, g_fmtargrequired, argv[0]);
+      nsh_error(vtbl, g_fmtargrequired, argv[0]);
       goto errout_with_path1;
     }
 
@@ -1717,14 +1729,14 @@ int cmd_cmp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fd1 = open(path1, O_RDONLY);
   if (fd1 < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       goto errout_with_path2;
     }
 
   fd2 = open(path2, O_RDONLY);
   if (fd2 < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "open", NSH_ERRNO);
       goto errout_with_fd1;
     }
 
@@ -1744,13 +1756,13 @@ int cmd_cmp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
       if (nbytesread1 < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "read", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "read", NSH_ERRNO);
           goto errout_with_fd2;
         }
 
       if (nbytesread2 < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "read", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "read", NSH_ERRNO);
           goto errout_with_fd2;
         }
 
@@ -1761,7 +1773,7 @@ int cmd_cmp(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       if (nbytesread1 != nbytesread2 ||
           memcmp(buf1, buf2, nbytesread1) != 0)
         {
-          nsh_output(vtbl, "files differ: byte %u\n", total_read);
+          nsh_error(vtbl, "files differ: byte %u\n", total_read);
           goto errout_with_fd2;
         }
 
@@ -1791,13 +1803,12 @@ errout:
   return ret;
 }
 #endif
-#endif
 
 /****************************************************************************
  * Name: cmd_truncate
  ****************************************************************************/
 
-#if !defined(CONFIG_DISABLE_MOUNTPOINT) && CONFIG_NFILE_DESCRIPTORS > 0
+#ifndef CONFIG_DISABLE_MOUNTPOINT
 #ifndef CONFIG_NSH_DISABLE_TRUNCATE
 int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 {
@@ -1811,14 +1822,14 @@ int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 
   if (strcmp(argv[1], "-s") != 0)
     {
-      nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+      nsh_error(vtbl, g_fmtarginvalid, argv[0]);
       return ERROR;
     }
 
   length = strtoul(argv[2], &endptr, 0);
   if (*endptr != '\0')
     {
-      nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+      nsh_error(vtbl, g_fmtarginvalid, argv[0]);
       return ERROR;
     }
 
@@ -1827,7 +1838,7 @@ int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   fullpath = nsh_getfullpath(vtbl, argv[3]);
   if (fullpath == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdoutofmemory, argv[0]);
+      nsh_error(vtbl, g_fmtcmdoutofmemory, argv[0]);
       return ERROR;
     }
 
@@ -1847,7 +1858,7 @@ int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
           int fd = creat(fullpath, 0666);
           if (fd < 0)
             {
-              nsh_output(vtbl, g_fmtcmdfailed, argv[0], "stat", NSH_ERRNO);
+              nsh_error(vtbl, g_fmtcmdfailed, argv[0], "stat", NSH_ERRNO);
               ret = ERROR;
             }
           else
@@ -1865,7 +1876,7 @@ int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
                   ret = ftruncate(fd, length);
                   if (ret < 0)
                     {
-                      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "ftruncate",
+                      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "ftruncate",
                                  NSH_ERRNO);
                     }
                 }
@@ -1875,14 +1886,14 @@ int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
         }
       else
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "stat",
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "stat",
                      NSH_ERRNO_OF(errval));
           ret = ERROR;
         }
     }
   else if (!S_ISREG(buf.st_mode))
     {
-      nsh_output(vtbl, g_fmtarginvalid, argv[0]);
+      nsh_error(vtbl, g_fmtarginvalid, argv[0]);
       ret = ERROR;
     }
   else
@@ -1892,7 +1903,7 @@ int cmd_truncate(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = truncate(fullpath, length);
       if (ret < 0)
         {
-          nsh_output(vtbl, g_fmtcmdfailed, argv[0], "truncate", NSH_ERRNO);
+          nsh_error(vtbl, g_fmtcmdfailed, argv[0], "truncate", NSH_ERRNO);
         }
     }
 

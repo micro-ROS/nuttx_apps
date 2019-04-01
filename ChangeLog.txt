@@ -3069,4 +3069,649 @@
 	  apps/tools: Fix to generate CONFIG_SYSTEM_NSH_SYMTAB_COUNTNAME in
 	  mksymtab.sh.  From Masayuki Ishikawa (2018-09-07)
 
-7.27 2018-xx-xx Gregory Nutt <gnutt@nuttx.org>
+7.27 2018-11-14 Gregory Nutt <gnutt@nuttx.org>
+
+	* Directory.mk:  Fix distclean targets of directory makefiles was not
+	  removing generated Kconfig files.  There is then no way to remove this
+	  Kconfig files without manually deleting them one at a time.  From Gregory
+	  Nutt (2018-09-08).
+	* apps/examples/tcpblaster:  Add an option to use poll() to pace input or
+	  output.  From Gregory Nutt (2018-09-10).
+	* apps/examples/tcpblaster:  Select CONFIG_LIBC_FLOATINGPOINT
+	  automatically.  Units in output are wrong:  Not Kbps bus Kb/Sec.  From
+	  Gregory Nutt (2018-09-10).
+	* apps/Application.mk:  Fix some build issues.  (1) Unable to found target
+	  'context' when CONFIG_NSH_BUILTIN_APPS disabled. (2) Unable to generate
+	  multiple programs.  From Chao An (2018-09-12).
+	* Fixes i8sak name. Accidentally renamed to i8ask in recent changes  From
+	  Anthony Merlino (2018-09-12).
+	* apps/examples/udpblaster:  Add option to use poll() on output (only). 
+	  Also picks up some fixes to various typographical errors.  From Gregory
+	  Nutt (2018-09-14).
+	* Correct some network-related configuration variable names.  All *_MTU
+	  defines were changes to *_PKTSIZE gut that was not reflected in apps/ 
+	  From Gregory Nutt (2018-09-14).
+	* Combine the NxWidgets repository into the apps/ repository:
+
+	  - Remove old NxWidgets directory
+	  - Merge remote-tracking branch 'NxWidgets/master'
+	  - Move NxWidgets files into graphics/NxWidgets
+	  - Integrate configuration/build system
+	  - Fix file paths in file headers.  Remove some duplicate tools.
+	  - Add new NxWidgets Unit Test configuration and build logic.
+	  
+	  From Gregory Nutt (2018-09-15).
+	* Directory.mk:  If the current directory contains a Kconfig file and
+	  MENUDESC is not defined, then Directory.mk must not trash the Kconfig in
+	  the current directory.  From Gregory Nutt (2018-09-16).
+	* This commit moves the NxWidgets include directories into the correct
+	  position in the apps/ source tree.
+
+	  - Clean-up some include path problems introduced with the previous set of
+	    changes.
+	  - app/include/graphics, apps/NxWidgets/UnitTests:  Update include paths
+	    for file in new location.
+	  - apps/NxWidgets/nxwidgets and nxwm:  Update include paths for file in new
+	    location.
+	  - apps/graphics/NxWidgets:  Move nxwidgets and nxwm include/ directories
+	    to apps/include/graphics
+
+	  From Gregory Nutt (2018-09-16).
+	* apps/nshlib:  Correct maximum number of arguments that can be provided to
+	  the mksmartfs command.  From Eunbong Song (2018-09-18).
+	* apps/examples/adc/Kconfig:  CONFIG_BOARDCTL_ADCTEST does not exist anymore
+	  and should removed as a dependency.  From Eunbong Song (2018-09-18).
+	* nshlib/, examples/:  Update to show newer file system object types
+	  returned by stat().  From Gregory Nutt (2018-09-22).
+	* Adapt the existing fstest example for SPIFFS:
+
+	  - examples/fstest:  For SPIFFS, add garbage collection and file system
+	    integrity IOCTL calls.  This was to avoid running out of FLASH space
+	    while running the fstest (ENOSPC=28).  However, it does not work.. still
+	    runs out of memory.
+	  - apps/examples/fstest:  Call statfs() and show state of file system on
+	    each loop.
+	  - apps/examples/fstest:  Fix a situation where a file system under test
+	    could cause the fstest to get stuck in an infinit loop.  From Gregory
+	    Nutt (2018-09-27).
+	* - apps/examples/fstest:  Add logic to dump logic content of SPIFFS
+	  - apps/examples/fstest/Kconfig: SPIFFS GC and integrity check option
+	    interferes SPIFFS.  Appears to corrupt the file system.  Now marked
+	    EXPERIMENTAL.  From Gregory Nutt (2018-09-28).
+	* - apps/examples/fstest:  Ignore EINTR errors while reading or writing.
+	  - apps/examples/fstest:  Add configuration option to customize stack
+	    size.  Detect when the media is full and stop writing files.  Report
+	    total file size.  From Gregory Nutt (2018-09-29).
+	* apps/netutils/netlib/netlib_parsehttpurl.c:  Correct handling of long URLs
+	  as noted in Bitbucket issue #119 (in the nuttx/ repository, not the apps/
+	  repository).  From Gregory Nutt (2018-09-30).
+	* apps/nshlib:  Add support for the 'env' command.  From Gregory Nutt
+	 (2018-09-30).
+	* apps/nshlib:  Add support for NSH local variables if CONFIG_NSH_VARS are
+	  set.  These are like environment variables but are local to NSH.  The
+	  importance of this is that these variables are *not* inherited when NSH
+	  creates a new task.  The new command 'export' was added.  In this case,
+	  the NSH variable will be promoted to an environment variable and will then
+	  be inherited by any tasks executed by NSH.  From Gregory Nutt (2018-10-01).
+	* apps/nshlib:  If CONFIG_NSH_VARS=y, the NSH 'set' command with no argument
+	  will list all of the local NSH variables.  From Gregory Nutt (2018-10-02).
+	* i8sak: Properly shuts down event thread.  From Anthony Merlino (2018-10-06).
+	* "dst" overflow protection when base64 string ends with "="  From Aleksandr
+	  Vyhovanec (2018-10-19).
+	* apps/system/progmem:  Remove this utility.  It makes illegal direct calls
+	  into the OS.  From Gregory Nutt (2018-10-19).
+	* apps/examples/mlx90614:  Add mlx90614 test example  From Alan Carvalho de
+	  Assis (2018-10-28).
+	* apps/netutils/netlib and apps/examples/igmp:  Adapt to use the corrected,
+	  semi-standard version of struct ip_msfilter.  From Gregory Nutt
+	  (2018-10-29).
+	* wireless/ieee802154/i8sak: Adds support for getting/setting transmit
+	  power.  From Anthony Merlino (2018-11-01).
+	* examples/mlx90614/mlx90614_main.c:  Include support to change device
+	  address on mlx90614  From Alan Carvalho de Assis (2018-11-02).
+	* apps/include/netutils/ipmsfilter.h:  Eliminate error generated by bad
+	  pre-processor logic.  From Gregory Nutt (2018-11-02).
+	* apps/examples/mld:  Add a test of MLD.  Provides a mechanism for some
+	  low-level bring-up of MLD.  From Gregory Nutt (2018-11-04).
+	* apps/Makefile:  Fix Windows native build patch extension.  From Anatol
+	  Ivanov (2018-11-05).
+	* apps/examples/ina226:  Added INA226 example  From Daniel P. Carvalho
+	  (2018-11-05).
+	* apps/examples/mld/mld_main.c:  Improve test by periodically dumping the
+	  content of /proc/net/mld (if available).  From Gregory Nutt (2018-11-06).
+	* apps/examples/mld:  Add logic to set up the routing table before
+	  attempting to send the multicast packet.  From Gregory Nutt (2018-11-07).
+	* nshlib/nsh_console.c: Add fflush to nsh_consolewrite().  This resolves
+	  this problem:
+
+	  > cat /dev/ttyCP &
+	  > echo ls >/dev/ttyCP
+
+	  Can't get the 'ls' result immediately, because 'cat' cmd uses
+	  nsh_consolewrite() and that uses fwrite with no fflush. We can get the
+	  'ls' result after type '\n', because nsh will fflush output when get
+	  '\n'.  From ligd (2018-11-07).
+	* nshlib/nsh_fsutils.c:  nsh_catfile() should not append '\n' if the last
+	  char in file is already '\n'  From Xiang Xiao (2018-11-07).
+	* nshlib/nsh_netinit.c:  Move call netlib_icmpv6_autoconfiguration() into
+	  nsh_net_bringup() like DHCP  From Xiang Xiao (2018-11-07).
+	* nshlib/nsh_envcmds.c:  Fix warning g_oldpwd defined but not used
+	  [-Wunused-const-variable]  From Xiang Xiao (2018-11-07).
+	* apps/system/hexed/src/bfile.c:  Fix memory leak  From zhuyanlin
+	  (2018-11-07).
+	* apps/system/i2c/i2c_get.c:  Fix i2c_msg freq initialization problem.  Typo
+	  prevent I2C frequency initialization in a struct i2c_msg.  From From:
+	  dongjiuzhu (2018-11-07).
+	* apps/system/system.c:  Fix warning when passing argument 6 of 'task_spawn'
+	  from incompatible pointer type [-Wincompatible-pointer-types]  From Xiang
+	  Xiao (2018-11-07).
+	* apps/system/vi/vi.c:  Do not print error if the file does not exist.  From
+	  anchao (2018-11-07).
+	* apps/netutils/chat and apps/examples/chat:  'constify' chat variables and
+	  parameters  From Xiang Xiao (2018-11-07).
+	* apps/netutils/pppd:  Refine and fix pppd code.  From Xiang Xiao
+	  (2018-11-07).
+	* apps/examples/mld:  Fix incorrect format of IPv6 Multicast address.  This
+	  resolves the UDP sendto() problem.  From Gregory Nutt (2018-11-07).
+	* apps/:  Rename BINFMT_EXEPATH to LIB_ENVPATH.  From anchao (2018-11-08).
+	* apps/examples/gpio:  Align with GPIO driver update  From wangyanjiong
+	  (2018-11-08).
+	* - system/ping/ping.c and system/ping6/ping6.c:  Set optind to zero in the
+	    error case
+	  - system/ping/ping.c and system/ping6/ping6.c:  Move all ping preparation
+	    work into icmp_ping
+	  - system/ping/ping.c and system/ping6/ping6.c:  Support -W <timeout> and
+	    -s <size> option
+	  - system/ping/ping.c and system/ping6/ping6.c:  Decouple the output from
+	    ping logic
+
+	  From Xiang Xiao (2018-11-08).
+	* apps/system/ping and pings and apps/netutils/ping:  Extract icmp ping and
+	  icmpv6 ping6 logic from system/ to C-callable library in netutils/.  From
+	  ligd (2018-11-08).
+	* apps/examples/webserver/Kconfig:  The webserver "app" allows for DHCP
+	  client to be enabled. However, the Kconfig infrastructure does not contain
+	  EXAMPLES_WEBSERVER_DHCPC config.
+
+	  Based on patch from "Anonymous" attached to Bitbucket Issue #130  From
+	  Gregory Nutt (2018-11-08).
+	* NxWidgets improvements
+
+	  - NxWidgets: fix garbage returned when CCycleButton::getValue() is called
+	    after removeAllOptions().
+
+	    It's a bit questionable whether returning 0 here is reasonable or
+	    if it would be better to assert(). But either is better than reading
+	    into random memory and returning a garbage value.
+
+	  - NXWidgets CScrollingPanel: Don't draw outside the widget area.
+
+	    The port->move() function doesn't support clipping the
+	    copied area to the client area, so we have to manually
+	    calculate the part that can be moved without going outside
+	    the widget.
+
+	  - CNxString: Add string + operator and ::format() function
+
+	  - CNumericEdit: Add option to include unit name after the value
+
+	  - NxWidgets: CNxWidget: Make useWidgetStyle() public
+
+	    Makes it easier to update styles when multiple controls are nested.
+
+	  - NxWidgets: Add CLabelGrid control for displaying text in grid format.
+
+	  From Petteri Aimonen (2018-11-09).
+	* apps/system/ping6:  Remove NET_USRSOCK from Kconfig dependence list  From
+	  Xiang Xiao (2018-11-09).
+	* graphics/NxWidgets/nxwidgets/src/clabelgrid.cxx:  Change old-style dbg()
+	  to current ginfo().  From Gregory Nutt (2018-11-09).
+
+7.28 2019-01-19 Gregory Nutt <gnutt@nuttx.org>
+
+	* netutils/webserver:  The webserver/httpd app is currently broken when script
+	  support is enabled (CONFIG_NETUTILS_HTTPD_SCRIPT_DISABLE). The root cause
+	  has been tracked down to the "Content-length" not being available ahead of
+	  time in this case (length of -1 passed to send_headers() ).  On the other
+	  hand, the server closing the socket does not result in FIN being sent
+	  to the browser either (FIN not supported by NuttX yet).
+
+	  Simple solution: Add support for HTTP Chunked Encoding to
+	  webserver/httpd (attached patch).
+
+	  The attached patch is simple. It adds a configuration option to enable
+	  chunked encoding. When enabled, the implementation will auto-detect the
+	  cases where content length is not available ahead of time, and will
+	  automatically engage chunked encoding transfers.
+
+	  Without this patch, the browser/client hangs forever, as it is
+	  expecting more data. With this patch, the browser displays the
+	  content.  From Vlado Vidovic (2018-11-23).
+	* From patch attached to nuttx/ Bitbucket Issue #136 from Vlado Vidovic:
+
+	  The patch provided in issue 135, which adds support for HTTP Chunked
+	  Encoding, covers all paths in the webserver app except CGI callbacks.
+	  As a result, if a page being served happens to use CGI, it could
+	  generate stream content that does not comply with HTTP Chunked Encoding.
+
+	  The patch attached amends the webserver app's CGI callbacks to use the
+	  HTTP Chunked Encoding sender function instead of using send()
+	  directly.  From Gregory Nutt (2018-11-23).
+	* apps/system/critmon:  Add a daemon to monitor critical section usage.
+	  From Gregory Nutt (2018-11-24).
+	* apps/wireless/bluetooth/btsak: 'bt bnep0 info' outputs a reversed addr.
+	  It should print BDAddr: aa:bb:cc:dd:ee:ff instead of BDAddr:
+	  ff:ee:dd:cc:bb:aa  From Lwazi (2018-11-25).
+	* Various initialization functions in configs/:  Change /dev/slcd to
+	  /dev/slcd0 for consistency  From Alan Carvalho de Assis (2018-11-25).
+	* wireless/bluetooth/btsak:  Fix some errors in btsak  From Lwazi Dube
+	  (2018-11-27).
+	* system: Fixes build error; There is no result variable, use errcode
+	  instead.  From Anthony Merlino (2018-11-28).
+	* apps/system/critmon/Makefile:  Stack size and priority reversed.  From
+	  Daniel Pereira Carvalho (2018-11-29).
+	* apps/nshlib: Add support to use SLCD as NSH Console  From Alan Carvalho
+	  de Assis (2018-11-29).
+	* wireless/bluetooth/btsak/btsak_main.c: Fix address parsing  From Lwazi
+	  Dube (2018-11-30).
+	* apps/wireless/bluetooth/btsak: Add connect and disconnect commands to
+	  btsak  From Lwazi Dube (2018-12-02).
+	* apps/nshlib/nsh_romfsetc.c:  Add support for CROMFS start-up script.
+	  From David Sidrane (2018-12-06).
+	* apps/wireless/bluetooth/btsak: Remove unnecessary gatt get commands.
+	  From Lwazi Dube (2018-12-08).
+	* apps/testing:  Move apps/examples/ostest to apps/testing/ostest.  From
+	  Gregory Nutt (2018-12-12).
+	* apps/wireless/bluetooth/btsak/btsak_scan.c: Fix reversed address  From
+	  Lwazi Dube (2018-12-17).
+	* apps/system/nsh/nsh_main.c:  Set NSH priorirty if the NSH task was
+	  scheduled at a different priority than the configured priority.  From
+	  Gregory Nutt (2018-12-20).
+	* apps/system/configdata:  Adds an "cfgdata" command which allows
+	  manipulation of the /dev/config items via the command line.  One such
+	  use for this utility would be to set a "macaddr" configdata item, etc.
+	  The utility is sort-of like a u-boot env variable edit function:
+
+	  For instance, to set a "macaddr" when the new CONFIG_MTD_CONFIG_NAMED
+	  option is selected, you would do:
+
+	  nsh> cfgdata set macaddr [0xfc 0x01 0x0b 0x45 0xa1 0x12]
+	  (The brackets denotes an array of bytes)
+	  nsh> cfgdata set hostname myboard
+
+	  or using the old ID,INSTANCE numeric method:
+
+	  nsh> cfgdata set 0,0 [0xfc 0x01 0x0b 0x45 0xa1 0x12]
+	  (The brackets denotes an array of bytes)
+	  nsh> cfgdata set 1,0 myboard
+
+	  You can also display all config items:
+
+	  nsh> cfgdata print all
+	  Name                    Len   Data
+	  macaddr                 6     0xFC 0x01 0x0B 0x45 0xA1 0x12
+	  hostname                8     myboard
+
+	  From Ken Pettit (2018-12-20).
+	* apps/examples/smp: Add dependency on SMP in Kconfig  From Masayuki
+	  Ishikawa (2018-12-25).
+	* apps/testing/ostest:  Add test for pthread-specific data.  From Gregory
+	  Nutt (2018-12-28).
+	* apps/examples/battery:  Add Battery Charger Monitor Example  From Alan
+	  Carvalho de Assis (2019-01-04).
+	* apps/system/termcurses:  Addition of termcurses libraries in
+	  apps/system/termcurses  From Ken Pettit (2019-01-05).
+	* apps/graphics/pdcurs34: Integration of termcurses into pdcurses, plus
+	  pdcurses updates for multi-thread support  From Ken Pettit (2019-01-05).
+	* [WIP] nshlib add var expansion in nsh parse  From Daniel Agar
+	  (2019-01-06).
+	* apps/system/nxplayer: Introduce CONFIG_NXPLAYER_MAINTHREAD_STACKSIZE
+	  From Masayuki Ishikawa (2019-01-07).
+	* apps/graphics/pdcurs34/nuttx and system/termcurses:  This commit fixes
+	  two issues:
+	  1. A memory corruption issue that occurs from a paste operation that
+	     would overflow the fixed buffer size for keyboard processing.
+	  2. A stall in getch() processing when there are cached keycodes in the
+	     termcurses emulation (tcurses_vt100.c)
+	  From Ken Pettit (2019-01-08).
+	* graphics/pdcurs34: This commit adds a configuration option to pdcurses
+	  to enable line-drawing character (ALTCHARSET) when using the short
+	  16-bit chtype.  This is done by limiting the characters to 7-bit ASCII
+	  values and using the 8-th bit as the A_ALTCHARSET bit.  This allows a
+	  significant RAM savings 4K - 20K depending on terminal size) while
+	  still allowing the nicer line-graphic characters for border drawing.
+	  From Ken Pettit (2019-01-08).
+	* apps/nshlib/nsh_command.c:  display built-in apps using multi-column
+	  mode like the nsh commands  From Ken Pettit (2019-01-11).
+	* apps/system/termcurses/tcurses_vt100.c: Fix an issue where the first
+	  curses 'getch()' call sometimes (usually) hangs waiting for a keypress.
+	  This bug was introduced when I fixed the keyboard 'paste' overflow
+	  error.  From Ken Pettit (2019-01-11).
+	* apps/nshlib/nsh_command.c:  In all multi-column help output, calculate
+	  an optimal column width rather than using a hard-coded width that may
+	  or may not be appropriate.  Also make the number of rows presented
+	  dependent upon the maximum width of the widest column.  From Gregory
+	  Nutt (2019-01-11).
+	* apps/nshlib/nsh_parse.c:  Fixes an error in the NSH parser.  There was
+	  a bug when executing an nsh shell script which contains a redirection.
+	  When the command in the script is executed, it sets the
+	  vtbl->np.np_redirect flag (as it should), but then doesn't restore it,
+	  leaving it set at the end of the script execution.  Then the
+	  vtbl->np.np_redirect flag is set when the 'sh' command completes,
+	  causing a restore from un-initialized variables, thus leading to a
+	  crash.  See the code snippet below for an example test case.
+
+	  Test case:
+
+	  NuttShell (NSH)
+	  nsh> mkrd -s 1024 40
+	  nsh> mkfatfs /dev/ram0
+	  nsh> mount -t vfat /dev/ram0 /tmp
+	  nsh> echo "echo 1 > /dev/null" > /tmp/test.sh
+	  nsh> cat /tmp/test.sh
+	  echo 1 > /dev/null
+	  nsh> sh /tmp/test.sh
+	  ...
+
+	  The nsh prompt doesn't get printed.  You can type a couple of commands,
+	  but then the system will crash because of bad pointers.  From Ken
+	  Pettit (2019-01-12).
+	* wireless/ieee802154/i8sak: Fixes issues related to re-running daemon.
+	  Releases lock when releasing daemon. Re-sets daemon_shutdown so that a
+	  subsequent daemon launch does not immediately return.  From Anthony
+	  Merlino (2019-01-13).
+	* NSH addroute: Adds command for setting default gateway. addroute
+	  default <ipaddr> <interface>  From Anthony Merlino (2019-01-13).
+	* apps/system/termcurses: Perform a bounds check to fix a random
+	  Termcurses crash that I haven't been able to track down.  The result of
+	  of the subtraction for priv->keycount should never be negative, but I
+	  think sometimes it is, so better to catch it and avoid a crash until I
+	  can track it down.  From Ken Pettit ? (2019-01-16).
+	* apps/system/vi:
+
+	  Bug fixes and changes to existing functionality
+
+	  1.  Deletion of last line in file using 'dd' caused infinite loop
+	      searching for 'nextline'.  Fixed.
+	  2.  Insertion of line above 1st line using 'O' caused line to be
+	      inserted on 2nd line.  Fixed.
+	  3.  Paste buffer from 'dd' was being free'd after the 'p'aste operation,
+	      preventing multiple paste opportunity.  Fixed.
+	  4.  The cursor was not being bound to the line end and was allowed to
+	      'hover' over the '\n' EOL character.  This caused wierd (relative to
+	      standard vi) insertion locations and cursor movement with 'a'ppend
+	      and 'i'nsert.  Fixed.
+	  5.  The 'vi_shrinkpos' position didn't take the end of file pointer into
+	      account when calculating 'curpos', 'prevpos' variables causing
+	      wierdness when deleting things near the end of the file.  Fixed.
+	  6.  The 'yy'ank command was improperly deleting the text from the
+	      document instead of simply yanking to the paste buffer.  Fixed.
+	  7.  The 'dd'elete line funciton was not copying the deleted line to the
+	      paste buffer as part of the delete operation.  Fixed.
+	  8.  The bottom line of the screen was sometimes being used for document
+	      text and other times for command / find entry.  Fixed by reserving
+	      the bottom the bottom line for status / command only.
+	  9.  When scrolling up / down through a file, the cursor position was not
+	      preserved and moved further and further to the left column based on
+	      the line lengths of the lines visited.  Fixed.
+	  10. The display was being COMPLETELY redrawn with each keystroke,
+	      causing the responsiveness to be unbearable.  Fixed.  Added logic
+	      to dynamicall indicated which portions of the screen need to be
+	      updated (full display, current line to end of screen, current line
+	      only, none).
+	  11. The individual display line updates were being performed a
+	      character at a time by calling the vi_putch() function, causing slow
+	      performance, especially in telnet or USBCDC sessions where there is
+	      a lot of overhead per packet.  Fixed by calling vi_write() instead
+	      with a block of characters with breaks as needed for TAB exansion.
+	  12. The forward delete 'x' operation allowed deletion through '\n'
+	      characters causing lines to be joined.  This is different from
+	      standard vi where 'x' at the end of a line performs a delete
+	      backward operation.  Fixed.
+	  13. When in 'ex' or find sub-modes (':' or '/' bottom line modes),
+	      hitting backspace with empty text did not return the operation to
+	      command mode like it does in standard vi.  Fixed.
+	  14. Performing a 'find' opertation would only search from the current
+	      cursor position to the end of the file and did not wrap like in
+	      standard vi.  Fixed.
+	  15. Loading a file that was larger than the initial text allocation
+	      would force a call to 'vi_extendtext', marking the file as modified
+	      when in fact it hadn't even been loaded yet.  Fixed.
+	  16. Combined vi_insert_mode and vi_replace_mode into a single function
+	      to save code space since they are nearly identical routines.
+	  17. In command mode, backspace was deleting characters which is different
+	      from standard vi.  Backspace in command mode normally simply moves
+	      the cursor left / to the previous line.  Fixed.
+	  18. Added code to handle boundry conditions when the file is new and
+	      commands are applied to an empty file.
+	  19. Fixed vi_shrinktext so it doesn't allocate a zero-length buffer when
+	      the last character in the file is deleted.
+	  20. The 'x' command was not copying to the paste buffer.  Fixed.
+	  21. Fixed parsecolon routine to properly deal with ":wq" command
+	      sequence.
+
+	  New feature additions
+
+	  1.  Vi startup feature to prepend the current working directory to the
+	      supplied filename if it does not start with '/' absolute path
+	      specifier.  This allows editing files in the current directory
+	      without needing to fully qualify the filename.
+	  2.  Standard '~' empty screen line characters for proper identification
+	      of empty '\n' only lines at the end of the file.
+	  3.  Moving into insert or append mode now prints '--INSERT--' in the
+	      status line and clears it upon exit.
+	  4.  Integration with termcurses to detect special keystrokes and to
+	      handle terminal type differences.  Haven't yet converted all vt100
+	      print codes to termcurses equivalents.
+	  5.  Support for up, down, left, right arrows, page-up, page-down keys
+	      in command mode.
+	  6.  Added 'b' command to move cursor 'b'ack to previous word.  Honors
+	      the command repeat value for multiple word moves.
+	  7.  Added 'w' command to move cursor to next 'w'ord.  Honors the command
+	      repeat value for multiple word moves.
+	  8.  Added 'f' and 't' commands to find characters on the current line.
+	      Honors the command repeat value.
+	  9.  Added the find 'n'ext command to repeat the previous find operation.
+	  10. Added the 'H', 'M', and 'L' commands to move the cursor to top,
+	      middle and bottom of the display.
+	  11. Extended yank/paste to manage a paste buffer with character mode in
+	      addition to line mode.  Character mode allows cut / paste of
+	      individual characters or groups of characters vs. full lines.
+	  12. Added support in the 'd'elete and 'y'ank commands for character mode
+	      deletions such as 'dw', 'dfa', '2yw', etc.
+	  13. Added support in paste routine for multiple paste using command value
+	      argument.
+	  14. Added support for the 'D' and 'C' delete and change to end of line
+	      commands.
+	  15. Added support for 's'ubstitute key ('x' followed by insert mode).
+	  16. Modified yank / paste allocation scheme to avoid repeated alloc
+	      and free of paste buffer.  Uses a minimum allocation size scheme and
+	      only does free / realloc when paste does not fit.  If the paste is
+	      smaller than the current allocation and the current allocation is
+	      larger than the threshold, then the buffer is freed and a smaller
+	      buffer allocated.  Otherwise the existing buffer is used.
+	  17. Support for 'P'aste before current cursor position.
+	  18. Support for '?' reverse search mode.
+	  19. Support for 'J'oin next line with current line command.
+	  20. Printing of current row,col in status line of display.
+	  21. Command repeat '.' support for commands that modifiy text.
+	  22. Support in replace  / insert mode for arrow keys, PGUP / PGDN, HOME,
+	     and END.  Using these will cause the command repeat buffer to
+	     reset such that only the last text addition after a cursor movement
+	     is saved.
+	  23. Added 'X' delete previous command.
+	  24. Added "gg" go to top of document command sequence.
+	  25. Added "ZZ" save and quit command (equivalent to :wq).
+	  26. Implemented '^' goto first non-whitespace on current line, along
+	      with '+' and '-' goto first non-whitespace on next / previous line.
+	  27. Added CR / LF goto first non-whitespace on next line in command
+	      mode. From Ken Pettit (2019-01-16).
+	* apps/nshlib:  Fix buffer overrun when redirected to a file.  SAVE_SIZE must
+	  be the same as sizeof(struct serialsave_s).  From Masayuki Ishikawa
+	  (2019-01-19).
+
+7.29 2019-03-25 Gregory Nutt <gnutt@nuttx.org>
+
+	* apps/system/vi/vi.c:  Fix an infinite loop bug that can show up in some
+	  cases (plus a couple of other items).  From Ken Pettit (2019-01-22).
+	* apps/system/cfgdata:  Make builtin task stack size and priority
+	  configurable.  Set default to 2048 (from 1024) per recommendation of
+	  Ken Pettit.  From Gregory Nutt (2019-01-22).
+	* apps/testing/smp:  Move apps/examples/smp to apps/testing/smp  From
+	  Gregory Nutt (2019-01-23).
+	* nshlib/nsh_console.h:  Fix copy paste errors. Some Kconfig
+	  configuration names needed CONFIG_ prefix.  From David Sidrane
+	  (2019-01-24).
+	* testing/:  Move all file system tests from examples/ to testing/
+	  (fstest, nxffs, smart, smart_test).  From Gregory Nutt (2019-01-24).
+	* testing/cxxtest:  Move examples/cxxtest to testing.  From Gregory Nutt
+	  (2019-01-24).
+	* apps/system/zmodem:  Switch to the raw mode before transfer and restore
+	  to the original setting after finishing the transfer.  From Xiang Xiao
+	  (2019-01-27).
+	* apps/netutils/codecs/base64.c: Remove the big stack array  From Xiang
+	  Xiao (2019-01-27).
+	* netutils/codecs/base64.c:  Add base64_[de|en]code_length() API  From
+	  ligd (2019-01-27).
+	* system/nxplayer/nxplayer.c:  Fix build error when only enable
+	  CONFIG_AUDIO_EXCLUDE_VOLUME is enabled.  From ZhongAn (2019-01-27).
+	* apps/system/system/system.c:  Correct a path name.  From anchao
+	  (2019-01-27).
+	* apps/testing/cxxtest:  Add a README file.  From Gregory Nutt
+	  (2019-01-27).
+	* apps/tools/mksymtab.sh:  'export LC_ALL=C' to get the traditional sort
+	  order  From anchao (2019-01-27).
+	* Follow up the kernel signal-related change in:
+	  - examples/oneshot/oneshot_main.c:
+	  - examples/alarm/alarm_main.c:
+	  - examples/ajoystick/ajoy_main.c
+	  - examples/djoystick/djoy_main.c
+	  - examples/buttons/buttons_main.c
+	  - examples/zerocross/zerocross_main.c
+	  - graphics/traveler/src/trv_input.c
+	  - graphics/ft80x/
+	  From Xiang Xiao (2019-01-27).
+	* apps/nshlib/nsh_netinit.c:  Update for changes to signal notification
+	  structures.  From Gregory Nutt (2019-01-27).
+	* graphics/NxWidgets/nxwm/src/ccalibration.cxx:  Correct and error in the
+	  type of the return value.  From Gregory Nutt (2019-01-27).
+	* apps/modbus/Kconfig:  Fix modbus master Kconfig.  Modbus Master ASCII
+	  compiles correctly  From Alan Carvalho de Assis (2019-01-28).
+	* apps/netutils/dhcpc/dhcpc.c:  Fix an error for DHCP REQUEST receiving a
+	  NAK.In DHCP Request operation, no need to update ciaddr to the client
+	  address and keep it as 0.  From Kevin Liu (2019-01-30).
+	* apps/eamples/modbusmaster:  Add Simple Modbus master example.   This
+	  example only supports Read/Write HoldingRegisters, but it is easy to
+	  extend it to support Read/Write Input/Coils/etc.  Originally creatd bey
+	  Vytautas in 2016 and updated with minor fixes for this commit.  From
+	  Alan Carvalho de Assis (2019-02-02).
+	* Update for corrected name of standard header file.  Should be dlfcn.h,
+	  not dllfcn.h.  I am surprised no one ever noticed before now.  From
+	  Gregory Nutt (2019-02-09).
+	* The file system can no longer be disabled.  Remove all conditional
+	  logic based on CONFIG_NFILE_DESCRIPTORS==0  From Gregory Nutt
+	  (2019-02-11).
+	* apps/:  Remove/replace all conditional logic based on
+	  CONFIG_NSOCKET_DESCRIPTORS == 0.  That value is always greater than
+	  zero now.  In places just replace with #ifdef CONFIG_NET.  From Gregory
+	  Nutt (2019-02-11).
+	* apps/testing/scanftest:  Port of Greg King's scanf test
+	  (https://github.com/cc65).  From Johannes (2019-02-14).
+	* apps/testing/scanftest/scanftest_main.c: Test improvements.  From
+	  Gregory Nutt (2019-02-14).
+	* testing/scanftest/scanftest_main.c:  Initialized s3, changed Ok to
+	  PASSED for Back to Back test.  From Johannes (2019-02-15).
+	* configs/system/embedlog:  Update to version 0.4.0.  From Michal Lyszczek
+	  (2019-02-15).
+	* app/examples/embedlog:  This example program presents most usefull
+	  features of embedlog library and how to use them.  From Michal Lyszczek
+	  (2019-02-15).
+	* system/nxplayer and nxrecorder:  Change 'int prio' to 'unsigned int prio'.
+	  Required by changes to MQ function prototypes. From Michal Lyszczek
+	  (2019-02-15).
+	* system/nxplayer and nxrecorder:  Fix some coding standard violatins
+	  that are just to in-yer-face to ignore:  No CamelCase variable names.
+	  This was not an extensive check for use of CamelCase.  Just some I
+	  stumbled across.  From Gregory Nutt (2019-02-15).
+	* tools/check-hash.sh:  Add a tool check hash on downloaded packages.
+	  From Michal Lyszczek (2019-02-18).
+	* apps/fsutils/inih: New package.  inih (INI Not Invented Here) is a
+	  simple .INI file parser written in C. https://github.com/benhoyt/inih
+	  From Michal Lyszczek (2019-02-18).
+	* apps/examples/ini_dumper: New example program.  ini_dumper is example
+	  program that dumps content of ini file in pretty ascii table. It is
+	  using inih ini library in fsutils/inih.  From Michal Lyszczek
+	  (2019-02-18).
+	* Some updates due to NuttX renaming:  CONFIG_BOARD_INITIALIZE is not
+	  CONFIG_BOARD_LATE_INITIALIZE; board_initialize() is now
+	  board_late_initialize().  From Gregory Nutt (2019-02-18).
+	* apps/system/psmq: New package.  psmq is publish subscribe message
+	  queue. It's a set of programs and libraries to implement
+	  publish/subscribe way of inter-process communication on top of POSIX
+	  message queue.  From Michal Lyszczek (2019-02-18).
+	* apps/system/psmq/README.txt:  Add a README.txt file.  This is just a
+	  copy of the description accompanying that patch that added
+	  system/psmq.  From Gregory Nutt (2019-02-18).
+	* pps/system/psmq/Kconfig:  Fix recursive dependency.  SYSTEM_PSMQ both
+	  depended on and selected SYSTEM_EMBEDLOG  From Michal Lyszczek
+	  (2019-02-19).
+	* system/vi: Condition KEY_CMDMODE_REPEAT with
+	  CONFIG_SYSTEM_VI_INCLUDE_COMMAND_REPEAT to avoid build error when
+	  option is not selected.  From Anthony Merlino (2019-02-23).
+	* apps//netutils/webclient/Kconfig:  NET_SOCKOPTS is needed to get
+	  webclient compiled.  From Alan Carvalho de Assis (2019-02-24).
+	* apps/testing/ostest:  Add test of pthread_mutex_timedlock()  From
+	  Gregory Nutt (2019-02-24).
+	* examples:  Add sx127x demo  From Mateuz Szafoni (2019-02-25).
+	* apps/system/taskset: Fix command arguments are not passed  From
+	  Masayuki Ishikawa (2019-02-25).
+	* testing/ostest/timedmutex.c:  pthread_mutex_timedlock() returns
+	  EDTIMEDOUT on a timedout, not eagain.  From Gregory Nutt (2019-02-25).
+	* testing/ostest/setvbuf.c:  Fix several errors in the setvbuf() test.
+	  From Gregory Nutt (2019-02-25).
+	* apps/system/cu/Kconfig:  CU term depends on TERMIOS and should select
+	  it.  From Alan Carvalho de Assis (2019-03-05).
+	* apps/examples/nxterm and graphics/NxWidgets/nxwm:  Replace direct calls
+	  to nxtk_register with legal, indirect calls via
+	  boardctrl(BOARDIOC_NXTERM).  Replace calls to (deleted)
+	  nxterm_unregister().  The correc way to delete a driver is by
+	  unlink'ing it.  From Gregory Nutt (2019-03-06).
+	* apps/examples/nxterm:  Most configuration options were not available in
+	  the Kconfig file.  From Gregory Nutt (2019-03-06).
+	* apps/examples/nxterm, graphics/NxWidgets:  Replace illegal direct calls
+	  to nxterm_redraw() and nxterm_kbdin() with new boardctl() calls.  From
+	  Gregory Nutt (2019-03-06).
+	* apps/examples/modbusmaster/mbmaster_main.c:  eMBMasterRegHoldingCB
+	  cannot be static.  From Alan Carvalho de Assis (2019-03-07).
+	* apps/examples/sx127x_demo/Kconfig:  Fix misplaced 'if'  From Gregory
+	  Nutt (2019-03-07).
+	* apps/examples/nxterm:  NxWM passed the size of the NxTK sub-window but
+	  nxterm example passed the size of the complete NxTK window.  They must
+	  be made consistent.  From Gregory Nutt (2019-03-09).
+	* Missing semicolon at the end of function call.  From Kejun ZHOU
+	  (2019-03-11).
+	* graphics:  nx_openwindow() and nxtk_openwindow() now accepts an
+	  addtional 'flag' parameter.  This argument is not used at present but
+	  will, eventually enable a RAM backed, per-window framebuffer.  From
+	  Gregory Nutt (2019-03-13).
+	* This commit adds a test example at apps/examples/pwfb that will be used
+	  for testing the per-window framebuffer feature.  The test does not work
+	  correctly yet.  From Gregory Nutt (2019-03-16).
+	* apps/examples/pwfb:  Change b32_t's to b16_t's; don't need so much
+	  precision.  Some improvements to motion.  Add VERBOSE debug output.
+	  Still lots of bugs.  From Gregory Nutt (2019-03-16).
+	* apps/examples/pwfb/pwfb_main.c:  Temporarily work around a race
+	  condition by adding a delay.  From Gregory Nutt (2019-03-16).
+	* - apps/examples/pwfb: Solve a race condition by changing some relative
+	    priorities.  Also removes a delay kludge that used as a workaround.
+	  - apps/examples/pwfb:  Add rate control.  Examples becomes unstable at
+	    high update rates.
+	  From Gregory Nutt (2019-03-17).
+	* nshlib/nsh_timcmds.c:  Uninitialized struct tm caused 'date -s' to
+	  fail.  From Valmantas Palikša (2019-03-18).
+	* apps/examples/pwfb:  Add a toolbar to the example windows.  From
+	  Gregory Nutt (2019-03-18).
+	* This commit adds apps/examples/pwlines, another test of the pw-window
+	  framebuffer lgoic.  From Gregory Nutt (2019-03-20).
+
+7.30 2019-xx-xx Gregory Nutt <gnutt@nuttx.org>

@@ -44,8 +44,8 @@
 #include "nsh.h"
 #include "nsh_console.h"
 
-#if !defined(CONFIG_DISABLE_MOUNTPOINT) && CONFIG_NFILE_DESCRIPTORS > 0 && \
-    defined(CONFIG_FS_WRITABLE) && defined(CONFIG_NSH_LOGIN_PASSWD) && \
+#if !defined(CONFIG_DISABLE_MOUNTPOINT) && defined(CONFIG_FS_WRITABLE) && \
+    defined(CONFIG_NSH_LOGIN_PASSWD) && \
     !defined(CONFIG_FSUTILS_PASSWD_READONLY)
 
 /****************************************************************************
@@ -64,8 +64,8 @@ int cmd_useradd(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = passwd_adduser(argv[1], argv[2]);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "passwd_adduser",
-                 NSH_ERRNO_OF(-ret));
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "passwd_adduser",
+                NSH_ERRNO_OF(-ret));
       return ERROR;
     }
 
@@ -85,7 +85,7 @@ int cmd_userdel(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = passwd_deluser(argv[1]);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "passwd_deluser",
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "passwd_deluser",
                  NSH_ERRNO_OF(-ret));
       return ERROR;
     }
@@ -106,7 +106,7 @@ int cmd_passwd(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = passwd_update(argv[1], argv[2]);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, argv[0], "passwd_update",
+      nsh_error(vtbl, g_fmtcmdfailed, argv[0], "passwd_update",
                  NSH_ERRNO_OF(-ret));
       return ERROR;
     }
@@ -115,6 +115,5 @@ int cmd_passwd(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
 }
 #endif /* !CONFIG_NSH_DISABLE_USERADD */
 
-#endif /* !CONFIG_DISABLE_MOUNTPOINT && CONFIG_NFILE_DESCRIPTORS > 0 &&
-        * CONFIG_FS_WRITABLE && CONFIG_NSH_LOGIN_PASSWD &&
-        * !CONFIG_FSUTILS_PASSWD_READONLY */
+#endif /* !CONFIG_DISABLE_MOUNTPOINT && CONFIG_FS_WRITABLE &&
+        * CONFIG_NSH_LOGIN_PASSWD && !CONFIG_FSUTILS_PASSWD_READONLY */

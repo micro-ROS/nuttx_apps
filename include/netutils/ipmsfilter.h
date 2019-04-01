@@ -2,7 +2,7 @@
  * apps/include/netutils/ipmsfilter.h
  * User interface to add/remove IP multicast address
  *
- *   Copyright (C) 2009, 2011, 2015 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2009, 2011, 2015, 2018 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,14 +47,6 @@
 #ifdef CONFIG_NET_IGMP
 
 /****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#ifdef CONFIG_NET_IPv6
-#  error "IGMP for IPv6 not supported"
-#endif
-
-/****************************************************************************
  * Public Data
  ****************************************************************************/
 
@@ -76,11 +68,10 @@ extern "C"
  *
  * Description:
  *   Add or remove an IP address from a multicast filter set.
- *   (See netutils/netlib/netlib_ipmsfilter.c)
  *
  * Parameters:
- *   ifname     The name of the interface to use, size must less than IMSFNAMSIZ
- *   multiaddr  Multicast group address to add/remove
+ *   interface  The local address of the local interface to use.
+ *   multiaddr  Multicast group address to add/remove (network byte order)
  *   fmode      MCAST_INCLUDE: Add multicast address
  *              MCAST_EXCLUDE: Remove multicast address
  *
@@ -89,7 +80,8 @@ extern "C"
  *
  ****************************************************************************/
 
-int ipmsfilter(FAR const char *ifname, FAR const struct in_addr *multiaddr,
+int ipmsfilter(FAR const struct in_addr *interface,
+               FAR const struct in_addr *multiaddr,
                uint32_t fmode);
 
 #undef EXTERN

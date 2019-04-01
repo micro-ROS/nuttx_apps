@@ -53,9 +53,7 @@ CSRCS += nsh_login.c
 endif
 endif
 
-ifneq ($(CONFIG_NFILE_DESCRIPTORS),0)
 CSRCS += nsh_fsutils.c
-endif
 
 ifeq ($(CONFIG_NSH_BUILTIN_APPS),y)
 CSRCS += nsh_builtin.c
@@ -63,6 +61,10 @@ endif
 
 ifeq ($(CONFIG_NSH_FILE_APPS),y)
 CSRCS += nsh_fileapps.c
+endif
+
+ifeq ($(CONFIG_NSH_VARS),y)
+CSRCS += nsh_vars.c
 endif
 
 ifeq ($(CONFIG_NSH_ROMFSETC),y)
@@ -118,8 +120,8 @@ ifeq ($(CONFIG_USBDEV),y)
 CSRCS += nsh_usbconsole.c
 endif
 
-ifeq ($(CONFIG_USBHOST),y)
-CSRCS += nsh_usbkeyboard.c
+ifeq ($(CONFIG_NSH_ALTCONDEV),y)
+CSRCS += nsh_altconsole.c
 endif
 
 ifeq ($(CONFIG_NSH_USBDEV_TRACE),y)

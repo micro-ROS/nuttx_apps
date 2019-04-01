@@ -112,8 +112,9 @@ const struct nx_callback_s g_nxlinescb =
   , nxlines_mousein /* mousein */
 #endif
 #ifdef CONFIG_NX_KBD
-  , nxlines_kbdin   /* my kbdin */
+  , nxlines_kbdin   /* kbdin */
 #endif
+  , NULL            /* event */
 };
 
 /****************************************************************************
@@ -205,7 +206,7 @@ static void nxlines_kbdin(NXWINDOW hwnd, uint8_t nch, FAR const uint8_t *ch,
  * Name: nxlines_test
  *
  * Description:
- *   Print "Hello, World!" in the center of the display.
+ *   Update line motion.
  *
  ****************************************************************************/
 

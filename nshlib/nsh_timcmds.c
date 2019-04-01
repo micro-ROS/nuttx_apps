@@ -1,7 +1,7 @@
 /****************************************************************************
  * apps/nshlib/dbg_timcmds.c
  *
- *   Copyright (C) 2011-2012, 2014 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2011-2012, 2014, 2019 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -125,7 +125,7 @@ static inline int date_showtime(FAR struct nsh_vtbl_s *vtbl, FAR const char *nam
   ret = clock_gettime(CLOCK_REALTIME, &ts);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, name, "clock_gettime", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, name, "clock_gettime", NSH_ERRNO);
       return ERROR;
     }
 
@@ -133,7 +133,7 @@ static inline int date_showtime(FAR struct nsh_vtbl_s *vtbl, FAR const char *nam
 
   if (gmtime_r((FAR const time_t*)&ts.tv_sec, &tm) == NULL)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, name, "gmtime_r", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, name, "gmtime_r", NSH_ERRNO);
       return ERROR;
     }
 
@@ -142,7 +142,7 @@ static inline int date_showtime(FAR struct nsh_vtbl_s *vtbl, FAR const char *nam
   ret = strftime(timbuf, MAX_TIME_STRING, format, &tm);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, name, "strftime", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, name, "strftime", NSH_ERRNO);
       return ERROR;
     }
 
@@ -165,6 +165,8 @@ static inline int date_settime(FAR struct nsh_vtbl_s *vtbl, FAR const char *name
   FAR char *saveptr;
   long result;
   int ret;
+
+  memset(&tm, 0, sizeof(tm));
 
   /* Only this date format is supported: MMM DD HH:MM:SS YYYY */
   /* Get the month abbreviation */
@@ -269,14 +271,14 @@ static inline int date_settime(FAR struct nsh_vtbl_s *vtbl, FAR const char *name
   ret = clock_settime(CLOCK_REALTIME, &ts);
   if (ret < 0)
     {
-      nsh_output(vtbl, g_fmtcmdfailed, name, "clock_settime", NSH_ERRNO);
+      nsh_error(vtbl, g_fmtcmdfailed, name, "clock_settime", NSH_ERRNO);
       return ERROR;
     }
 
   return OK;
 
 errout_bad_parm:
-  nsh_output(vtbl, g_fmtarginvalid, name);
+  nsh_error(vtbl, g_fmtarginvalid, name);
   return ERROR;
 }
 #endif
@@ -306,7 +308,7 @@ int cmd_time(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   ret = clock_gettime(TIME_CLOCK, &start);
   if (ret < 0)
     {
-       nsh_output(vtbl, g_fmtcmdfailed, argv[0], "clock_gettime", NSH_ERRNO);
+       nsh_error(vtbl, g_fmtcmdfailed, argv[0], "clock_gettime", NSH_ERRNO);
        return ERROR;
     }
 
@@ -332,7 +334,7 @@ int cmd_time(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
       ret = clock_gettime(TIME_CLOCK, &end);
       if (ret < 0)
         {
-           nsh_output(vtbl, g_fmtcmdfailed, argv[0], "clock_gettime", NSH_ERRNO);
+           nsh_error(vtbl, g_fmtcmdfailed, argv[0], "clock_gettime", NSH_ERRNO);
            ret = ERROR;
         }
       else
@@ -426,7 +428,7 @@ int cmd_date(FAR struct nsh_vtbl_s *vtbl, int argc, char **argv)
   return ret;
 
 errout:
-  nsh_output(vtbl, errfmt, argv[0]);
+  nsh_error(vtbl, errfmt, argv[0]);
   return ERROR;
 }
 #endif

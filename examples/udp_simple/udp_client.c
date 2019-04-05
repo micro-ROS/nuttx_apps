@@ -135,7 +135,7 @@ void udp_client(void)
   printf("Client sending %i characters: ", i);
   printf(aux_buf);
   printf("\n");
-  nbytes = sendto(sockfd, outbuf, SENDSIZE, 0,
+  nbytes = sendto(sockfd, outbuf, 12, 0,
                   (struct sockaddr*)&server, addrlen);
   printf("%i bytes send\n",nbytes);
   if (nbytes < 0)

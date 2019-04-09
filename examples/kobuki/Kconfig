@@ -21,6 +21,6 @@ config UROS_EXAMPLES_KOBUKI_PROGNAME
 #
 config UROS_EXAMPLES_KOBUKI_STACKSIZE
 	int "Kobuki stack size"
-	default 32768
+	default 65000
 
 endif

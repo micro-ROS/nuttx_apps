@@ -103,7 +103,7 @@ KobukiRobot *r;
 void commandVelCallback(const void * msgin){ //TwistConstPtr
   const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
   numberMsgCmdVel++;
-  printf("cmd_vel received(#%d)\n", numberMsgCmdVel);
+  //printf("cmd_vel received(#%d)\n", numberMsgCmdVel);
 
   if ( twist != NULL ) {
     tv = (float)twist->linear.x;
@@ -112,10 +112,10 @@ void commandVelCallback(const void * msgin){ //TwistConstPtr
     r->setSpeed(tv, rv);
     r->sendControls();
 
-    printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
+    //printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
 
     //debug output float CONFIG_LIBC_FLOATINGPOINT=y
-    printf("cmd_vel (#%d): tv=%f rv=%lf \n", numberMsgCmdVel, (double) (twist->linear.x), (double) (twist->angular.z));
+    //printf("cmd_vel (#%d): tv=%f rv=%lf \n", numberMsgCmdVel, (double) (twist->linear.x), (double) (twist->angular.z));
     } else {
     printf("Error in callback commandVelCallback Twist message expected!\n");
   }

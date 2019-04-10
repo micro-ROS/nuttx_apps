@@ -101,6 +101,7 @@ void udp_cmdline(int argc, char **argv)
 
 #ifdef CONFIG_EXAMPLES_UDP_SIMPLE_IPv6
       ret = inet_pton(AF_INET6, argv[1], g_udpserver_ipv6);
+printf("foo\r\n");
 #else
       ret = inet_pton(AF_INET, argv[1], &g_udpserver_ipv4);
 #endif

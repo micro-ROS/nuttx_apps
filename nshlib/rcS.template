@@ -1,5 +1,3 @@
-# Create a RAMDISK and mount it at XXXRDMOUNTPOINTXXX
+mount -t procfs /proc
+kobuki &
 
-mkrd -m XXXMKRDMINORXXX -s XXMKRDSECTORSIZEXXX XXMKRDBLOCKSXXX
-mkfatfs /dev/ramXXXMKRDMINORXXX
-mount -t vfat /dev/ramXXXMKRDMINORXXX XXXRDMOUNTPOINTXXX

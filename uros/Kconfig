@@ -1,11 +1,21 @@
 # Kconfig for micro-ROS
 
-menu "uROS"
+menu "microROS"
 
 config UROS
-    bool "Enable uROS"
+    bool "Enable microROS"
     default n
     ---help---
         Enable support for uROS 
+
+if UROS
+
+config UROS_DIR
+    string "microROS workspace (relative to NuttX)"
+    default "../uros_ws/"
+    ---help---
+	Location of the microROS workspace.
+
+endif
 
 endmenu # uROS

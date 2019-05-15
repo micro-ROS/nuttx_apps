@@ -1,5 +1,5 @@
 ############################################################################
-# apps/examples/uros_subscriber/Makefile
+# apps/examples/hello/Makefile
 #
 #   Copyright (C) 2008, 2010-2013 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>
@@ -35,26 +35,23 @@
 
 -include $(TOPDIR)/Make.defs
 
-# uROS-subscriber built-in application info
+# date built-in application info
 
-CONFIG_UROS_EXAMPLES_SUBSCRIBER_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_UROS_EXAMPLES_SUBSCRIBER_STACKSIZE ?= 65000
+CONFIG_EXAMPLES_DATE_PRIORITY ?= SCHED_PRIORITY_DEFAULT
+CONFIG_EXAMPLES_DATE_STACKSIZE ?= 2048
 
-APPNAME = subscriber
-PRIORITY = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_PRIORITY)
-STACKSIZE = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_STACKSIZE)
+APPNAME = date
 
-# uROS-subscriber Example
+PRIORITY  = $(CONFIG_EXAMPLES_DATE_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_DATE_STACKSIZE)
 
 ASRCS =
 CSRCS =
-MAINSRC = subscriber_main.c 
+MAINSRC = date_main.c
 
-CONFIG_UROS_EXAMPLES_SUBSCRIBER_PROGNAME ?= subscriber$(EXEEXT)
-PROGNAME = $(CONFIG_UROS_EXAMPLES_SUBSCRIBER_PROGNAME)
-UROS_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROS_INCLUDES)"} -std=c99
+CONFIG_EXAMPLES_DATE_PROGNAME ?= date$(EXEEXT)
+PROGNAME = $(CONFIG_EXAMPLES_DATE_PROGNAME)
 
-MODULE = CONFIG_UROS_EXAMPLES_SUBSCRIBER
+MODULE = CONFIG_EXAMPLES_DATE
 
 include $(APPDIR)/Application.mk

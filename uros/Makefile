@@ -37,13 +37,15 @@ all: .built
 	done
 	$(Q) touch .built
 
-colcon_compile: 
+arm_toolchain.cmake: $(TOPDIR)/.config arm_toolchain.cmake.in
 	cat arm_toolchain.cmake.in | \
 		sed "s/@CROSSDEV@/$(CROSSDEV)/g" | \
 		sed "s/@NUTTX_TOPDIR@/$(subst /,\/,$(TOPDIR))/g" |\
 		sed "s/@ARCH_CPU_FLAGS@/\"$(ARCHCPUFLAGS)\"/g" |\
 		sed "s/@ARCH_OPT_FLAGS@/\"$(ARCHOPTIMIZATION)\"/g" \
 		> arm_toolchain.cmake
+
+colcon_compile: arm_toolchain.cmake
 	$(Q) cd $(UROS_DIR); \
 		colcon build \
 			--packages-ignore-regex=.*_cpp \
@@ -57,7 +59,7 @@ colcon_compile:
 
 install: 
 
-context: colcon_compile
+context: arm_toolchain.cmake
 
 .depend:
 

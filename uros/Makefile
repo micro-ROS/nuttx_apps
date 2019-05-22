@@ -64,12 +64,14 @@ context: colcon_compile
 depend: .depend
 
 clean:
+	cd $(UROS_DIR); colcon build --cmake-target clean --cmake-target-skip-unavailable
+
+distclean:
 	$(call DELDIR, $(UROS_DIR)/build)
 	$(call DELDIR, $(UROS_DIR)/install)
 	$(call DELDIR, $(UROS_DIR)/log)
 	$(call DELFILE, $(UROS_DIR)/.built)
 
-distclean: clean
 
 preconfig:
 

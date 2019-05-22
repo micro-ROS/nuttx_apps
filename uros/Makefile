@@ -21,21 +21,25 @@ else
 	BUILD_TYPE = RelWithDebInfo
 endif
 
-all: .built
+all: colcon_compile $(BIN)
   .PHONY: clean depend distclean preconfig
   .PRECIOUS: ../../libapps$(LIBEXT)
 
-.built: colcon_compile
-	$(call DELDIR, $(UROS_DIR)/build/extracted)
-	$(Q) mkdir $(UROS_DIR)/build/extracted
-	for lib in $(shell find $(UROS_DIR)/install -name '*.a'); do \
-		cd $(UROS_DIR)/build/extracted && \
-		$(ARCROSSDEV)ar -x $$lib && \
-		cd - > /dev/null && \
-		$(ARCROSSDEV)ar q $(BIN) $(UROS_DIR)/build/extracted/* && \
-		rm $(UROS_DIR)/build/extracted/*; \
-	done
-	$(Q) touch .built
+
+%.stamp_archive: %.a
+	#-$(Q) mkdir -p extract/$(*F)
+	-$(Q) mkdir -p extract/temp
+	cd extract/temp && $(ARCROSSDEV)ar -x $<
+	cd extract/temp; for file in *; do mv $$file ../$(*F)_$$file; done
+	touch $@ -r $<
+
+%.stamp_update: %.stamp_archive
+	$(ARCROSSDEV)ar r $(BIN) extract/$(*F)_*
+	touch $@
+
+ARCHIVES = $(shell find $(UROS_DIR)/install -name '*.a')
+
+$(BIN): $(ARCHIVES:.a=.stamp_update)
 
 arm_toolchain.cmake: $(TOPDIR)/.config arm_toolchain.cmake.in
 	cat arm_toolchain.cmake.in | \
@@ -67,6 +71,9 @@ depend: .depend
 
 clean:
 	cd $(UROS_DIR); colcon build --cmake-target clean --cmake-target-skip-unavailable
+	rm -f $(ARCHIVES:.a=.stamp_archive)
+	rm -f $(ARCHIVES:.a=.stamp_update)
+	rm -rf extract
 
 distclean:
 	$(call DELDIR, $(UROS_DIR)/build)

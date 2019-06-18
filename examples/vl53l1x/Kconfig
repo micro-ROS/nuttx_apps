@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_VL53L1X_DEMO
+	tristate "\"VL53L1X_DEMO\" example"
+	default n
+	---help---
+		Enable the \"VL53L1X_DEMO\" example
+
+if EXAMPLES_VL53L1X_DEMO
+
+config EXAMPLES_VL53L1X_DEMO_PROGNAME
+	string "Program name"
+	default "VL53L1X_DEMO"
+	depends on BUILD_LOADABLE
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_VL53L1X_DEMO_PRIORITY
+	int "VL53L1X_DEMO priority"
+	default 100
+
+config EXAMPLES_VL53L1X_DEMO_STACKSIZE
+	int "VL53L1X_DEMO size"
+	default 2048
+
+endif

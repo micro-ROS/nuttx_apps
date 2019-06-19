@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_MICRO_ROS_EXAMPLES_PUBLISHER_HIH6130),y)
+    CONFIGURED_APPS += examples/publisher_hih6130
+endif

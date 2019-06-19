@@ -1,0 +1,19 @@
+config MICRO_ROS_EXAMPLES_PUBLISHER_HIH6130
+	bool "micro-ROS HIH6130 Publisher Example"
+	default n
+	depends on UROS
+	---help---
+		Enable the HIH6130 publisher micro-ROS example
+
+if MICRO_ROS_EXAMPLES_PUBLISHER_HIH6130
+
+config MICRO_ROS_EXAMPLES_PUBLISHER_HIH6130_PROGNAME
+	string "Program name"
+	default "publisher_hih6130"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+
+endif

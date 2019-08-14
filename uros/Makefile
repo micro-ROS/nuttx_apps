@@ -4,15 +4,6 @@ include $(APPDIR)/Make.defs
 
 UROS_DIR = $(APPDIR)/$(CONFIG_UROS_DIR)
 
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  BIN = ..\libapps$(LIBEXT)
-else
-ifeq ($(WINTOOL),y)
-  BIN = ..\\libapps$(LIBEXT)
-else
-  BIN = ../libapps$(LIBEXT)
-endif
-endif
 
 # Build type flag
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
@@ -21,25 +12,12 @@ else
 	BUILD_TYPE = RelWithDebInfo
 endif
 
-all: colcon_compile $(BIN)
-  .PHONY: clean depend distclean preconfig
-  .PRECIOUS: ../../libapps$(LIBEXT)
+all: colcon_compile
+	$(MAKE) -f Makefile.apps
+	
+.PHONY: clean depend distclean preconfig
+.PRECIOUS: ../../libapps$(LIBEXT)
 
-
-%.stamp_archive: %.a
-	#-$(Q) mkdir -p extract/$(*F)
-	-$(Q) mkdir -p extract/temp
-	cd extract/temp && $(ARCROSSDEV)ar -x $<
-	cd extract/temp; for file in *; do mv $$file ../$(*F)_$$file; done
-	touch $@ -r $<
-
-%.stamp_update: %.stamp_archive
-	$(ARCROSSDEV)ar r $(BIN) extract/$(*F)_*
-	touch $@
-
-ARCHIVES = $(shell find $(UROS_DIR)/install -name '*.a')
-
-$(BIN): $(ARCHIVES:.a=.stamp_update)
 
 arm_toolchain.cmake: $(TOPDIR)/.config arm_toolchain.cmake.in
 	cat arm_toolchain.cmake.in | \

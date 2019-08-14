@@ -41,11 +41,11 @@ colcon_compile: arm_toolchain.cmake
 
 install: 
 
-context: arm_toolchain.cmake
+context: arm_toolchain.cmake colcon_compile
 
 .depend:
 
-depend: .depend
+depend: .depend 
 
 clean:
 	cd $(UROS_DIR); colcon build --cmake-target clean --cmake-target-skip-unavailable

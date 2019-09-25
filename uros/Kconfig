@@ -12,7 +12,7 @@ if UROS
 
 config UROS_DIR
     string "micro-ROS workspace (relative to NuttX)"
-    default "../uros_ws/"
+    default "../mcu_ws/"
     ---help---
 	Location of the micro-ROS workspace.
 

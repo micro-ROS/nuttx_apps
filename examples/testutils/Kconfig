@@ -1,0 +1,6 @@
+config EXAMPLES_TESTUTILS
+	tristate "test-utils example"
+	default n
+	select NETUTILS_ESP8266
+	---help---
+		Enable the test-utils example

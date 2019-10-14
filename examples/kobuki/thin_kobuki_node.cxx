@@ -116,7 +116,7 @@ void commandVelCallback(const void * msgin){ //TwistConstPtr
     r->setSpeed(tv, rv);
     r->sendControls();
 
-    //printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
+    printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
 
     //debug output float CONFIG_LIBC_FLOATINGPOINT=y
     //printf("cmd_vel (#%d): tv=%f rv=%lf \n", numberMsgCmdVel, (double) (twist->linear.x), (double) (twist->angular.z));
@@ -180,7 +180,7 @@ try {
     rcl_init_options_fini(&init_options);
     printf("Turtlebot2 embedded kobuki driver\n");
  
-    rcl_node_t node = rcl_get_zero_initialized_node();
+    rcl_node_t node = rcl_get_zero_initialized_node();  // create a node pointer 
     rcl_node_options_t node_ops = rcl_node_get_default_options();
 
     rc = rcl_node_init(&node, "free_kobuki_node", "", &context, &node_ops);

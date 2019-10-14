@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (OpenOCD/NuttX)",
+            "cwd": "${workspaceRoot}",
+            "executable": "../NuttX/nuttx",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "device": "stm32f4x",
+            "configFiles": [
+                "interface/ftdi/olimex-arm-usb-ocd-h.cfg",
+                "target/stm32f4x.cfg"
+            ]
+        }
+    ]
+}

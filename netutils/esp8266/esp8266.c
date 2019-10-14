@@ -586,8 +586,8 @@ int lesp_vsend_cmd(FAR const IPTR char *format, va_list ap)
 {
   int ret = 0;
 
-  ret = vsnprintf(g_lesp_state.bufcmd, BUF_CMD_LEN, format, ap);
-  if (ret >= BUF_CMD_LEN)
+  ret = vsnprintf(g_lesp_state.bufcmd, BUF_CMD_LEN, format, ap); // it is not writing to bufcmd at first iteration ?
+  if (ret >= BUF_CMD_LEN) //buf_cmd_len is 250 and ret comes out as 4, still entering if loop ?
     {
       g_lesp_state.bufcmd[BUF_CMD_LEN-1] = '\0';
       ninfo("Buffer too small for '%s'...\n", g_lesp_state.bufcmd);
@@ -595,8 +595,8 @@ int lesp_vsend_cmd(FAR const IPTR char *format, va_list ap)
     }
 
   ninfo("Write:%s\n", g_lesp_state.bufcmd);
-
-  ret = write(g_lesp_state.fd, g_lesp_state.bufcmd, ret);
+//ret is -1 and is an invalid argument. "ret"bytes from "bufcmd" to "fd"socket
+  ret = write(g_lesp_state.fd, g_lesp_state.bufcmd, ret); //ret is 4 after execution . but nothing in  socket no.3 buffer?
   if (ret < 0)
     {
       ret = -1;
@@ -656,18 +656,19 @@ static int lesp_send_cmd(FAR const IPTR char *format, ...)
 static int lesp_read(int timeout_ms)
 {
   int ret = 0;
-
+  printf("in lespread fun \n");
   struct timespec ts;
 
   if (! g_lesp_state.is_initialized)
     {
       ninfo("Esp8266 not initialized; can't list access points\n");
+      printf("Esp8266 not initialized; can't list access points _ inside lesp_read function\n");
       return -1;
     }
 
   if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
     {
-      return -1;
+      return -1;  //getting -1 at this point
     }
 
   ts.tv_nsec += (timeout_ms%1000) * 1000000;
@@ -709,8 +710,9 @@ static int lesp_read(int timeout_ms)
 
   ninfo("lesp_read %d=>%s and ans = %d \n", ret, g_lesp_state.bufans,
         g_lesp_state.ans);
-
+  printf("exited lespread fun \n");
   return ret;
+
 }
 
 /****************************************************************************
@@ -760,7 +762,7 @@ int lesp_read_ans_ok(int timeout_ms)
 
   while (g_lesp_state.ans != lesp_eOK)
     {
-      ret = lesp_read(timeout_ms);
+      ret = lesp_read(timeout_ms); //output -1 unable to read
 
       if ((ret < 0) || (g_lesp_state.ans == lesp_eERR) || \
            (time(NULL) > end))
@@ -799,7 +801,9 @@ static int lesp_ask_ans_ok(int timeout_ms, FAR const IPTR char *format, ...)
   va_list ap;
 
   va_start(ap, format);
+  
   ret = lesp_vsend_cmd(format, ap);
+  
   va_end(ap);
 
   if (ret >= 0)
@@ -829,6 +833,7 @@ static int lesp_check(void)
   if (! g_lesp_state.is_initialized)
     {
       nerr("ERROR: ESP8266 not initialized\n");
+      printf ("ERROR: ESP8266 not initialized\n");
       return -1;
     }
 
@@ -837,6 +842,7 @@ static int lesp_check(void)
   if (lesp_ask_ans_ok(lespTIMEOUT_MS, "AT\r\n") < 0)
     {
       nerr("ERROR: ESP8266 not answer at AT command\n");
+      printf ("ERROR: ESP8266 not answer at AT command\n");
       return -1;
     }
 
@@ -2009,6 +2015,7 @@ int lesp_list_access_points(lesp_cb_t cb)
   int number = 0;
 
   pthread_mutex_lock(&g_lesp_state.mutex);
+  printf("entered in to lesp_list_access_points method \n");
 
   ninfo("List access point(s)...\n");
 

@@ -1,0 +1,95 @@
+#include <nuttx/config.h>
+#include <nuttx/fs/fs.h>
+
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <poll.h>
+#include <termios.h>
+#include <assert.h>
+#include <errno.h>
+#include <debug.h>
+#include <unistd.h>
+
+#include <netdb.h>
+#include <arpa/inet.h>
+
+#include "netutils/esp8266.h"
+
+void ap_cb(lesp_ap_t *ap)
+{
+    //char ssid[20] = "AI-THINKER_1A0F26";
+    // nothing for now
+    //ap->ssid = "AI-THINKER_1A0F26";
+   // memcpy(ap->ssid,"AI-THINKER_1A0F26",18);
+}
+
+#define DEVICE_FILENAME "/dev/ttyS0"
+
+int i =0;
+int ret =0;
+bool end =true;
+struct termios options;
+#ifdef BUILD_MODULE
+int main(int argc, char *argv[])
+#else
+int testutils_main(int argc, char *argv[])
+#endif
+{
+  char buffer[1024];  /* Input buffer */
+  char *bufptr;      /* Current char in buffer */
+  int  nbytes =1;       /* Number of bytes read */
+  int  tries;        /* Number of tries so far */
+  memset(buffer, 0, sizeof(buffer)); //clear command
+  int fd = open(DEVICE_FILENAME, O_RDWR);
+  if(fd == -1) {
+    printf("Could not open %s\n", DEVICE_FILENAME);
+    return -1;
+  }
+  ret = write(fd, "AT+CIFSR\r\n", 11);
+  printf("written : %d \n",ret);
+  int nread=0;
+  while (end)
+  {
+    nbytes=read(fd,buffer+nread,100);
+    nread +=nbytes;
+    //printf("number of bytes read is %d \n", nread);
+    if (buffer[nread-1] == 'K' || buffer[nread-2] == 'O'){
+      buffer[nread+3]='\0';
+      
+      end=false;
+      break;
+    }
+    else if (nread >=2048)
+      break;
+  }
+  printf("%s",buffer);
+  close(fd);
+  return 0;
+}
+
+do
+  {
+      puts("Enter 1 . Command 2. Exit ");
+      printf("Enter your choice: ");
+      scanf("%d",&choice);
+      switch(choice)
+      {
+          case 1:
+          printf("Entered in to case 1\n");
+          process_command();
+          
+          break;
+          case 2:
+          puts("Exit");
+          break;
+          default:
+          printf("default\n");
+      }
+  }while(choice != 2);

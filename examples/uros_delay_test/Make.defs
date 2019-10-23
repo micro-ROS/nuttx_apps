@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_UROS_DELAY_TEST),y)
+    CONFIGURED_APPS += examples/uros_delay_test
+endif

@@ -1,0 +1,25 @@
+-include $(TOPDIR)/Make.defs
+
+# uROS-publisher built-in application info
+
+CONFIG_UROS_DELAY_TEST_PRIORITY ?= SCHED_PRIORITY_DEFAULT
+CONFIG_UROS_DELAY_TEST_STACKSIZE ?= 65000
+
+APPNAME = delay_test
+PRIORITY = $(CONFIG_UROS_DELAY_TEST_PRIORITY)
+STACKSIZE = $(CONFIG_UROS_DELAY_TEST_STACKSIZE)
+
+# uROS-publisher Example
+
+ASRCS =
+CSRCS =
+MAINSRC = delay_test_main.c 
+
+CONFIG_UROS_DELAY_TEST_PROGNAME ?= delay_test$(EXEEXT)
+PROGNAME = $(CONFIG_UROS_DELAY_TEST_PROGNAME)
+UROS_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROS_INCLUDES)"} -std=c99
+
+MODULE = CONFIG_UROS_DELAY_TEST
+
+include $(APPDIR)/Application.mk

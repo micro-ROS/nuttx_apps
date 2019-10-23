@@ -29,7 +29,8 @@ arm_toolchain.cmake: $(TOPDIR)/.config arm_toolchain.cmake.in
 
 colcon_compile: arm_toolchain.cmake
 	$(Q) cd $(UROS_DIR); \
-		colcon build \
+		/usr/bin/time --append --output=/home/lui3si/src/micro-ros/mcu_ws.time \
+			colcon build \
 			--packages-ignore-regex=.*_cpp \
 			--cmake-args \
 			-DBUILD_SHARED_LIBS=OFF \

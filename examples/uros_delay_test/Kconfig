@@ -1,0 +1,26 @@
+config UROS_DELAY_TEST
+	bool "microROS Delay Test"
+	default n
+	depends on UROS
+	---help---
+		Enable the Micro-ROS delay test
+
+if UROS_DELAY_TEST
+
+config UROS_DELAY_TEST_PROGNAME
+	string "Program name"
+	default "delay_test"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+#config UROS_DELAY_TEST_PRIORITY
+#	int "Publisher task priority"
+#	default 100
+#
+#config UROS_DELAY_TEST_STACKSIZE
+#	int "Publisher stack size"
+#	default 2048
+
+endif

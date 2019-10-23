@@ -13,8 +13,8 @@ STACKSIZE = $(CONFIG_UROS_EXAMPLES_KOBUKI_STACKSIZE)
 
 ASRCS = 
 CSRCS = serial.c
-CXXSRCS = kobuki_robot.cxx kobuki_protocol.cxx
-MAINSRC = thin_kobuki_node.cxx
+CXXSRCS = kobuki_robot.cxx kobuki_protocol.cxx ros_util.cxx thin_kobuki_node.cxx
+MAINSRC = kobuki_main.cxx
 
 CONFIG_UROS_EXAMPLES_KOBUKI_PROGNAME ?= kobuki$(EXEEXT)
 PROGNAME = $(CONFIG_UROS_EXAMPLES_KOBUKI_PROGNAME)

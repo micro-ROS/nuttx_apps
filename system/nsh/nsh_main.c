@@ -291,6 +291,14 @@ int nsh_main(int argc, char *argv[])
    * system() and popen() interfaces.
    */
 
+
+
+    // Running Kobuki app on NSH startup
+    char *custom[] = {" ", "kobuki"};
+  
+    nsh_initialize();
+    return nsh_system(2, custom);
+
 #ifdef HAVE_NSH_COMMAND
   if (argc > 1)
     {

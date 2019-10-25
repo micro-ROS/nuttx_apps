@@ -32,7 +32,9 @@
 #include <stdint.h>
 #include <string>
 #include <istream>
+#include <pthread.h>
 #include "kobuki_protocol.h"
+
 
 class Packet;
 class PacketSyncFinder;
@@ -63,7 +65,7 @@ public:
   void runFromFile(std::istream& is);
 
   //void receiveData(ros::Time&);
-  void receiveData(uros_time_t& );
+  void receiveData(struct timespec &);
   
   void sendControls();
   void playSequence(uint8_t sequence);
@@ -82,6 +84,7 @@ public:
   int pwm(Side s) const;   //0-255
   bool button(int num) const;
   bool charger() const;
+  float voltage() const;
   float battery() const;   //percentage
   bool overcurrent(Side s) const ;
   float current(Side s) const ;   //ampere
@@ -106,7 +109,7 @@ public:
   inline float gyroRate();
   */
 
-protected:
+public:
   uint16_t _timestamp;
   uint8_t _bumper;
   uint8_t _wheel_drop;

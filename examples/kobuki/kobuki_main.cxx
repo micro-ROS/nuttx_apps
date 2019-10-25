@@ -1,4 +1,6 @@
-// Copyright (c) 2018, Robert Bosch GmbH
+// Copyright (c) 2018, 2019 Robert Bosch GmbH
+// Author: Ingo Lütkebohle <ingo.luetkebohle@de.bosch.com>
+// Author: Jan Staschulat <jan.staschulat@de.bosch.com>
 // Copyright (c) 2015, Lab-RoCoCo
 // All rights reserved.
 
@@ -65,25 +67,14 @@
 //#include <tf/transform_datatypes.h>
 
 #include "ros_util.h"
-#include "thin_kobuki_node.h"
+#include "kobuki_node.h"
+#include <poll.h>
+
+using namespace kobuki;
 
 using namespace std;
 
-void kobuki_on_message(const void* msgin)
-{
-    const std_msgs__msg__Int32* msg = (const std_msgs__msg__Int32*)msgin;
-    printf("Subscriber: I heard: [%i]\n", msg->data);
-}
-
-// Stop motion if we do not receive a command without this timeout
-//const ros::Duration COMMAND_TIMEOUT(0.3);
-
-
-volatile float tv = 0, rv = 0;
 int numberMsgCmdVel = 0;
-
-//ros::Time last_update;
-uros_time_t last_update;
 
 struct mallinfo mi;
 static void
@@ -103,7 +94,6 @@ display_mallinfo(void)
   printf("Total free space (fordblks):           %d\n", mi.fordblks);
 }
 
-
 KobukiRobot *r;
 
 void commandVelCallback(const void * msgin){ //TwistConstPtr
@@ -112,42 +102,41 @@ void commandVelCallback(const void * msgin){ //TwistConstPtr
   //printf("cmd_vel received(#%d)\n", numberMsgCmdVel);
 
   if ( twist != NULL ) {
-    tv = (float)twist->linear.x;
-    rv = (float)twist->angular.z;
-    
-    r->setSpeed(tv, rv);
+    r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
     r->sendControls();
-
-    //printf("CommandVelCallback twist received (int) tv=%d rv=%d \n",(int) (twist->linear.x), (int)(twist->angular.z));
-
-    //debug output float CONFIG_LIBC_FLOATINGPOINT=y
-    //printf("cmd_vel (#%d): tv=%f rv=%lf \n", numberMsgCmdVel, (double) (twist->linear.x), (double) (twist->angular.z));
-    } else {
-    printf("Error in callback commandVelCallback Twist message expected!\n");
+  } else {
+        printf("Error in callback commandVelCallback Twist message expected!\n");
   }
-  display_mallinfo();
 }
 
-/* START functions from rclc layer (functions.c)*/
 #define PRINT_RCL_ERROR(rclc, rcl) \
   do { \
     fprintf(stderr, "[" #rclc "] error in " #rcl ": %s\n", rcutils_get_error_string().str); \
     rcl_reset_error(); \
   } while (0)
 
-static
-inline
-void
-_spin_node_exit(rcl_wait_set_t * wait_set)
+void* kobuki_run(void *np)
 {
-    rcl_ret_t rc = rcl_wait_set_fini(wait_set);
-    if (rc != RCL_RET_OK) {
-        PRINT_RCL_ERROR(spin_node, rcl_wait_set_fini);
+    KobukiRobot robot;
+    r = &robot;
+    KobukiNode *node = (KobukiNode*)np;
+    robot.connect("/dev/ttyS1");
+
+    struct pollfd pf = { .fd = robot._serial_fd, .events = POLLIN, .revents = 0 };
+    uint32_t packetCount = 0, count = 0;
+    while( true ){ // ros::ok() did not work on Olimex with micro-ROS
+        struct timespec ts;        
+        poll(&pf, 1, 0);
+        robot.receiveData(ts);        
+        if(packetCount != robot.packetCount()) {
+            packetCount = robot.packetCount();
+            ++count;
+            if((count % 5) == 0) {
+                node->update_state(ts, robot);
+            }
+        }                
     }
 }
-/* END defines and functions from rclc layer (functions.c) */
-
-using namespace kobuki;
 
 extern "C"
 {
@@ -158,15 +147,21 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                                         // and CONFIG_UROS_EXAMPLES_KOBUKI_PROGNAME
 #endif
   {
-    display_mallinfo();
+    pthread_t kobuki_thread;
+    
     try {
         rcl_ret_t          rc;
-        KobukiRobot robot;
-        r = &robot;
         int result = 0;
+        const uint32_t timeout_ms = 10;
+
         printf("Turtlebot2 embedded kobuki driver\n");
 
-        KobukiNode node(argc, argv);
+        KobukiNode node(argc, argv, "kobuki_node");
+        
+        result = pthread_create(&kobuki_thread, NULL, &kobuki_run, &node);
+        if(result != 0) {
+            fprintf(stderr, "Failed to create kobuki thread: %d.\n", result);
+        }
 
         //create publisher
         const char* pose_topic = "robot_pose";
@@ -194,6 +189,14 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
         const char * cmd_vel_topic_name = "cmd_vel";
         rcl_subscription_t sub_cmd_vel = rcl_get_zero_initialized_subscription();
         rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
+        
+        subscription_ops.qos = {
+                    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+                    10,
+                    RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+                    RMW_QOS_POLICY_DURABILITY_VOLATILE,
+                    false
+            };
         const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist);
         
         rc = rcl_subscription_init(
@@ -211,144 +214,61 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             printf("Created subscriber %s:\n",cmd_vel_topic_name);
         }
 
-        // connections are properly setup
-        //TODO replace std::string with char var[256]
-        std::string serial_device;
-        std::string command_vel_topic;
-
-        serial_device     = "/dev/ttyS1";
-        command_vel_topic = "cmd_vel";
-
-        robot.connect(serial_device);
-
-        //ros::Rate r(100);
-        //TODO set rate
-        
-        geometry_msgs__msg__Vector3 pose;
-        geometry_msgs__msg__Vector3__init(&pose);
-
-        int packet_count = 0;
-        float64 delta    = 0.0;
-        int count = 0;
-
-        display_mallinfo();
-
-        while( true ){ // ros::ok() did not work on Olimex with micro-ROS
-            count++;
-            uros_time_t timestamp;
-            robot.receiveData(timestamp);
-
-            if (packet_count < robot.packetCount()) {
-                packet_count = robot.packetCount();
-
-                // send the odometry
-                float x,y,theta, vx, vtheta;
-                robot.getOdometry(x,y,theta,vx,vtheta);
-                /*if((count % 10) == 0) {
-                        printf("x=%f, y=%f, theta=%f, vx=%f, vtheta=%f\n",(double) x, (double)y, (double)theta, (double)vx, vtheta);
-                }*/
-                pose.x = x;
-                pose.y = y;
-                pose.z = theta; // HACK!
-
-                if((count % 5) == 0) {
-
-                        if (! &pub_odom ){
-                            fprintf(stderr, "[rcl_publish] null pointer to publisher");
-                            return RCL_RET_INVALID_ARGUMENT;
-                        }	
-                        rcl_publish( &pub_odom, (const void *) &pose);
-                }
-
-                // imu data
-                //float heading;
-                //robot.getImu(heading, vtheta);
-                //imu.header.seq = seq; //header.seq does not exist
-                //imu.header.stamp = timestamp;
-                //imu.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, heading);
-                //imu.angular_velocity.z = vtheta;
-
-                //rclc_publish( pub_imu, (const void *) &imu); 
-                //printf("Sending imu\n");
-                // debug - sending a twist message - because odom and imu data produce error messages in nsh shell as well as in ros2-environment
-                //rclc_publish ( pub_twist, (const void *) & msg_twist);
-                //printf("Sending kobuki_twist\n");
-                }
-
-            //spin once
-            //rclc_spin_node_once(node, 10);
-            // use do{}while(0) to have port error handling 
-            // by replacing 'return' in error detection parts rclc_spin_node_once  by a 'break')
-            
-            do {
-                uint32_t timeout_ms = 10;
-
-                // get empty wait set
-                rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-                rc = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, rcl_get_default_allocator());
-                if (rc != RCL_RET_OK) {
-                    PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_init);
-                    break;
-                }
-
-                // set rmw fields to NULL
-                rc = rcl_wait_set_clear(&wait_set);
-                if (rc != RCL_RET_OK) {
-                    PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_clear_subscriptions);
-                    _spin_node_exit(&wait_set);
-                    break;
-                }
-
-                size_t index = 0; // is never used - denotes the index of the subscription in the storage container
-                rc = rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index);
-                if (rc != RCL_RET_OK) {
-                    PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_add_subscription);
-                    _spin_node_exit(&wait_set);
-                    break;
-                }
-
-                rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
-                if (rc == RCL_RET_TIMEOUT) {
-                    _spin_node_exit(&wait_set);
-                    break;
-                }					
-
-                if (rc != RCL_RET_OK) {
-                PRINT_RCL_ERROR(spin_node_once, rcl_wait);
-                _spin_node_exit(&wait_set);
+        // get empty wait set
+        rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
+        rc = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, rcl_get_default_allocator());
+        if (rc != RCL_RET_OK) {
+            PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_init);
+            return -1;
+        }
+        while(true) {
+            // set rmw fields to NULL
+            rc = rcl_wait_set_clear(&wait_set);
+            if (rc != RCL_RET_OK) {
+                PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_clear_subscriptions);
                 break;
             }
 
-            // if RET_OK => one subscription is received because only ONE subscription has been added
-            // just double check here.
-            if ( wait_set.subscriptions[0] ){
+            size_t index = 0; // is never used - denotes the index of the subscription in the storage container
+            rc = rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index);
+            if (rc != RCL_RET_OK) {
+                PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_add_subscription);
+                break;
+            }
+
+            rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
+            if (rc == RCL_RET_TIMEOUT) {
+                continue;
+            }
+
+            if (rc != RCL_RET_OK && rc != RCL_RET_TIMEOUT) {
+                PRINT_RCL_ERROR(spin_node_once, rcl_wait);
+                continue;
+            }
+            
+            if (wait_set.subscriptions[0] ){
                 geometry_msgs__msg__Twist msg;
                 rmw_message_info_t        messageInfo;
                 rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo);
-
-                if (rc != RCL_RET_OK) {
-                    PRINT_RCL_ERROR(spin_node_once, rcl_take);
-                    _spin_node_exit(&wait_set);
-                    break;
+                if(rc != RCL_RET_OK) {
+                    continue;
                 }
 
-                // call message callback
                 commandVelCallback( &msg );
-                
             } else {
                 //sanity check
-                fprintf(stderr, "[spin_node_once] no subscription received.\n");
+                fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
             }
-            rcl_wait_set_fini(&wait_set);
-            
-            } while (0);
+
+            node.publish_status_info();
         }        
+        rcl_wait_set_fini(&wait_set);
 	} catch(const std::exception& ex) {
         printf("%s\n", ex.what());
 	} catch(...) {
         printf("Caught unknown error");
 	}
-
+    
     return 0;
     
   } // main

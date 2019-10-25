@@ -405,8 +405,8 @@ PacketParser::PacketParser(){
 
   c= new PayloadCreator<InertialSensorDataPayload>;
   _creators[c->header] = c;
-/*
-  /c= new PayloadCreator<CliffSensorDataPayload>;
+
+  /*c= new PayloadCreator<CliffSensorDataPayload>;
   _creators[c->header] = c;
 
   c= new PayloadCreator<CurrentPayload>;

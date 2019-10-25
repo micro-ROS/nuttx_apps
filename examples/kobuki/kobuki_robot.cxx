@@ -125,14 +125,15 @@ void KobukiRobot::setSpeed(float tv, float rv) {
 
 //TODO time
 //void KobukiRobot::receiveData(ros::Time& timestamp) {
-void KobukiRobot::receiveData(uros_time_t& timestamp) {  
+void KobukiRobot::receiveData(struct timespec& timestamp) {  
   if (_serial_fd < 0)
     throw std::runtime_error("robot not connected");
 
   char buf [255];
   int n = read (_serial_fd, buf, 255);
-  //TODO time
-  //timestamp = ros::Time::now();
+  if(n > 0) {
+    clock_gettime(CLOCK_REALTIME, &timestamp);
+  }
   for (int i = 0; i<n; i++){
     _sync_finder.putChar(buf[i]);
     if (_sync_finder.packetReady()){
@@ -266,6 +267,9 @@ bool KobukiRobot::charger() const {
 
 float KobukiRobot::battery() const {
   return 10.0f*_battery/16.7;
+}
+float KobukiRobot::voltage() const {
+  return _battery/10.0f;
 }
 
 bool KobukiRobot::overcurrent(Side s) const {

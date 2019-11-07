@@ -277,7 +277,7 @@ try {
                             fprintf(stderr, "[rcl_publish] null pointer to publisher");
                             return RCL_RET_INVALID_ARGUMENT;
                         }	
-                        rcl_publish( &pub_odom, (const void *) &pose);
+                        rcl_publish( &pub_odom, (const void *) &pose, NULL);
                 }
 
                 // imu data
@@ -305,7 +305,7 @@ try {
 
                 // get empty wait set
                 rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-                rc = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, rcl_get_default_allocator());
+                rc = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, NULL, rcl_get_default_allocator());
                 if (rc != RCL_RET_OK) {
                     PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_init);
                     break;
@@ -344,7 +344,7 @@ try {
             if ( wait_set.subscriptions[0] ){
                 geometry_msgs__msg__Twist msg;
                 rmw_message_info_t        messageInfo;
-                rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo);
+                rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo, NULL);
 
                 if (rc != RCL_RET_OK) {
                     PRINT_RCL_ERROR(spin_node_once, rcl_take);

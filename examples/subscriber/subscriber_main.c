@@ -1,16 +1,8 @@
 #include <nuttx/config.h>
-#include <rclc/rclc.h>
+#include <rcl/rcl.h>
+#include <rcl/error_handling.h>
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
-
-static int count = 0;
-
-void on_message(const void* msgin)
-{
-    const std_msgs__msg__Int32* msg = (const std_msgs__msg__Int32*)msgin;
-    printf("I heard: [%i]\n", msg->data);
-    count++;
-}
 
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
@@ -18,34 +10,75 @@ int main(int argc, char *argv[])
 int subscriber_main(int argc, char* argv[])
 #endif
 {
-    (void)argc;
-    (void)argv;
-    int result = 0;
-    rclc_init(1, "");
-    rclc_node_t* node = NULL;
-    if (node = rclc_create_node("int32_subscriber_c", ""))
-    {
-        rclc_subscription_t* sub = NULL;
-        if(sub = rclc_create_subscription(node, RCLC_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-                                                        "std_msgs_msg_Int32", on_message, 1, false))
-        {
-            while (rclc_ok() && count <= 50)
-            {
-                rclc_spin_node_once(node, 500);
-            }
-            rclc_destroy_subscription(sub);
-        }
-        else
-        {
-            printf("Issues creating subscriber\n");
-            result = -1;
-        }
-        rclc_destroy_node(node);
+    rcl_ret_t rv = RCL_RET_ERROR;
+
+    rcl_init_options_t options = rcl_get_zero_initialized_init_options();
+    rv = rcl_init_options_init(&options, rcl_get_default_allocator());
+    if (RCL_RET_OK != rv) {
+        printf("rcl init options error: %s\n", rcl_get_error_string().str);
+        return 1;
     }
-    else
-    {
-        printf("Issues creating node\n");
-        result = -1;
+
+    rcl_context_t context = rcl_get_zero_initialized_context();
+    rv = rcl_init(argc, argv, &options, &context);
+    if (RCL_RET_OK != rv) {
+        printf("rcl initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
     }
-    return result;
+
+    rcl_node_options_t node_ops = rcl_node_get_default_options();
+    rcl_node_t node = rcl_get_zero_initialized_node();
+    rv = rcl_node_init(&node, "int32_subscriber_rcl", "", &context, &node_ops);
+    if (RCL_RET_OK != rv)
+    {
+        fprintf(stderr, "[main] error in rcl : %s\n", rcutils_get_error_string().str);
+        rcl_reset_error();
+        return 1;
+    }
+
+    rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
+    rcl_subscription_t subscription = rcl_get_zero_initialized_subscription();
+    rv = rcl_subscription_init(
+        &subscription, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &subscription_ops);
+    if (RCL_RET_OK != rv) {
+        printf("Subscription initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
+
+    rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
+    rv = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &context, rcl_get_default_allocator());
+    if (RCL_RET_OK != rv) {
+        printf("Wait set initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
+
+    rv = rcl_wait_set_clear(&wait_set);
+    if (RCL_RET_OK != rv) {
+        printf("Wait set clear error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
+
+    size_t index;
+    rv = rcl_wait_set_add_subscription(&wait_set, &subscription, &index);
+    if (RCL_RET_OK != rv) {
+        printf("Wait set add subscription error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
+
+    void* msg = rcl_get_default_allocator().zero_allocate(sizeof(std_msgs__msg__Int32), 1, rcl_get_default_allocator().state);
+    do {
+        rv = rcl_wait(&wait_set, 1000000);
+        for (size_t i = 0; i < wait_set.size_of_subscriptions; ++i) {
+        rv = rcl_take(wait_set.subscriptions[i], msg, NULL, NULL);
+        if (RCL_RET_OK == rv)
+        {
+            printf("I received: [%i]\n", ((const std_msgs__msg__Int32*)msg)->data);
+        }
+        }
+    } while ( RCL_RET_OK == rv || RCL_RET_SUBSCRIPTION_TAKE_FAILED == rv);
+
+    rv = rcl_subscription_fini(&subscription, &node);
+    rv = rcl_node_fini(&node);
+
+    return 0;
 }

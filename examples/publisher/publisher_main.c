@@ -1,5 +1,6 @@
 #include <nuttx/config.h>
-#include <rclc/rclc.h>
+#include <rcl/rcl.h>
+#include <rcl/error_handling.h>
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
 
@@ -9,41 +10,53 @@ int main(int argc, char *argv[])
 int publisher_main(int argc, char* argv[])
 #endif
 {
-    (void)argc;
-    (void)argv;
-    int result = 0;
-    rclc_init(1, "");
-    printf("modified publisher\n");
-    const rclc_message_type_support_t type_support = RCLC_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32);
-    rclc_node_t* node = NULL;
-    if (node = rclc_create_node("publisher_node", ""))
-    {
-        rclc_publisher_t* publisher = NULL;
-        if(publisher = rclc_create_publisher(node, type_support, "std_msgs_msg_Int32", 1))
-        {
-            printf("Created publisher \n");
-            std_msgs__msg__Int32 msg;
-            msg.data = 0;
-            while (true ) // rclc_ok() && msg.data <= 1000)
-            {
-                printf("Sending: '%i'\n", msg.data++);
-                rclc_publish(publisher, (const void*)&msg);
-                rclc_spin_node_once(node, 500);
-		if (msg.data == 1000) { msg.data = 0; }
-            }
-            rclc_destroy_publisher(publisher);
-        }
-        else
-        {
-            printf("Issues creating publisher\n");
-            result = -1;
-        }
-        rclc_destroy_node(node);
+    rcl_ret_t rv;
+
+    rcl_init_options_t options = rcl_get_zero_initialized_init_options();
+    rv = rcl_init_options_init(&options, rcl_get_default_allocator());
+    if (RCL_RET_OK != rv) {
+        printf("rcl init options error: %s\n", rcl_get_error_string().str);
+        return 1;
     }
-    else
-    {
-        printf("Issues creating node\n");
-        result = -1;
+
+    rcl_context_t context = rcl_get_zero_initialized_context();
+    rv = rcl_init(argc, argv, &options, &context);
+    if (RCL_RET_OK != rv) {
+        printf("rcl initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
     }
-    return result;
+
+    rcl_node_options_t node_ops = rcl_node_get_default_options();
+    rcl_node_t node = rcl_get_zero_initialized_node();
+    rv = rcl_node_init(&node, "int32_publisher_rcl", "", &context, &node_ops);
+    if (RCL_RET_OK != rv) {
+        printf("Node initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
+
+    rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
+    rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
+    rv = rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops);
+    if (RCL_RET_OK != rv) {
+        printf("Publisher initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
+
+    std_msgs__msg__Int32 msg;
+    const int num_msg = 1000;
+    msg.data = 0;
+    usleep(3000000); // As we are sending low number mensajes we need to wait discovery of the subscriber. (Do not have a notification on discovery)
+    do {
+        rv = rcl_publish(&publisher, (const void*)&msg, NULL);
+        if (RCL_RET_OK == rv )
+        {
+            printf("Sent: '%i'\n", msg.data++);
+        }
+    } while (RCL_RET_OK == rv && msg.data < num_msg );
+    printf("TOTAL sent: %i\n", num_msg);
+
+    rv = rcl_publisher_fini(&publisher, &node);
+    rv = rcl_node_fini(&node);
+
+    return 0;
 }

@@ -128,7 +128,7 @@ namespace kobuki
             pthread_mutex_unlock(&update_mutex);
             return;
         }
-        rcl_ret_t rc = rcl_publish(&pub_base_info, &msg_base_info);
+        rcl_ret_t rc = rcl_publish(&pub_base_info, &msg_base_info, NULL);
         if(rc != RCL_RET_OK) {
             fprintf(stderr, "Error publishing BaseInfo: %s\n", rcutils_get_error_string().str);
         }

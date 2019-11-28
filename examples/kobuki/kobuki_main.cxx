@@ -196,6 +196,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
         CHECK_RET(rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &(node.context), rcl_get_default_allocator()))
 
         while(true) {
+            node.publish_status_info();     
             // set rmw fields to NULL
             CHECK_RET(rcl_wait_set_clear(&wait_set));
 
@@ -230,7 +231,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                 fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
             }
 
-            node.publish_status_info();
+            
         }        
         WARN_RET(rcl_wait_set_fini(&wait_set));
 	} catch(const std::exception& ex) {

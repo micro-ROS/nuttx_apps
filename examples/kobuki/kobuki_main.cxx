@@ -102,10 +102,11 @@ void commandVelCallback(const void * msgin) {
   //printf("cmd_vel received(#%d)\n", numberMsgCmdVel);
 
   if ( twist != NULL ) {
+        ROS_DEBUG("Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
     r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
     r->sendControls();
   } else {
-        printf("Error in callback commandVelCallback Twist message expected!\n");
+        ROS_ERROR("Error in callback commandVelCallback Twist message expected but got %p!\n", msgin);
   }
 }
 

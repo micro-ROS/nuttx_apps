@@ -47,7 +47,7 @@
 #include <iostream>
 #include "serial.h"
 //#include <ros/console.h> 
-#define ROS_DEBUG(...)  printf(__VA_ARGS__);
+#include "ros_util.h"
 
 using namespace std;
 

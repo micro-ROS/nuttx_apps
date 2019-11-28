@@ -52,7 +52,7 @@ namespace kobuki
         }
 
         rc = rcl_init(argc, argv, &init_options, &context);
-        rcl_init_options_fini(&init_options);
+        WARN_RET(rcl_init_options_fini(&init_options))
         if (rc != RCL_RET_OK) {
             throw RCLException(rcutils_get_error_string().str);
         }
@@ -76,7 +76,7 @@ namespace kobuki
             &pub_opt);
 
         if (rc != RCL_RET_OK) {
-            rcl_node_fini( &node);
+            WARN_RET(rcl_node_fini( &node))
             throw RCLException("Failed to create BaseInfo publisher");
         }
 
@@ -87,7 +87,7 @@ namespace kobuki
         rc = rcl_guard_condition_init(&kobuki_guard, &context, guard_options);
         if(rc != RCL_RET_OK) {
             drive_base_msgs__msg__BaseInfo__fini(&msg_base_info);
-            rcl_node_fini( &node);
+            WARN_RET(rcl_node_fini( &node))
             throw RCLException("Could not create Kobuki guard");
         }
         
@@ -95,7 +95,7 @@ namespace kobuki
 
     KobukiNode::~KobukiNode() {
         drive_base_msgs__msg__BaseInfo__fini(&msg_base_info);
-        rcl_guard_condition_fini(&kobuki_guard);        
+        WARN_RET(rcl_guard_condition_fini(&kobuki_guard))
     }
 
     void KobukiNode::update_state(const struct timespec &ts, const KobukiRobot& robot)

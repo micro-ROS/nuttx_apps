@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <string>
+#include <rcl/error_handling.h>
 #include <syslog.h>
 
 namespace kobuki 
@@ -26,4 +27,23 @@ private:
 #define ROS_DEBUG(fmt, ...)     /*syslog(LOG_DEBUG, fmt, __VA_ARGS__);*/
 #define ROS_INFO(fmt, ...)      syslog(LOG_INFO, fmt, __VA_ARGS__);
 #define ROS_ERROR(fmt, ...)     syslog(LOG_ERR, fmt, __VA_ARGS__);
+
+#define PRINT_RCL_ERROR(func) \
+  do { \
+    ROS_ERROR("error in " #func ": %s\n", rcutils_get_error_string().str); \
+    rcl_reset_error(); \
+  } while (0)
+
+#define CHECK_RET(FUNC) { \
+    rcl_ret_t macro_rc = FUNC ; \
+    if(macro_rc != RMW_RET_OK) { \
+        PRINT_RCL_ERROR(FUNC); \
+        return -1; \
+    } else { \
+        /* fprintf(stdout, "OK on " #FUNC "\n"); */\
+    } \
+}
+#define WARN_RET(FUNC) { rcl_ret_t macro_rc = FUNC ; if(macro_rc != RMW_RET_OK) { PRINT_RCL_ERROR(FUNC); } }
+#define THROW_RET(FUNC) { rcl_ret_t macro_rc = FUNC ; if(macro_rc != RMW_RET_OK) { throw RCLException(rcutils_get_error_string().str); } }
+
 #endif

@@ -175,9 +175,9 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
         rcl_subscription_t sub_cmd_vel = rcl_get_zero_initialized_subscription();
         rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
         
-        subscription_ops.qos = {
+        subscription_ops.qos =  {
                     RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-                    10,
+                    1,
                     RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
                     RMW_QOS_POLICY_DURABILITY_VOLATILE,
                     false

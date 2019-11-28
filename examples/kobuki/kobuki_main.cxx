@@ -215,7 +215,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             if (wait_set.subscriptions[0] ){
                 geometry_msgs__msg__Twist msg;
                 rmw_message_info_t        messageInfo;
-                rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo);
+                rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo, NULL);
                 if(rc != RCL_RET_OK) {
                     if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
                         fprintf(stderr, "error return on rcl_take: %d\n", rc);

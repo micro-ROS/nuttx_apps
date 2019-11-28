@@ -394,7 +394,6 @@ struct PayloadCreator: public BasePayloadCreator{
 
 
 PacketParser::PacketParser(){
-  printf("pp ctor\n");
   _creators.resize(30,0);
   BasePayloadCreator* c;
   c= new PayloadCreator<BasicSensorDataPayload>;

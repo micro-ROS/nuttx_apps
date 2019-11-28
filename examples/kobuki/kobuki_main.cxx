@@ -110,14 +110,7 @@ void commandVelCallback(const void * msgin) {
   }
 }
 
-#define PRINT_RCL_ERROR(rclc, rcl) \
-  do { \
-    fprintf(stderr, "[" #rclc "] error in " #rcl ": %s\n", rcutils_get_error_string().str); \
-    rcl_reset_error(); \
-  } while (0)
-
-void* kobuki_run(void *np)
-{
+void* kobuki_run(void *np) {
     KobukiRobot robot;
     r = &robot;
     KobukiNode *node = (KobukiNode*)np;
@@ -171,20 +164,12 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
         const rosidl_message_type_support_t * pub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3);
         rcl_publisher_options_t pub_opt = rcl_publisher_get_default_options();
 
-        rc = rcl_publisher_init(
+        CHECK_RET(rcl_publisher_init(
             &pub_odom,
             &(node.node),
             pub_type_support,
             pose_topic,
-            &pub_opt);
-
-        if (rc != RCL_RET_OK) {
-            PRINT_RCL_ERROR(create_publisher, rcl_publisher_init);
-            printf("Failed to create publisher: %s.\n", pose_topic);
-            return -1;
-        } else {
-            printf("Created publisher: %s\n", pose_topic);
-        }
+            &pub_opt))
 
         //create subscription
         const char * cmd_vel_topic_name = "cmd_vel";
@@ -200,42 +185,23 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             };
         const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist);
         
-        rc = rcl_subscription_init(
+        CHECK_RET(rcl_subscription_init(
             &sub_cmd_vel,
             &(node.node),
             sub_type_support,
             cmd_vel_topic_name,
-            &subscription_ops);
-
-        if (rc != RCL_RET_OK) {
-            PRINT_RCL_ERROR(create_subscription, rcl_subscription_init);
-            printf("Failed to create subscriber: cmd_vel.\n");
-            return -1;
-        } else {
-            printf("Created subscriber %s:\n",cmd_vel_topic_name);
-        }
+            &subscription_ops))
 
         // get empty wait set
         rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-        rc = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, rcl_get_default_allocator());
-        if (rc != RCL_RET_OK) {
-            PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_init);
-            return -1;
-        }
+        CHECK_RET(rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &(node.context), rcl_get_default_allocator()))
+
         while(true) {
             // set rmw fields to NULL
-            rc = rcl_wait_set_clear(&wait_set);
-            if (rc != RCL_RET_OK) {
-                PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_clear_subscriptions);
-                break;
-            }
+            CHECK_RET(rcl_wait_set_clear(&wait_set));
 
             size_t index = 0; // is never used - denotes the index of the subscription in the storage container
-            rc = rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index);
-            if (rc != RCL_RET_OK) {
-                PRINT_RCL_ERROR(spin_node_once, rcl_wait_set_add_subscription);
-                break;
-            }
+            CHECK_RET(rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index));
 
             rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
             if (rc == RCL_RET_TIMEOUT) {
@@ -243,7 +209,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             }
 
             if (rc != RCL_RET_OK && rc != RCL_RET_TIMEOUT) {
-                PRINT_RCL_ERROR(spin_node_once, rcl_wait);
+                PRINT_RCL_ERROR(rcl_wait);
                 continue;
             }
             
@@ -263,7 +229,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
 
             node.publish_status_info();
         }        
-        rcl_wait_set_fini(&wait_set);
+        WARN_RET(rcl_wait_set_fini(&wait_set));
 	} catch(const std::exception& ex) {
         printf("%s\n", ex.what());
 	} catch(...) {

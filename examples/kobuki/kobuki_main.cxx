@@ -97,16 +97,16 @@ display_mallinfo(void)
 KobukiRobot *r;
 
 void commandVelCallback(const void * msgin) {
-  const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
-  numberMsgCmdVel++;
+    const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
+    numberMsgCmdVel++;
 
-  if ( twist != NULL ) {
+    if ( twist != NULL ) {
         ROS_DEBUG("Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
-    r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
-    r->sendControls();
-  } else {
+        r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
+        r->sendControls();
+    } else {
         ROS_ERROR("Error in callback commandVelCallback Twist message expected but got %p!\n", msgin);
-  }
+    }
 }
 
 void* kobuki_run(void *np) {
@@ -181,7 +181,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                     RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
                     RMW_QOS_POLICY_DURABILITY_VOLATILE,
                     false
-            };
+        };
         const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist);
         
         CHECK_RET(rcl_subscription_init(
@@ -232,7 +232,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             }
 
             
-        }        
+        }
         WARN_RET(rcl_wait_set_fini(&wait_set));
 	} catch(const std::exception& ex) {
         printf("%s\n", ex.what());

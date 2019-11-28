@@ -96,7 +96,7 @@ display_mallinfo(void)
 
 KobukiRobot *r;
 
-void commandVelCallback(const void * msgin){ //TwistConstPtr
+void commandVelCallback(const void * msgin) {
   const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
   numberMsgCmdVel++;
   //printf("cmd_vel received(#%d)\n", numberMsgCmdVel);

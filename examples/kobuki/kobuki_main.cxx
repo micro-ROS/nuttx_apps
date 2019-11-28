@@ -99,7 +99,6 @@ KobukiRobot *r;
 void commandVelCallback(const void * msgin) {
   const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
   numberMsgCmdVel++;
-  //printf("cmd_vel received(#%d)\n", numberMsgCmdVel);
 
   if ( twist != NULL ) {
         ROS_DEBUG("Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
@@ -148,7 +147,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
         int result = 0;
         const uint32_t timeout_ms = 10;
 
-        printf("Turtlebot2 embedded kobuki driver\n");
+        printf("Turtlebot2 ('Kobuki') driver\n");
 
         KobukiNode node(argc, argv, "kobuki_node");
         
@@ -218,6 +217,10 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                 rmw_message_info_t        messageInfo;
                 rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo);
                 if(rc != RCL_RET_OK) {
+                    if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
+                        fprintf(stderr, "error return on rcl_take: %d\n", rc);
+                        PRINT_RCL_ERROR(rcl_take);
+                    }
                     continue;
                 }
 

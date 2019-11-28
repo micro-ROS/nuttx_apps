@@ -41,8 +41,8 @@ namespace kobuki
 {
     KobukiNode::KobukiNode(int argc, char* argv[], const char* node_name) 
     : context(rcl_get_zero_initialized_context()), node(rcl_get_zero_initialized_node()),
-      kobuki_guard(rcl_get_zero_initialized_guard_condition()),
-      update_mutex(PTHREAD_MUTEX_INITIALIZER), dirty(false) {
+      kobuki_guard(rcl_get_zero_initialized_guard_condition()), dirty(false),
+      update_mutex(PTHREAD_MUTEX_INITIALIZER) {
         rcl_init_options_t init_options;    //global static var in rcl
         rcl_ret_t          rc;
         init_options = rcl_get_zero_initialized_init_options();

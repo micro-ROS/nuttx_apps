@@ -116,8 +116,8 @@ void* kobuki_run(void *np) {
     robot.connect("/dev/ttyS1");
 
     struct pollfd pf = { .fd = robot._serial_fd, .events = POLLIN, .revents = 0 };
-    uint32_t packetCount = 0, count = 0;
-    while( true ){ // ros::ok() did not work on Olimex with micro-ROS
+    int32_t packetCount = 0, count = 0;
+    while(true) {
         struct timespec ts;        
         poll(&pf, 1, 0);
         robot.receiveData(ts);        

@@ -41,6 +41,7 @@ set(CMAKE_CXX_FLAGS_INIT "-std=c++14 -Dunix=1 ${ARCH_CPU_FLAGS} ${ARCH_OPT_FLAGS
 
 
 set(NUTTX_TOPDIR @NUTTX_TOPDIR@)
+set(BOARD @BOARD@)
 include_directories(SYSTEM 
 	${NUTTX_TOPDIR}/include
 	${NUTTX_TOPDIR}/include/cxx
@@ -48,8 +49,8 @@ include_directories(SYSTEM
     )
 
 link_directories(
-	${NUTTX_APPDIR}/staging
-	${NUTTX_APPDIR}/configs/olimex-stm32-e407/src
+	${NUTTX_TOPDIR}/staging
+	${NUTTX_TOPDIR}/configs/${BOARD}/src
     )
     
 set(__BIG_ENDIAN__ 0)

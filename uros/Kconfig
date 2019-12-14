@@ -14,8 +14,80 @@ config UROS_DIR
     string "micro-ROS workspace (relative to NuttX)"
     default "../mcu_ws/"
     ---help---
-	Location of the micro-ROS workspace.
+        Location of the micro-ROS workspace.
+
+
+
+config MICRO_XRCEDDS_CUSTOM_CONFIG
+  bool "Use custom config for MICRO_XRCEDDS"
+  default n
+  
+if MICRO_XRCEDDS_CUSTOM_CONFIG
+
+choice
+  prompt "MICRO_XRCEDDS transport layer"
+  
+  config MICRO_XRCEDDS_TRANSPORT_SERIAL
+    bool "SERIAL"
+  
+  config MICRO_XRCEDDS_TRANSPORT_UDP
+    bool "UDP"
+endchoice
+        
+if MICRO_XRCEDDS_TRANSPORT_SERIAL
+  config MICRO_XRCEDDS_TRANSPORT_SERIAL_DEVICE
+    string "path to serial device"
+    default "/dev/ttyS0"
 
 endif
+  
+if MICRO_XRCEDDS_TRANSPORT_UDP
+  config MICRO_XRCEDDS_TRANSPORT_UDP_IP
+    string "ip address"
+    default "127.0.0.1"
+    
+  config MICRO_XRCEDDS_TRANSPORT_UDP_PORT
+    int "port"
+    default 8888
+endif
 
+choice
+  prompt "MICRO_XRCEDDS Creation mode"
+  
+  config MICRO_XRCEDDS_CREATION_MODE_XML
+    bool "XML"
+  
+  config MICRO_XRCEDDS_CREATION_MODE_REFS
+    bool "REFS"
+endchoice
+
+config MICRO_XRCEDDS_MAX_HISTORY
+  int "Max history"
+  default 4
+  
+config MICRO_XRCEDDS_MAX_NODES
+  int "Max number of nodes"
+  default 2
+  
+config MICRO_XRCEDDS_MAX_PUBLISHERS_X_NODE
+  int "Max publishers per node"
+  default 4
+  
+config MICRO_XRCEDDS_MAX_SUBSCRIPTIONS_X_NODE
+  int "Max subscription per node"
+  default 4
+  
+config MICRO_XRCEDDS_RMW_NODE_NAME_MAX_NAME_LENGTH
+  int "Max node name length"
+  default 128
+  
+config MICRO_XRCEDDS_RMW_TOPIC_NAME_MAX_NAME_LENGTH
+  int "Max topic name length"
+  default 50
+
+config MICRO_XRCEDDS_RMW_TYPE_NAME_MAX_NAME_LENGTH
+  int "Max type name length"
+  default 128
+endif # MICRO_XRCEDDS_CUSTOM_CONFIG
+endif # UROS
 endmenu # UROS

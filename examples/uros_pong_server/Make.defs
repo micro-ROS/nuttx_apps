@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_UROS_PONG_SERVER),y)
+    CONFIGURED_APPS += examples/uros_pong_server
+endif

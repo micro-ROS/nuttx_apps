@@ -1,0 +1,19 @@
+config UROS_PONG_SERVER
+	bool "microROS Pong Server"
+	default n
+	depends on UROS
+	---help---
+		Listen on the /uros_ping topic and replies to /uros_pong, to enable
+		Round-Trip-Time measurements.
+
+if UROS_PONG_SERVER
+
+config UROS_PONG_SERVER_PROGNAME
+	string "Program name"
+	default "uros_pong"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+endif

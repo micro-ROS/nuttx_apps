@@ -99,7 +99,9 @@ bool PongServer::wait(uint32_t timeout_ms)
         rc = rcl_take(&subscriber, &sub_msg, &messageInfo, NULL);
 
         if(rc != RCL_RET_OK) {
-            PRINT_RCL_ERROR(rcl_take);
+            if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
+                PRINT_RCL_ERROR(rcl_take);
+            }
             return false;
         }       
 

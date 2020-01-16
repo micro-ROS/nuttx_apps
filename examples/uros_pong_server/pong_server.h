@@ -46,6 +46,8 @@ private:
   rcl_publisher_t publisher;
   rcl_subscription_t subscriber;
   rcl_wait_set_t wait_set;
+  rmw_message_info_t messageInfo;
+  std_msgs__msg__Header sub_msg;
 };
 
 #endif  

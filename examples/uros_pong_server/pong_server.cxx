@@ -73,7 +73,7 @@ PongServer::PongServer(int argc, char* argv[]) :
         WARN_RET(rcl_node_fini( &node))
         throw RCLException("Failed to initialize message");
     }
-    const size_t BUFSIZE = 256;
+    const size_t BUFSIZE = 1024;
     void * data = realloc(sub_msg.frame_id.data, BUFSIZE);
     bool result = false;
     if(data != NULL) {

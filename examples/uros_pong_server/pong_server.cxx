@@ -1,4 +1,6 @@
 #include "pong_server.h"
+#include "rosidl_generator_c/string_functions.h"
+#include <sstream>
 
 using namespace kobuki;
 
@@ -65,11 +67,33 @@ PongServer::PongServer(int argc, char* argv[]) :
         throw RCLException("Failed to create wait set");
     }
 
+    if(!std_msgs__msg__Header__init(&sub_msg)) {
+        WARN_RET(rcl_subscription_fini( &subscriber, &node))
+        WARN_RET(rcl_publisher_fini( &publisher, &node))
+        WARN_RET(rcl_node_fini( &node))
+        throw RCLException("Failed to initialize message");
+    }
+    const size_t BUFSIZE = 256;
+    void * data = realloc(sub_msg.frame_id.data, BUFSIZE);
+    bool result = false;
+    if(data != NULL) {
+        sub_msg.frame_id.data = (char*)data;
+        sub_msg.frame_id.capacity = BUFSIZE;
+    } else {
+        std_msgs__msg__Header__fini(&sub_msg);
+        WARN_RET(rcl_subscription_fini( &subscriber, &node))
+        WARN_RET(rcl_publisher_fini( &publisher, &node))
+        WARN_RET(rcl_node_fini( &node))
+        throw RCLException("Failed to reallocate message buffer");
+    }
 }
 
 PongServer::~PongServer()
 {
-    // TODO
+    std_msgs__msg__Header__fini(&sub_msg);
+    WARN_RET(rcl_subscription_fini( &subscriber, &node))
+    WARN_RET(rcl_publisher_fini( &publisher, &node))
+    WARN_RET(rcl_node_fini( &node))
 }
 
 bool PongServer::wait(uint32_t timeout_ms)
@@ -94,21 +118,21 @@ bool PongServer::wait(uint32_t timeout_ms)
     // if RET_OK => one subscription is received because only ONE subscription has been added
     // just double check here.
     if ( wait_set.subscriptions[0] ){
-        rmw_message_info_t        messageInfo;
-        std_msgs__msg__Header sub_msg;
         rc = rcl_take(&subscriber, &sub_msg, &messageInfo, NULL);
+        if(rc == RCL_RET_OK) {
+            // just re-publish it
+            rcl_publish(&publisher, &sub_msg, NULL);
+            return true;
+        }
 
         if(rc != RCL_RET_OK) {
             if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
                 PRINT_RCL_ERROR(rcl_take);
+                return false;
             }
-            return false;
-        }       
-
-        // just return it
-        rcl_publish(&publisher, &sub_msg, NULL);
-
-        return true;        
+        }
+        
+        return false;
     } else {
         //sanity check
         fprintf(stderr, "[spin_node_once] no subscription received.\n");

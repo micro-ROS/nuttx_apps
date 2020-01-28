@@ -30,7 +30,7 @@
 
 #include <math.h>
 
-#include "ros_util.h"
+#include "uros/ros_util.h"
 #include "kobuki_node.h"
 #include <rosidl_generator_c/string_functions.h>
 #include <rosidl_generator_c/primitives_sequence_functions.h>

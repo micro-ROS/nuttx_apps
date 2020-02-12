@@ -41,12 +41,12 @@ public:
 
     bool wait(uint32_t timeout_ms);
 private:
-  rcl_context_t context;
   rcl_node_t node;
   rcl_publisher_t publisher;
   rcl_subscription_t subscriber;
-  rcl_wait_set_t wait_set;
   rmw_message_info_t messageInfo;
+  rclc_support_t support;
+  rclc_executor_t executor;
   std_msgs__msg__Header sub_msg;
 };
 

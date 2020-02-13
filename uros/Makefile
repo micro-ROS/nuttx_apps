@@ -12,6 +12,15 @@ else
 	BUILD_TYPE = RelWithDebInfo
 endif
 
+ifeq ($(CONFIG_UROS_TRANSPORT_UDP),y)
+  RMW_UXRCE_TRANSPORT=udp
+  AGENT_IP=$(CONFIG_UROS_AGENT_IP)
+else
+  RMW_UXRCE_TRANSPORT=serial
+endif
+
+
+
 all: colcon_compile
 	$(MAKE) -f Makefile.apps
 	
@@ -27,13 +36,29 @@ arm_toolchain.cmake: $(TOPDIR)/.config arm_toolchain.cmake.in
 		sed "s/@ARCH_OPT_FLAGS@/\"$(ARCHOPTIMIZATION)\"/g" \
 		> arm_toolchain.cmake
 
+rmw_config.meta: $(TOPDIR)/.config rmw_config.meta.in
+	cat rmw_config.meta.in | \
+		sed "s/@MAX_NODES@/$(CONFIG_UROS_MAX_NODES)/g" | \
+		sed "s/@MAX_PUBLISHERS@/$(CONFIG_UROS_MAX_PUBLISHERS)/g" | \
+		sed "s/@MAX_SUBSCRIPTIONS@/$(CONFIG_UROS_MAX_SUBSCRIPTIONS)/g" | \
+		sed "s/@MAX_SERVICES@/$(CONFIG_UROS_MAX_SERVICES)/g" | \
+		sed "s/@MAX_CLIENTS@/$(CONFIG_UROS_MAX_CLIENTS)/g" | \
+		sed "s/@MAX_HISTORY@/$(CONFIG_UROS_MAX_HISTORY)/g" | \
+		sed "s/@TRANSPORT@/$(RMW_UXRCE_TRANSPORT)/g" | \
+		sed "s/@AGENT_IP@/$(AGENT_IP)/g" | \
+		sed "s/@AGENT_PORT@/$(CONFIG_UROS_AGENT_PORT)/g" |\
+		sed "s/@SERIAL_PORT@/$(CONFIG_UROS_SERIAL_PORT)/g" \
+		> rmw_config.meta
+
 ifeq (${UROS_FAST_BUILD},y)
 colcon_compile:
 else
-colcon_compile: arm_toolchain.cmake
+colcon_compile: arm_toolchain.cmake rmw_config.meta
 	$(Q) cd $(UROS_DIR); \
 			colcon build \
 			--packages-ignore-regex=.*_cpp \
+			--metas colcon.meta \
+			--metas $(APPDIR)/uros/rmw_config.meta \
 			--cmake-args \
 			-DBUILD_SHARED_LIBS=OFF \
 			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \

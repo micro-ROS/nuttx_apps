@@ -1,0 +1,25 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_JOYSTICK
+	tristate "USB Joystick Logitech extreme 3D PRO"
+	default n
+	---help---
+		Enable the USB Joystick Logitech extreme 3D PRO
+
+if EXAMPLES_JOYSTICK
+
+config EXAMPLES_JOYSTICK_PROGNAME
+	string "Program name"
+	default "joystick"
+	depends on BUILD_LOADABLE
+	---help---
+		This is the name of the program that will be use when the joystick 
+		program is installed.
+
+config EXAMPLES_JOYSTICK_STACKSIZE
+	int "Task stack size"
+	default 2048
+endif

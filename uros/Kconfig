@@ -16,6 +16,73 @@ config UROS_DIR
     ---help---
 	Location of the micro-ROS workspace.
 
+choice 
+	prompt "Transport"
+	default UROS_TRANSPORT_UDP if CONFIG_NET_UDP
+	default UROS_TRANSPORT_SERIAL if CONFIG_SERIAL
+
+config UROS_TRANSPORT_UDP
+  bool "UDP transport"
+
+  ---help---
+    Uses UDP for the connection to agent.
+
+config UROS_TRANSPORT_SERIAL
+  bool "Serial transport"
+  
+  ---help---
+     Uses a serial interface for the connection to the agent.
+
+endchoice
+
+if UROS_TRANSPORT_UDP
+  config UROS_AGENT_IP
+    string "IP address of the agent"
+    default "127.0.0.1"
+  
+  config UROS_AGENT_PORT
+    int "Port number of the agent"
+    default 8888
+  
+endif
+
+if UROS_TRANSPORT_SERIAL
+  config UROS_SERIAL_PORT
+    string "Serial port to use"
+    default "/dev/ttyS1"
+  
+endif
+
+config UROS_MAX_NODES
+  int "Maximum number of nodes"
+  default 2
+
+config UROS_MAX_PUBLISHERS
+  int "Maximum number of publishers per node"
+  default 2
+
+config UROS_MAX_SUBSCRIPTIONS
+  int "Maximum number of subscriptions per node"
+  default 1
+
+config UROS_MAX_SERVICES
+  int "Maximum number of service handlers per node"
+  default 1
+  ---help---
+    This is the maximum number of services per node. Please note that parameter service, if used, needs one of those.
+
+config UROS_MAX_CLIENTS
+  int "Maximum number of service clients per node"
+  default 1
+
+config UROS_MAX_HISTORY
+  int "Maximum message history length"
+  default 2
+
+config UROS_XML_BUFFER_LENGTH
+  int "Length of internal XML buffer. DO NOT CHANGE"
+  default 400
+
 endif
 
 endmenu # UROS

@@ -16,7 +16,7 @@ extern "C" int uros_pong_server_main(int argc, char* argv[])
         ROS_INFO("%s\n", "Pong server initialized.");
               
         while(true) {
-            ps.wait(1000);
+            ps.spin(1000);
         }
 
     } catch(kobuki::RCLException& ex) {

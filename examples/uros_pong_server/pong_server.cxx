@@ -4,10 +4,29 @@
 
 using namespace kobuki;
 
+static rcl_publisher_t * pub_ptr;
+void pong_callback(const void * msgin)
+{
+  rcl_ret_t rc;
+  const std_msgs__msg__Header * msg = (const std_msgs__msg__Header *)msgin;
+  if (msg == NULL) {
+    ROS_INFO("pong_server: %s\n", "received NULL message.");
+  } else {
+    // ROS_INFO("pong_server: received pong message.\n");
+    rc = rcl_publish(pub_ptr, msg, NULL);
+    if (rc != RCL_RET_OK) {
+        PRINT_RCL_ERROR(pong_callback);
+    }
+  }
+}
+
 PongServer::PongServer(int argc, char* argv[]) : 
-  context(rcl_get_zero_initialized_context()), node(rcl_get_zero_initialized_node()),
-  publisher(rcl_get_zero_initialized_publisher()), subscriber(rcl_get_zero_initialized_subscription()),
-  wait_set(rcl_get_zero_initialized_wait_set())
+  context(rcl_get_zero_initialized_context()),
+  node(rcl_get_zero_initialized_node()),
+  publisher(rcl_get_zero_initialized_publisher()),
+  subscriber(rcl_get_zero_initialized_subscription()),
+  allocator(rcl_get_default_allocator()),
+  executor(rclc_executor_get_zero_initialized_executor())
 {
     // RCL NODE INITIALIZATION
     rcl_ret_t rc = RMW_RET_OK;
@@ -20,7 +39,6 @@ PongServer::PongServer(int argc, char* argv[]) :
     ROS_INFO("pong_server: %s\n", "Creating node");
     rcl_node_options_t node_ops = rcl_node_get_default_options();
     THROW_RET(rcl_node_init(&node, "pong_server", "", &context, &node_ops));
-    // END RCL NODE INIT
 
     // COMMUNICATION INIT
     ROS_INFO("pong_server: %s\n", "Creating publisher");
@@ -39,6 +57,8 @@ PongServer::PongServer(int argc, char* argv[]) :
         WARN_RET(rcl_node_fini( &node))
         throw ex;
     }
+    // save publisher in global pointer to publish msg in callback
+    pub_ptr = &publisher;
 
     ROS_INFO("pong_server: %s\n", "Creating subscriber");
     rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
@@ -51,20 +71,9 @@ PongServer::PongServer(int argc, char* argv[]) :
         "uros_ping",
         &subscription_ops);
     if(rc != RCL_RET_OK) {
-        rcutils_reset_error();
         WARN_RET(rcl_publisher_fini( &publisher, &node))
         WARN_RET(rcl_node_fini( &node))
         throw RCLException("Failed to create ping subscriber");
-    }
-
-    ROS_INFO("pong_server: %s\n", "Creating waitset");
-    rc = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &context, rcl_get_default_allocator());
-    if (rc != RCL_RET_OK) {
-        rcutils_reset_error();
-        WARN_RET(rcl_subscription_fini( &subscriber, &node))
-        WARN_RET(rcl_publisher_fini( &publisher, &node))
-        WARN_RET(rcl_node_fini( &node))
-        throw RCLException("Failed to create wait set");
     }
 
     if(!std_msgs__msg__Header__init(&sub_msg)) {
@@ -75,7 +84,6 @@ PongServer::PongServer(int argc, char* argv[]) :
     }
     const size_t BUFSIZE = 1024;
     void * data = realloc(sub_msg.frame_id.data, BUFSIZE);
-    bool result = false;
     if(data != NULL) {
         sub_msg.frame_id.data = (char*)data;
         sub_msg.frame_id.capacity = BUFSIZE;
@@ -86,57 +94,39 @@ PongServer::PongServer(int argc, char* argv[]) :
         WARN_RET(rcl_node_fini( &node))
         throw RCLException("Failed to reallocate message buffer");
     }
+
+    ROS_INFO("pong_server: %s\n", "Creating executor");
+    unsigned int num_handles = 1;
+    rc = rclc_executor_init(&executor, &context, num_handles, &allocator);
+    if(rc != RCL_RET_OK) {
+        std_msgs__msg__Header__fini(&sub_msg);
+        WARN_RET(rcl_subscription_fini( &subscriber, &node))
+        WARN_RET(rcl_publisher_fini( &publisher, &node))
+        WARN_RET(rcl_node_fini( &node))
+        throw RCLException("Failed to create executor");
+    }
+
+    rc = rclc_executor_add_subscription(&executor, &subscriber, &sub_msg, pong_callback, ON_NEW_DATA);
+    if(rc != RCL_RET_OK) {
+        std_msgs__msg__Header__fini(&sub_msg);
+        WARN_RET(rclc_executor_fini( &executor))
+        WARN_RET(rcl_subscription_fini( &subscriber, &node))
+        WARN_RET(rcl_publisher_fini( &publisher, &node))
+        WARN_RET(rcl_node_fini( &node))
+        throw RCLException("Failed to add subscription to executor");
+    }
 }
 
 PongServer::~PongServer()
 {
     std_msgs__msg__Header__fini(&sub_msg);
+    WARN_RET(rclc_executor_fini( &executor))
     WARN_RET(rcl_subscription_fini( &subscriber, &node))
     WARN_RET(rcl_publisher_fini( &publisher, &node))
     WARN_RET(rcl_node_fini( &node))
 }
 
-bool PongServer::wait(uint32_t timeout_ms)
+bool PongServer::spin(uint32_t timeout_ms)
 {
-    rcl_ret_t rc = RCL_RET_OK;
-    // set rmw fields to NULL
-    THROW_RET(rcl_wait_set_clear(&wait_set))
-
-    size_t index = 0; // is never used - denotes the index of the subscription in the storage container
-    THROW_RET(rcl_wait_set_add_subscription(&wait_set, &subscriber, &index))
-    
-    rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
-    if (rc  == RCL_RET_TIMEOUT) {
-        return false; // doing nothing
-    }					
-
-    if (rc != RCL_RET_OK) {
-        PRINT_RCL_ERROR(rcl_wait);
-        return false;
-    }
-
-    // if RET_OK => one subscription is received because only ONE subscription has been added
-    // just double check here.
-    if ( wait_set.subscriptions[0] ){
-        rc = rcl_take(&subscriber, &sub_msg, &messageInfo, NULL);
-        if(rc == RCL_RET_OK) {
-            // just re-publish it
-            rcl_publish(&publisher, &sub_msg, NULL);
-            return true;
-        }
-
-        if(rc != RCL_RET_OK) {
-            if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
-                PRINT_RCL_ERROR(rcl_take);
-                return false;
-            }
-        }
-        
-        return false;
-    } else {
-        //sanity check
-        fprintf(stderr, "[spin_node_once] no subscription received.\n");
-    }
-
-    return false;
+    return rclc_executor_spin_some(&executor, RCL_MS_TO_NS(timeout_ms));
 }

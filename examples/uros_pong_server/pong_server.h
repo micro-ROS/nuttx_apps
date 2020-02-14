@@ -31,6 +31,8 @@
 #define __PONG_SERVER_H
 
 #include <rcl/rcl.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
 #include <std_msgs/msg/header.h>
 #include "ros_util.h"
 

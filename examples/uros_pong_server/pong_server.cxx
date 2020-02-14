@@ -1,6 +1,5 @@
 #include "pong_server.h"
-#include "rclc/rclc.h"
-#include "rclc/executor.h"
+
 #include "rosidl_generator_c/string_functions.h"
 #include <sstream>
 
@@ -9,33 +8,38 @@ using namespace kobuki;
 static rcl_publisher_t * pub_ptr;
 void pong_callback(const void * msgin)
 {
-  const std_msgs__msg__Header * sub_msg = (const std_msgs__msg__Header *)msgin;
+  rcl_ret_t rc;
+  const std_msgs__msg__Header * msg = (const std_msgs__msg__Header *)msgin;
   if (msg == NULL) {
-    ROS_INFO("pong_server: pong_callback received NULL message.\n");
+    ROS_INFO("pong_server: %s\n", "received NULL message.");
   } else {
     // ROS_INFO("pong_server: received pong message.\n");
-    rcl_publish(pub_ptr, sub_msg, NULL);
+    rcl_publish(pub_ptr, msg, NULL);
+    if (rc != RCL_RET_OK) {
+        PRINT_RCL_ERROR(pong_callback);
+    }
   }   
 }
 
 PongServer::PongServer(int argc, char* argv[]) : 
-  context(rcl_get_zero_initialized_context()), node(rcl_get_zero_initialized_node()),
-  publisher(rcl_get_zero_initialized_publisher()), subscriber(rcl_get_zero_initialized_subscription()),
-  wait_set(rcl_get_zero_initialized_wait_set()), executor(rclc_executor_get_zero_initialized_executor())
+  node(rcl_get_zero_initialized_node()),
+  publisher(rcl_get_zero_initialized_publisher()),
+  subscriber(rcl_get_zero_initialized_subscription()),
+  executor(rclc_executor_get_zero_initialized_executor())
 {
     // RCL NODE INITIALIZATION
     rcl_ret_t rc = RMW_RET_OK;
 
     ROS_INFO("pong_server: %s\n", "Initializing rclc");
     rcl_allocator_t allocator = rcl_get_default_allocator();
-    rc = rclc_support_init(&support, argc, argv, &allocator));
+    rc = rclc_support_init(&support, argc, argv, &allocator);
     if(rc != RCL_RET_OK) {
         rcutils_reset_error();
         throw RCLException("Failed to create executor support object");
     }
 
     ROS_INFO("pong_server: %s\n", "Creating node");
-    rc = rclc_node_init_default(&node, "pong_server", "", &support));
+    rc = rclc_node_init_default(&node, "pong_server", "", &support);
     if(rc != RCL_RET_OK) {
         rcutils_reset_error();
         WARN_RET(rclc_support_fini(&support))
@@ -86,7 +90,6 @@ PongServer::PongServer(int argc, char* argv[]) :
     }
     const size_t BUFSIZE = 1024;
     void * data = realloc(sub_msg.frame_id.data, BUFSIZE);
-    bool result = false;
     if(data != NULL) {
         sub_msg.frame_id.data = (char*)data;
         sub_msg.frame_id.capacity = BUFSIZE;
@@ -137,5 +140,5 @@ PongServer::~PongServer()
 
 bool PongServer::wait(uint32_t timeout_ms)
 {
-    return rclc_executor_spin_some(&executor, RCL_MS_TO_NS(wait_timeout));
+    return rclc_executor_spin_some(&executor, RCL_MS_TO_NS(timeout_ms));
 }

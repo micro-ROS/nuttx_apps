@@ -1,0 +1,2 @@
+Invoking command in '/home/jst3si/uros_ws/firmware/apps/build/firmware': /usr/bin/cmake /home/jst3si/uros_ws/firmware/apps -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/jst3si/uros_ws/firmware/apps/install/firmware
+Invoked command in '/home/jst3si/uros_ws/firmware/apps/build/firmware' returned '1': /usr/bin/cmake /home/jst3si/uros_ws/firmware/apps -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/jst3si/uros_ws/firmware/apps/install/firmware

@@ -1,0 +1,9 @@
+source;share/firmware/hook/ros_package_path.ps1
+source;share/firmware/hook/ros_package_path.dsv
+source;share/firmware/hook/ros_package_path.sh
+source;share/firmware/hook/pkg_config_path.ps1
+source;share/firmware/hook/pkg_config_path.dsv
+source;share/firmware/hook/pkg_config_path.sh
+source;share/firmware/hook/pkg_config_path_multiarch.ps1
+source;share/firmware/hook/pkg_config_path_multiarch.dsv
+source;share/firmware/hook/pkg_config_path_multiarch.sh

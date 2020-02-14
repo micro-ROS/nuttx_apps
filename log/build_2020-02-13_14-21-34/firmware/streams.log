@@ -1,0 +1,4 @@
+Invoking command in '/home/jst3si/uros_ws/firmware/apps/build/firmware': /usr/bin/cmake /home/jst3si/uros_ws/firmware/apps -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/jst3si/uros_ws/firmware/apps/install/firmware
+CMake Error: The source directory "/home/jst3si/uros_ws/firmware/apps" does not appear to contain CMakeLists.txt.
+Specify --help for usage, or press the help button on the CMake GUI.
+Invoked command in '/home/jst3si/uros_ws/firmware/apps/build/firmware' returned '1': /usr/bin/cmake /home/jst3si/uros_ws/firmware/apps -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/jst3si/uros_ws/firmware/apps/install/firmware

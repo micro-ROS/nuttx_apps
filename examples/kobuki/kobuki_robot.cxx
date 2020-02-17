@@ -94,7 +94,14 @@ void KobukiRobot::playSound(uint8_t duration, uint16_t note) {
   _control_packet->_payloads.push_back(sp);
 }
 
+void KobukiRobot::apply_safety_constraints(float& tv, float &rv) const
+{
+
+}
+
 void KobukiRobot::setSpeed(float tv, float rv) {
+  apply_safety_constraints(tv, rv);
+
   BaseControlPayload* bp = new BaseControlPayload;
   // convert to mm;
   tv *=1000;

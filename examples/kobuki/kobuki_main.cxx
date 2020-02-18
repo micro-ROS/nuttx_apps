@@ -38,7 +38,7 @@
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <unistd.h>
 #include <nuttx/init.h>
 #include "platform/cxxinitialize.h"
 
@@ -102,6 +102,7 @@ void commandVelCallback(const void * msgin) {
     numberMsgCmdVel++;
 
     if ( twist != NULL ) {
+        ROS_INFO("INFO: Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
         ROS_DEBUG("Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
         r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
         r->sendControls();
@@ -109,6 +110,8 @@ void commandVelCallback(const void * msgin) {
         ROS_ERROR("Error in callback commandVelCallback Twist message expected but got %p!\n", msgin);
     }
 }
+
+struct timespec mocup_ts;
 
 void* kobuki_run(void *np) {
     KobukiRobot robot;
@@ -118,7 +121,13 @@ void* kobuki_run(void *np) {
 
     struct pollfd pf = robot.getPollFD();
     int32_t packetCount = 0, count = 0;
+
+    // mocup
+    mocup_ts.tv_sec = 0;
+    mocup_ts.tv_nsec = 0;
+
     while(true) {
+        /*
         struct timespec ts;        
         poll(&pf, 1, 0);
         robot.receiveData(ts);        
@@ -128,7 +137,11 @@ void* kobuki_run(void *np) {
             if((count % 5) == 0) {
                 node->update_state(ts, robot);
             }
-        }                
+        }
+        */
+       usleep(100000); // 100 ms => publish with 10Hz
+       mocup_ts.tv_nsec++;
+       node->update_state(mocup_ts,robot);
     }
 }
 

@@ -96,7 +96,18 @@ void KobukiRobot::playSound(uint8_t duration, uint16_t note) {
 
 void KobukiRobot::apply_safety_constraints(float& tv, float &rv) const
 {
-
+  if(!(_safety_state & OPERATIONAL)) {
+    tv = 0;
+    rv = 0;
+    return;
+  }
+  if((_safety_state & LOW_SPEED)) {
+    tv = copysign(std::max(LOW_SPEED_TV, (float)fabs(tv)), tv);
+    rv = copysign(std::max(LOW_SPEED_RV, (float)fabs(rv)), rv);
+  }
+  if((_safety_state & NO_TRANSLATE) || ((_safety_state & NO_FORWARD) && tv > 0)) {
+      tv = 0;
+  }
 }
 
 void KobukiRobot::setSpeed(float tv, float rv) {

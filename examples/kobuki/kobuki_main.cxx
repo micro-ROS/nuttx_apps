@@ -33,6 +33,7 @@
 
 #include <rcl/error_handling.h>
 #include <rcl/rcl.h>
+#include <rclc/executor.h>
 
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
@@ -177,49 +178,29 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             cmd_vel_topic_name,
             &subscription_ops))
 
-        // get empty wait set
-        rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-        CHECK_RET(rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &(node.context), rcl_get_default_allocator()))
 
-        while(true) {
-            node.publish_status_info();     
-            // set rmw fields to NULL
-            CHECK_RET(rcl_wait_set_clear(&wait_set));
+        // initialize and configure executor
+        rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
+        rcl_allocator_t allocator = rcl_get_default_allocator();
+        CHECK_RET(rclc_executor_init(
+            &executor,
+            &node.context,
+            1,
+            &allocator))
 
-            size_t index = 0; // is never used - denotes the index of the subscription in the storage container
-            CHECK_RET(rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index));
+        // add subscription for topic 'cmd_vel'
+        geometry_msgs__msg__Twist msg;
+        CHECK_RET(rclc_executor_add_subscription(
+            &executor,
+            &sub_cmd_vel,
+            &msg,
+            commandVelCallback,
+            ON_NEW_DATA))
 
-            rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
-            if (rc == RCL_RET_TIMEOUT) {
-                continue;
-            }
-
-            if (rc != RCL_RET_OK && rc != RCL_RET_TIMEOUT) {
-                PRINT_RCL_ERROR(rcl_wait);
-                continue;
-            }
-            
-            if (wait_set.subscriptions[0] ){
-                geometry_msgs__msg__Twist msg;
-                rmw_message_info_t        messageInfo;
-                rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo, NULL);
-                if(rc != RCL_RET_OK) {
-                    if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
-                        fprintf(stderr, "error return on rcl_take: %d\n", rc);
-                        PRINT_RCL_ERROR(rcl_take);
-                    }
-                    continue;
-                }
-
-                commandVelCallback( &msg );
-            } else {
-                //sanity check
-                fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
-            }
-
-            
+        while (true) {
+            node.publish_status_info();
+            CHECK_RET(rclc_executor_spin_some(&executor,RCL_MS_TO_NS(timeout_ms)))
         }
-        WARN_RET(rcl_wait_set_fini(&wait_set));
 	} catch(const std::exception& ex) {
         printf("%s\n", ex.what());
 	} catch(...) {

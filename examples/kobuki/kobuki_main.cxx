@@ -218,7 +218,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                 commandVelCallback( &msg );
             } else {
                 //sanity check
-                fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
+                //fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
             }
 
             

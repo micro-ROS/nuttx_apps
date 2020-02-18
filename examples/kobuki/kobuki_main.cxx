@@ -156,20 +156,6 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             fprintf(stderr, "Failed to create kobuki thread: %d.\n", result);
         }
 
-        //create publisher
-        const char* pose_topic = "robot_pose";
-
-        rcl_publisher_t pub_odom        = rcl_get_zero_initialized_publisher();
-        const rosidl_message_type_support_t * pub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3);
-        rcl_publisher_options_t pub_opt = rcl_publisher_get_default_options();
-
-        CHECK_RET(rcl_publisher_init(
-            &pub_odom,
-            &(node.node),
-            pub_type_support,
-            pose_topic,
-            &pub_opt))
-
         //create subscription
         const char * cmd_vel_topic_name = "cmd_vel";
         rcl_subscription_t sub_cmd_vel = rcl_get_zero_initialized_subscription();

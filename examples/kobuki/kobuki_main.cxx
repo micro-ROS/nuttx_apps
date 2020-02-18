@@ -113,21 +113,25 @@ void* kobuki_run(void *np) {
     KobukiRobot robot;
     r = &robot;
     KobukiNode *node = (KobukiNode*)np;
-    robot.connect("/dev/ttyS1");
+    try {
+        robot.connect("/dev/ttyS1");
 
-    struct pollfd pf = robot.getPollFD();
-    int32_t packetCount = 0, count = 0;
-    while(true) {
-        struct timespec ts;        
-        poll(&pf, 1, 0);
-        robot.receiveData(ts);        
-        if(packetCount != robot.packetCount()) {
-            packetCount = robot.packetCount();
-            ++count;
-            if((count % 5) == 0) {
-                node->update_state(ts, robot);
-            }
-        }                
+        struct pollfd pf = robot.getPollFD();
+        int32_t packetCount = 0, count = 0;
+        while(true) {
+            struct timespec ts;        
+            poll(&pf, 1, 0);
+            robot.receiveData(ts);        
+            if(packetCount != robot.packetCount()) {
+                packetCount = robot.packetCount();
+                ++count;
+                if((count % 5) == 0) {
+                    node->update_state(ts, robot);
+                }
+            }                
+        }
+    } catch(const std::exception& ex) {
+        fprintf(stderr, "Error on reading from robot %s\n", ex.what());
     }
 }
 

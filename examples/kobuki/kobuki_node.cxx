@@ -116,6 +116,7 @@ namespace kobuki
         msg_base_info.blocked = false;  // TODO: read out from laser
         msg_base_info.in_collision = robot.inCollision();
         msg_base_info.at_cliff = robot.atCliff();
+        msg_base_info.safety_state = robot.getSafetyState();
 
         dirty = true;
         pthread_mutex_unlock(&update_mutex);

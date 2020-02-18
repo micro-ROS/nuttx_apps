@@ -124,10 +124,15 @@ public:
   inline float gyroRate();
   */
 
- struct pollfd getPollFD() {
-   struct pollfd pf = { .fd = _serial_fd, .events = POLLIN, .revents = 0 };
-   return pf;
- }
+  struct pollfd getPollFD() {
+    struct pollfd pf = { .fd = _serial_fd, .events = POLLIN, .revents = 0 };
+    return pf;
+  }
+
+  // return current state as bitfield according to drive_base_msgs::BaseInfo constants
+  int getSafetyState() const {
+    return _safety_state;
+  }
 
 private:
   /*** 
@@ -136,15 +141,23 @@ private:
    *   LOW_SPEED    -> max .1m/s
    *   NO_TRANSLATE -> no translation allowed (only rotation)
    *   NO_FORWARD   -> forward motion is prohibited
+   *   NO_ROTATE    -> rotation is prohibited
    */
   enum SafetyState { 
-    OPERATIONAL  = 0x01, 
-    LOW_SPEED    = 0x02, 
-    NO_TRANSLATE = 0x04, 
-    NO_FORWARD   = 0x08
+    OPERATIONAL  = 1, 
+    LOW_SPEED    = 1 << 1, 
+    NO_FORWARD   = 1 << 2,
+    NO_BACKWARD   = 1 << 3,
+    NO_ROTATE    = 1 << 4
   };  
   /*** Modify speeds according to safey constraints */
-  void apply_safety_constraints(float& tv, float &rv) const;
+  void applySafetyConstraints(float& tv, float &rv) const;
+
+  /*** 
+   * Inspect currently stored sensor data to derive safety state. 
+   * If necessary, this will send an appropriate speed command to the robot.
+  */
+  void updateSafetyState();
 
 protected:
   uint16_t _safety_state { 0 };
@@ -168,11 +181,13 @@ protected:
   uint16_t _digital_input;
   uint32_t _udid[3];
   uint32_t _P,_I,_D;
+  float cmd_tv { 0 }, cmd_rv { 0 };
   float _x, _y, _theta;
   float _velocity_x, _velocity_theta;
   float _initial_heading, _heading;
   float _baseline, _left_ticks_per_m, _right_ticks_per_m;
   bool _first_round;
+  bool _safety_enabled { true };
   int _packet_count;
 
   void processOdometry(uint16_t left_encoder_, uint16_t right_encoder_,

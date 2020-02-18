@@ -124,10 +124,15 @@ public:
   inline float gyroRate();
   */
 
- struct pollfd getPollFD() {
-   struct pollfd pf = { .fd = _serial_fd, .events = POLLIN, .revents = 0 };
-   return pf;
- }
+  struct pollfd getPollFD() {
+    struct pollfd pf = { .fd = _serial_fd, .events = POLLIN, .revents = 0 };
+    return pf;
+  }
+
+  // return current state as bitfield according to drive_base_msgs::BaseInfo constants
+  int getSafetyState() const {
+    return _safety_state;
+  }
 
 private:
   /*** 

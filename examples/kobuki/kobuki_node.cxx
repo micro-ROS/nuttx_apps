@@ -101,7 +101,7 @@ namespace kobuki
     void KobukiNode::update_state(const struct timespec &ts, const KobukiRobot& robot)
     {
         pthread_mutex_lock(&update_mutex);
-        msg_base_info.hw_timestamp = robot._timestamp;
+        msg_base_info.hw_timestamp = robot.getHWTime();
         msg_base_info.stamp.sec = ts.tv_sec;
         msg_base_info.stamp.nanosec = ts.tv_nsec;
 
@@ -112,10 +112,10 @@ namespace kobuki
         msg_base_info.power_supply = drive_base_msgs__msg__BaseInfo__POWER_SUPPLY_STATUS_CHARGING ?
             robot.charger() : drive_base_msgs__msg__BaseInfo__POWER_SUPPLY_STATUS_DISCHARGING;
         // diagnostics info
-        msg_base_info.overcurrent = robot._overcurrent_flags;
+        msg_base_info.overcurrent = robot.overcurrentAny();
         msg_base_info.blocked = false;  // TODO: read out from laser
-        msg_base_info.in_collision = robot._bumper;
-        msg_base_info.at_cliff = robot._cliff;
+        msg_base_info.in_collision = robot.inCollision();
+        msg_base_info.at_cliff = robot.atCliff();
 
         dirty = true;
         pthread_mutex_unlock(&update_mutex);

@@ -115,7 +115,7 @@ void* kobuki_run(void *np) {
     KobukiNode *node = (KobukiNode*)np;
     robot.connect("/dev/ttyS1");
 
-    struct pollfd pf = { .fd = robot._serial_fd, .events = POLLIN, .revents = 0 };
+    struct pollfd pf = robot.getPollFD();
     int32_t packetCount = 0, count = 0;
     while(true) {
         struct timespec ts;        

@@ -37,6 +37,7 @@
 #include "kobuki_protocol.h"
 
 static const float LOW_SPEED_TV = 0.1f;   // -> 0.1m/s
+static const float MAX_SPEED_TV = 0.5f;   
 static const float LOW_SPEED_RV = 0.78f;  // ~45°/s
 
 class Packet;

@@ -107,6 +107,8 @@ void KobukiRobot::applySafetyConstraints(float& tv, float &rv) const
   if((_safety_state & LOW_SPEED)) {
     tv = copysign(std::max(LOW_SPEED_TV, (float)fabs(tv)), tv);
     rv = copysign(std::max(LOW_SPEED_RV, (float)fabs(rv)), rv);
+  } else {
+    tv = copysign(std::min(MAX_SPEED_TV, (float)fabs(tv)), tv);
   }
   if((_safety_state & NO_BACKWARD) && tv < 0) {
     tv = 0;

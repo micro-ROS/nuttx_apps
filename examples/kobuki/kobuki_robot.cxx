@@ -132,7 +132,7 @@ void KobukiRobot::updateSafetyState() {
   const int old_state = _safety_state;
 
   // we can operate as long as no wheel drop is detected
-  update_bits(_safety_state, OPERATIONAL, _wheel_drop != 0);
+  update_bits(_safety_state, OPERATIONAL, _wheel_drop == 0);
   // if the front bumper is pressed, we can only rotate or drive back
   update_bits(_safety_state, NO_FORWARD, inCollision());
   // if the cliff sensors are triggered, we can only drive backwards

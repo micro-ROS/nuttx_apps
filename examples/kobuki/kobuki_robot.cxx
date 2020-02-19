@@ -111,7 +111,7 @@ void KobukiRobot::applySafetyConstraints(float& tv, float &rv) const
   if((_safety_state & NO_BACKWARD) && tv < 0) {
     tv = 0;
   } else if((_safety_state & NO_FORWARD) && tv > 0) {
-      tv = 0;
+    tv = 0;
   }
   if((_safety_state & NO_ROTATE)) {
     rv = 0;
@@ -133,11 +133,16 @@ void KobukiRobot::updateSafetyState() {
 
   // we can operate as long as no wheel drop is detected
   update_bits(_safety_state, OPERATIONAL, _wheel_drop == 0);
-  // if the front bumper is pressed, we can only rotate or drive back
-  update_bits(_safety_state, NO_FORWARD, inCollision());
   // if the cliff sensors are triggered, we can only drive backwards
-  update_bits(_safety_state, NO_FORWARD | NO_ROTATE, atCliff());
-
+  // and if the front bumper is pressed, we can only rotate or drive back
+  if(atCliff()) {
+    update_bits(_safety_state, NO_FORWARD | NO_ROTATE, atCliff());
+  } else if(inCollision()) {
+    update_bits(_safety_state, NO_FORWARD, inCollision());
+  } else {
+    update_bits(_safety_state, NO_FORWARD | NO_ROTATE, false);
+  }
+  
   // if safety state has changed, update speed accordingly
   if(_safety_enabled && (old_state != _safety_state)) {
     setSpeed(cmd_tv, cmd_rv);

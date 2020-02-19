@@ -145,10 +145,10 @@ private:
    */
   enum SafetyState { 
     OPERATIONAL  = 1, 
-    LOW_SPEED    = 1 << 1, 
-    NO_FORWARD   = 1 << 2,
-    NO_BACKWARD   = 1 << 3,
-    NO_ROTATE    = 1 << 4
+    LOW_SPEED    = 2, 
+    NO_FORWARD   = 4,
+    NO_BACKWARD   = 8,
+    NO_ROTATE    = 16
   };  
   /*** Modify speeds according to safey constraints */
   void applySafetyConstraints(float& tv, float &rv) const;

@@ -36,6 +36,8 @@
 #include <rclc/executor.h>
 
 #include <std_msgs/msg/int32.h>
+#include <drive_base_msgs/msg/trv_command.h>
+#include <rcutils/time.h> 
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -98,16 +100,30 @@ display_mallinfo(void)
 KobukiRobot *r;
 
 void commandVelCallback(const void * msgin) {
-    const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
+    const drive_base_msgs__msg__TRVCommand * cmd = (const drive_base_msgs__msg__TRVCommand *)msgin;
+    if(cmd == nullptr)
+        return;
+
     numberMsgCmdVel++;
 
-    if ( twist != NULL ) {
-        ROS_DEBUG("Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
-        r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
-        r->sendControls();
-    } else {
-        ROS_ERROR("Error in callback commandVelCallback Twist message expected but got %p!\n", msgin);
+    // check message age
+    rcutils_time_point_value_t msgtime = RCUTILS_S_TO_NS(cmd->header.stamp.sec) + cmd->header.stamp.nanosec;
+    rcutils_time_point_value_t curtime;
+    rcutils_system_time_now(&curtime);
+    rcutils_duration_value_t duration_ns = curtime - msgtime;
+    long duration_ms = RCUTILS_NS_TO_MS(duration_ns);
+    //fprintf(stdout, "Cur time ns %llu, msg time ns %llu, difference %lld / %ld\n",
+    //    curtime, msgtime, duration_ns, duration_ms);
+    
+    const unsigned int period = cmd->header.expected_period != 0 ? cmd->header.expected_period : 100;
+    if(labs(duration_ms) > period/2) {
+        fprintf(stderr, "WARN: Ignoring outdated message (age %ld ms > %d ms [period/2])\n", duration_ms, period/2);
+        return;
     }
+ 
+    ROS_DEBUG("Received speed cmd %f/%f\n", cmd->translational_velocity, cmd->rotational_velocity);
+    r->setSpeed(cmd->translational_velocity, cmd->rotational_velocity);
+    r->sendControls();
 }
 
 void* kobuki_run(void *np) {
@@ -162,7 +178,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
         }
 
         //create subscription
-        const char * cmd_vel_topic_name = "cmd_vel";
+        const char * cmd_vel_topic_name = "drive_cmd";
         rcl_subscription_t sub_cmd_vel = rcl_get_zero_initialized_subscription();
         rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
         
@@ -173,7 +189,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                     RMW_QOS_POLICY_DURABILITY_VOLATILE,
                     false
         };
-        const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist);
+        const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(drive_base_msgs, msg, TRVCommand);
         
         CHECK_RET(rcl_subscription_init(
             &sub_cmd_vel,
@@ -193,7 +209,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             &allocator))
 
         // add subscription for topic 'cmd_vel'
-        geometry_msgs__msg__Twist msg;
+        drive_base_msgs__msg__TRVCommand msg;
         CHECK_RET(rclc_executor_add_subscription(
             &executor,
             &sub_cmd_vel,

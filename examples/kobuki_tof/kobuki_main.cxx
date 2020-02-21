@@ -137,7 +137,7 @@ extern "C"
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
-int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Makefile 
+int kobuki_tof_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Makefile 
                                         // and CONFIG_UROS_EXAMPLES_KOBUKI_PROGNAME
 #endif
   {

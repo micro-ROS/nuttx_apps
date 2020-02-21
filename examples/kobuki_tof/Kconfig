@@ -1,26 +1,26 @@
-config UROS_EXAMPLES_KOBUKI
-	bool "uROS Kobuki"
+config UROS_EXAMPLES_KOBUKI_TOF
+	bool "uROS Kobuki TOF sensor"
 	default n
 	depends on UROS
 	---help---
 		Enable the subscriber uROS example
 
-if UROS_EXAMPLES_KOBUKI
+if UROS_EXAMPLES_KOBUKI_TOF
 
-config UROS_EXAMPLES_KOBUKI_PROGNAME
+config UROS_EXAMPLES_KOBUKI_TOF_PROGNAME
 	string "Program name"
-	default "kobuki"
+	default "kobuki_tof"
 	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
-#config UROS_EXAMPLES_KOBUKI_PRIORITY
+#config UROS_EXAMPLES_KOBUKI_TOF_PRIORITY
 #	int "Kobuki task priority"
 #	default 100
 #
-config UROS_EXAMPLES_KOBUKI_STACKSIZE
-	int "Kobuki stack size"
+config UROS_EXAMPLES_KOBUKI_TOF_STACKSIZE
+	int "Kobuki tof stack size"
 	default 65000
 
 endif

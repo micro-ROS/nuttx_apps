@@ -1,3 +1,3 @@
 ifeq ($(CONFIG_UROS_EXAMPLES_KOBUKI),y)
-    CONFIGURED_APPS += examples/kobuki
+    CONFIGURED_APPS += examples/kobuki_tof
 endif

@@ -35,6 +35,7 @@
 #include <rcl/rcl.h>
 
 #include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/bool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -113,7 +114,7 @@ void* kobuki_run(void *np) {
     KobukiRobot robot;
     r = &robot;
     KobukiNode *node = (KobukiNode*)np;
-    robot.connect("/dev/ttyS1");
+    robot.connect("/dev/ttyS0");
 
     struct pollfd pf = { .fd = robot._serial_fd, .events = POLLIN, .revents = 0 };
     int32_t packetCount = 0, count = 0;
@@ -191,29 +192,46 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             cmd_vel_topic_name,
             &subscription_ops))
 
+        //create subscription
+        const char * tof_trigger_topic_name = "/tof/trigger";
+        rcl_subscription_t sub_tof_trigger = rcl_get_zero_initialized_subscription();
+        subscription_ops = rcl_subscription_get_default_options();
+        const rosidl_message_type_support_t * sub_type_support_trigger = ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool);
+        
+        CHECK_RET(rcl_subscription_init(
+            &sub_tof_trigger,
+            &(node.node),
+            sub_type_support_trigger,
+            tof_trigger_topic_name,
+            &subscription_ops));
+
         // get empty wait set
         rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-        CHECK_RET(rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &(node.context), rcl_get_default_allocator()))
+        CHECK_RET(rcl_wait_set_init(&wait_set, 2, 0, 0, 0, 0, 0, &(node.context), rcl_get_default_allocator()))
+        
+        bool invisible_wall = false;
 
         while(true) {
             node.publish_status_info();     
+
             // set rmw fields to NULL
             CHECK_RET(rcl_wait_set_clear(&wait_set));
 
-            size_t index = 0; // is never used - denotes the index of the subscription in the storage container
-            CHECK_RET(rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index));
+            size_t index_vel;
+            CHECK_RET(rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index_vel));
+
+            size_t index_tof;
+            CHECK_RET(rcl_wait_set_add_subscription(&wait_set, &sub_tof_trigger, &index_tof));
 
             rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
-            if (rc == RCL_RET_TIMEOUT) {
-                continue;
+            
+            if (wait_set.subscriptions[index_tof]){
+                std_msgs__msg__Bool msg;
+                rc = rcl_take(&sub_tof_trigger, &msg, NULL, NULL);
+                invisible_wall = msg.data;
             }
 
-            if (rc != RCL_RET_OK && rc != RCL_RET_TIMEOUT) {
-                PRINT_RCL_ERROR(rcl_wait);
-                continue;
-            }
-            
-            if (wait_set.subscriptions[0] ){
+            if (wait_set.subscriptions[index_vel] ){
                 geometry_msgs__msg__Twist msg;
                 rmw_message_info_t        messageInfo;
                 rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo, NULL);
@@ -224,11 +242,13 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                     }
                     continue;
                 }
-
+                
+                if (invisible_wall || r->_cliff || r->_bumper){
+                    msg.angular.z = 0;
+                    msg.linear.x = (msg.linear.x > 0) ? 0 : msg.linear.x;
+                }
+                
                 commandVelCallback( &msg );
-            } else {
-                //sanity check
-                fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
             }
 
             

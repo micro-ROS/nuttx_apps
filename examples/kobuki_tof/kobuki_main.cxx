@@ -132,6 +132,10 @@ void* kobuki_run(void *np) {
     }
 }
 
+constexpr double kobuki_max_angular_velocity = 1.00;
+constexpr double kobuki_max_linear_velocity = 0.35;
+constexpr double kobuki_damping_constant = 0.995;
+
 extern "C"
 {
 #if defined(BUILD_MODULE)
@@ -211,9 +215,8 @@ int kobuki_tof_main(int argc, char* argv[]) // name must match '$APPNAME_main' i
         
         bool invisible_wall = false;
 
+        geometry_msgs__msg__Twist msg = {0};
         while(true) {
-            node.publish_status_info();     
-
             // set rmw fields to NULL
             CHECK_RET(rcl_wait_set_clear(&wait_set));
 
@@ -226,13 +229,12 @@ int kobuki_tof_main(int argc, char* argv[]) // name must match '$APPNAME_main' i
             rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
             
             if (wait_set.subscriptions[index_tof]){
-                std_msgs__msg__Bool msg;
-                rc = rcl_take(&sub_tof_trigger, &msg, NULL, NULL);
-                invisible_wall = msg.data;
+                std_msgs__msg__Bool msg_tof;
+                rc = rcl_take(&sub_tof_trigger, &msg_tof, NULL, NULL);
+                invisible_wall = msg_tof.data;
             }
 
             if (wait_set.subscriptions[index_vel] ){
-                geometry_msgs__msg__Twist msg;
                 rmw_message_info_t        messageInfo;
                 rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo, NULL);
                 if(rc != RCL_RET_OK) {
@@ -243,15 +245,27 @@ int kobuki_tof_main(int argc, char* argv[]) // name must match '$APPNAME_main' i
                     continue;
                 }
                 
-                if (invisible_wall || r->_cliff || r->_bumper){
-                    msg.angular.z = 0;
-                    msg.linear.x = (msg.linear.x > 0) ? 0 : msg.linear.x;
-                }
-                
-                commandVelCallback( &msg );
+                msg.angular.z =
+                    std::min(
+                        kobuki_max_angular_velocity,
+                        std::max(-kobuki_max_angular_velocity, msg.angular.z));
+                msg.linear.x =
+                    std::min(
+                        kobuki_max_linear_velocity,
+                        std::max(-kobuki_max_linear_velocity, msg.linear.x));
+            }
+            else
+            {
+                msg.angular.z *= kobuki_damping_constant;
+                msg.linear.x *= kobuki_damping_constant;
             }
 
-            
+            if (invisible_wall || r->_cliff || r->_bumper){
+                msg.angular.z = 0;
+                msg.linear.x = (msg.linear.x > 0) ? 0 : msg.linear.x;
+            }
+
+            commandVelCallback( &msg );
         }
         WARN_RET(rcl_wait_set_fini(&wait_set));
 	} catch(const std::exception& ex) {
@@ -265,4 +279,3 @@ int kobuki_tof_main(int argc, char* argv[]) // name must match '$APPNAME_main' i
   } // main
 
 } // extern "C"
-

@@ -59,11 +59,11 @@ config UROS_MAX_NODES
 
 config UROS_MAX_PUBLISHERS
   int "Maximum number of publishers per node"
-  default 2
+  default 3
 
 config UROS_MAX_SUBSCRIPTIONS
   int "Maximum number of subscriptions per node"
-  default 1
+  default 2
 
 config UROS_MAX_SERVICES
   int "Maximum number of service handlers per node"

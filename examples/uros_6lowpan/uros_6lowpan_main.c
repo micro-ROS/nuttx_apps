@@ -17,7 +17,6 @@ int uros_6lowpan_main(int argc, char* argv[])
 #endif
 {
     char buffer[256]; // Buffer to save configuration commands.
-    char aux_buffer[2]; // Buffer to save the configuration ID.
 
     if(3 > argc || 0 == atoi(argv[2]))
     {

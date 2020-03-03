@@ -170,12 +170,6 @@ int uros_6lowpan_main(int argc, char* argv[])
         do {
  
             rv = rcl_wait(&wait_set, 1000000);
-            if(RCL_RET_SUBSCRIPTION_TAKE_FAILED == rv){
-                printf("foo\r\n");
-            }
-            else{
-                printf("%i\r\n",rv);
-            }
             for (size_t i = 0; i < wait_set.size_of_subscriptions; ++i) {
                 rv = rcl_take(wait_set.subscriptions[i], msg, NULL, NULL);
                 if (RCL_RET_OK == rv)

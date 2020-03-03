@@ -24,12 +24,17 @@ int uros_6lowpan_main(int argc, char* argv[])
         printf("usage: program [-h | --help] | ip port sub/pub [<max_topics>]\n");
         return 0;
     }
+    //Check if the IP and the port are correct
+    if(strlen(argv[1])>39 || strlen(argv[2])>4){
+        printf("Error: IP or port size incorrect \r\n");
+        return 0;
+    }
 
     //6lowpan configuration process
     printf("Do you want to configure the 6lowpan network? (Y/N)\r\n");
     memset(buffer,0,sizeof(buffer));
     scanf("%s", buffer);
-    int i=rand();
+
     if(!strcmp(buffer,"y")){
         system("ifdown wpan0"); // Is necessary to bring down the network to configure.
         system("i8sak wpan0 startpan cd:ab"); //Set the radio as an endpoint.
@@ -56,7 +61,10 @@ int uros_6lowpan_main(int argc, char* argv[])
         //6lowpan configuration finished
     }
 
-    
+    //Waiting for a user input to continue.
+    printf("Press any key to continue\r\n");
+    scanf("%s",aux_buffer);
+
     rcl_ret_t rv;
 
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
@@ -80,6 +88,7 @@ int uros_6lowpan_main(int argc, char* argv[])
     }
 
     if(!strcmp(argv[3],"pub")){
+        printf("micro-ROS Publisher\r\n");
 
         rcl_node_options_t node_ops = rcl_node_get_default_options();
         rcl_node_t node = rcl_get_zero_initialized_node();
@@ -116,6 +125,8 @@ int uros_6lowpan_main(int argc, char* argv[])
 
     }
     else if(!strcmp(argv[3],"sub")){
+        printf("micro-ROS subscriber \r\n");
+
         rcl_node_options_t node_ops = rcl_node_get_default_options();
         rcl_node_t node = rcl_get_zero_initialized_node();
         rv = rcl_node_init(&node, "int32_subscriber_rcl", "", &context, &node_ops);
@@ -157,8 +168,14 @@ int uros_6lowpan_main(int argc, char* argv[])
 
         void* msg = rcl_get_default_allocator().zero_allocate(sizeof(std_msgs__msg__Int32), 1, rcl_get_default_allocator().state);
         do {
-            printf("foo\r\n");
+ 
             rv = rcl_wait(&wait_set, 1000000);
+            if(RCL_RET_SUBSCRIPTION_TAKE_FAILED == rv){
+                printf("foo\r\n");
+            }
+            else{
+                printf("%i\r\n",rv);
+            }
             for (size_t i = 0; i < wait_set.size_of_subscriptions; ++i) {
                 rv = rcl_take(wait_set.subscriptions[i], msg, NULL, NULL);
                 if (RCL_RET_OK == rv)
@@ -174,4 +191,7 @@ int uros_6lowpan_main(int argc, char* argv[])
     else{
         printf("Error. It must be pub (publisher) or sub (subscriber).\r\n");
     }
+
+    printf("Closing Micro-ROS 6lowpan app\r\n");
+    return 0;
 }

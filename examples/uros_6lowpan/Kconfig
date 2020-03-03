@@ -15,5 +15,13 @@ config UROS_6LOWPAN_EXAMPLE_PROGNAME
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
+config UROS_6LOWPAN_EXAMPLE_ID
+	hex "6LoWPAN device ID"
+	default 00
+	depends on UROS_6LOWPAN_EXAMPLE
+	---help---
+		ID of the 6LoWPAN radio. It must be between 00 and FF
 
 endif
+
+

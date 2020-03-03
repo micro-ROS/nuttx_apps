@@ -33,24 +33,16 @@ int uros_6lowpan_main(int argc, char* argv[])
     //6lowpan configuration process
     printf("Do you want to configure the 6lowpan network? (Y/N)\r\n");
     memset(buffer,0,sizeof(buffer));
-    scanf("%s", buffer);
+    scanf("%2s", buffer);
 
     if(!strcmp(buffer,"y")){
         system("ifdown wpan0"); // Is necessary to bring down the network to configure.
         system("i8sak wpan0 startpan cd:ab"); //Set the radio as an endpoint.
         system("i8sak set chan 26"); //Set the radio channel.
         system("i8sak set panid cd:ab"); //Set network PAN ID.
-
-        // Set the ID
-        printf("Introduce your 6LowPan ID (It must between 00 and FF (Hex))\r\n");
-        scanf("%s", aux_buffer);
-        if (strlen(aux_buffer) < 2) {
-            printf("Error ID must be between 00 and FF\n");
-            return 0;
-        }
-        sprintf(buffer,"i8sak set saddr 42:%c%c",aux_buffer[0],aux_buffer[1]); // Set the short address of the radio
+        sprintf(buffer,"i8sak set saddr 42:%02x",CONFIG_UROS_6LOWPAN_EXAMPLE_ID); // Set the short address of the radio
         system(buffer);
-        sprintf(buffer, "i8sak set eaddr 00:fa:de:00:de:ad:be:%c%c", aux_buffer[0],aux_buffer[1]); // TODO: This won't work on the lastest version of NuttX
+        sprintf(buffer, "i8sak set eaddr 00:fa:de:00:de:ad:be:%02x", CONFIG_UROS_6LOWPAN_EXAMPLE_ID); // TODO: This won't work on the lastest version of NuttX
         system(buffer);
         system("i8sak acceptassoc");
         system("ifup wpan0"); // Bring up the network.
@@ -76,7 +68,6 @@ int uros_6lowpan_main(int argc, char* argv[])
     }
 
     // Set the IP and the port of the Agent
-    // TODO (Juan) Check if the IP and the port are correct
     rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&options);
     rmw_uros_options_set_udp_address(argv[1], argv[2], rmw_options);
 

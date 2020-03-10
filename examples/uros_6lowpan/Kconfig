@@ -1,0 +1,27 @@
+config UROS_6LOWPAN_EXAMPLE
+	bool "microROS Publisher/Subscriber 6LoWPAN"
+	default n
+	depends on UROS
+	---help---
+		Enable the publisher/subscriber example over 6LoWPAN radio communication
+
+if UROS_6LOWPAN_EXAMPLE
+
+config UROS_6LOWPAN_EXAMPLE_PROGNAME
+	string "Program name"
+	default "uros_6lowpan"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config UROS_6LOWPAN_EXAMPLE_ID
+	hex "6LoWPAN device ID"
+	default 00
+	depends on UROS_6LOWPAN_EXAMPLE
+	---help---
+		ID of the 6LoWPAN radio. It must be between 00 and FF
+
+endif
+
+

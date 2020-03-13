@@ -197,7 +197,7 @@ int kobuki_tof_main(int argc, char* argv[]) // name must match '$APPNAME_main' i
             &subscription_ops))
 
         //create subscription
-        const char * tof_trigger_topic_name = "/tof/trigger";
+        const char * tof_trigger_topic_name = "/sensors/tof/trigger";
         rcl_subscription_t sub_tof_trigger = rcl_get_zero_initialized_subscription();
         subscription_ops = rcl_subscription_get_default_options();
         const rosidl_message_type_support_t * sub_type_support_trigger = ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool);

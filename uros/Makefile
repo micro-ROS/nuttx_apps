@@ -17,6 +17,8 @@ ifeq ($(CONFIG_UROS_TRANSPORT_UDP),y)
   AGENT_IP=$(CONFIG_UROS_AGENT_IP)
 else
   RMW_UXRCE_TRANSPORT=serial
+  RMW_UXRCE_SERIAL_DEVICE=$(shell echo $(CONFIG_UROS_SERIAL_PORT) |\
+  	sed 's/\"//g')
 endif
 
 
@@ -47,7 +49,7 @@ rmw_config.meta: $(TOPDIR)/.config rmw_config.meta.in
 		sed "s/@TRANSPORT@/$(RMW_UXRCE_TRANSPORT)/g" | \
 		sed "s/@AGENT_IP@/$(AGENT_IP)/g" | \
 		sed "s/@AGENT_PORT@/$(CONFIG_UROS_AGENT_PORT)/g" |\
-		sed "s/@SERIAL_PORT@/$(CONFIG_UROS_SERIAL_PORT)/g" \
+		sed 's#@SERIAL_PORT@#$(RMW_UXRCE_SERIAL_DEVICE)#g' \
 		> rmw_config.meta
 
 ifeq (${UROS_FAST_BUILD},y)

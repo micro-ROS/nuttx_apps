@@ -1,0 +1,18 @@
+config UROS_PINGPONG_EXAMPLE
+	bool "micro-ROS Ping Pong"
+	default n
+	depends on UROS
+	---help---
+		micro-ROS Ping Pong sample app
+
+if UROS_PINGPONG_EXAMPLE
+
+config UROS_PINGPONG_EXAMPLE_PROGNAME
+	string "Program name"
+	default "uros_ping_pong"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+endif

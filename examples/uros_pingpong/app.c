@@ -4,6 +4,8 @@
 // Micro-ROS specific library
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
 #include "rosidl_generator_c/string_functions.h"
 #include <std_msgs/msg/header.h>
 #include <rmw_uros/options.h>
@@ -15,16 +17,6 @@
 #include <stdlib.h>
 
 #define STRING_BUFFER_LEN 100
-
-// Thread to trigger a publication guard condition
-void * trigger_guard_condition(void *args){
-  rcl_guard_condition_t * guard_condition = (rcl_guard_condition_t *)args;
-
-  while(true){
-    rcl_trigger_guard_condition(guard_condition);
-    sleep(5);
-  }
-}
 
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
@@ -56,8 +48,9 @@ int uros_pingpong_main(int argc, char* argv[])
   rcl_publisher_t pong_publisher = rcl_get_zero_initialized_publisher();
   rcl_publisher_init(&pong_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Header), "/microROS/pong", &pong_publisher_ops);
 
-  // Create a reliable pong subscriber
+  // Create a best efforts pong subscriber
   rcl_subscription_options_t pong_subscription_ops = rcl_subscription_get_default_options();
+  pong_subscription_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
   rcl_subscription_t pong_subscription = rcl_get_zero_initialized_subscription();
   rcl_subscription_init(&pong_subscription, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Header), "/microROS/pong", &pong_subscription_ops);
 
@@ -67,18 +60,9 @@ int uros_pingpong_main(int argc, char* argv[])
   rcl_subscription_t ping_subscription = rcl_get_zero_initialized_subscription();
   rcl_subscription_init(&ping_subscription, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Header), "/microROS/ping", &ping_subscription_ops);
 
-  // Create a guard condition
-  rcl_guard_condition_t guard_condition = rcl_get_zero_initialized_guard_condition();
-  rcl_guard_condition_options_t guard_condition_options = rcl_guard_condition_get_default_options();
-  rcl_guard_condition_init(&guard_condition, &context, guard_condition_options);
-  
-  // Create a thread that triggers the guard condition
-  pthread_t guard_condition_thread;
-  pthread_create(&guard_condition_thread, NULL, trigger_guard_condition, &guard_condition);
-
   // Create a wait set
   rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-  rcl_wait_set_init(&wait_set, 2, 1, 0, 0, 0, 0, &context, rcl_get_default_allocator());
+  rcl_wait_set_init(&wait_set, 2, 0, 0, 0, 0, 0, &context, rcl_get_default_allocator());
 
   // Create and allocate the pingpong publication message
   std_msgs__msg__Header msg;
@@ -100,6 +84,8 @@ int uros_pingpong_main(int argc, char* argv[])
   struct timespec ts;
   rcl_ret_t rc;
 
+  uint32_t iterations = 0;
+
   do {
     // Clear and set the waitset
     rcl_wait_set_clear(&wait_set);
@@ -110,14 +96,11 @@ int uros_pingpong_main(int argc, char* argv[])
     size_t index_ping_subscription;
     rcl_wait_set_add_subscription(&wait_set, &ping_subscription, &index_ping_subscription);
     
-    size_t index_guardcondition;
-    rcl_wait_set_add_guard_condition(&wait_set, &guard_condition, &index_guardcondition);
-    
     // Run session for 100 ms
     rcl_wait(&wait_set, RCL_MS_TO_NS(100));
 
     // Check if it is time to send a ping
-    if (wait_set.guard_conditions[index_guardcondition]) {
+    if (iterations++ % 50 == 0) {
       // Generate a new random sequence number
       seq_no = rand();
       sprintf(msg.frame_id.data, "%d_%d", seq_no, device_id);
@@ -131,7 +114,7 @@ int uros_pingpong_main(int argc, char* argv[])
       // Reset the pong count and publish the ping message
       pong_count = 0;
       rcl_publish(&ping_publisher, (const void*)&msg, NULL);
-      // printf("Ping send seq 0x%x\n", seq_no);
+      printf("Ping send seq %s\n", msg.frame_id.data);  
     }
     
     // Check if some pong message is received
@@ -140,7 +123,7 @@ int uros_pingpong_main(int argc, char* argv[])
 
       if(rc == RCL_RET_OK && strcmp(msg.frame_id.data,rcv_msg.frame_id.data) == 0) {
           pong_count++;
-          // printf("Pong for seq 0x%x (%d)\n", seq_no, pong_count);
+          printf("Pong for seq %s (%d)\n", rcv_msg.frame_id.data, pong_count);
       }
     }
 
@@ -150,7 +133,7 @@ int uros_pingpong_main(int argc, char* argv[])
 
       // Dont pong my own pings
       if(rc == RCL_RET_OK && strcmp(msg.frame_id.data,rcv_msg.frame_id.data) != 0){
-        // printf("Ping received with seq 0x%x (%d). Answering.\n", seq_no);
+        printf("Ping received with seq %s. Answering.\n", rcv_msg.frame_id.data);
         rcl_publish(&pong_publisher, (const void*)&rcv_msg, NULL);
       }
     }

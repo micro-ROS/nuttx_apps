@@ -9,11 +9,13 @@ int main(int argc, char *argv[])
 #else
 int publisher_main(int argc, char* argv[])
 #endif
-{
+{   
     rcl_ret_t rv;
 
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
     rv = rcl_init_options_init(&options, rcl_get_default_allocator());
+        printf("rcl_init_options_init\n");
+
     if (RCL_RET_OK != rv) {
         printf("rcl init options error: %s\n", rcl_get_error_string().str);
         return 1;
@@ -21,6 +23,8 @@ int publisher_main(int argc, char* argv[])
 
     rcl_context_t context = rcl_get_zero_initialized_context();
     rv = rcl_init(argc, argv, &options, &context);
+    printf("rcl_init\n");
+
     if (RCL_RET_OK != rv) {
         printf("rcl initialization error: %s\n", rcl_get_error_string().str);
         return 1;

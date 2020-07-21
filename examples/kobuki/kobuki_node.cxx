@@ -32,8 +32,6 @@
 
 #include "uros/ros_util.h"
 #include "kobuki_node.h"
-#include <rosidl_generator_c/string_functions.h>
-#include <rosidl_generator_c/primitives_sequence_functions.h>
 
 static const float NOMINAL_BATTERY_VOLTAGE = 16.7f;
 

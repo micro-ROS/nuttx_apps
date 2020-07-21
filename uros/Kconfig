@@ -63,7 +63,7 @@ config UROS_MAX_PUBLISHERS
 
 config UROS_MAX_SUBSCRIPTIONS
   int "Maximum number of subscriptions"
-  default 1
+  default 2
 
 config UROS_MAX_SERVICES
   int "Maximum number of service handlers"

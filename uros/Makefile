@@ -59,7 +59,7 @@ colcon_compile: arm_toolchain.cmake rmw_config.meta
 	$(Q) cd $(UROS_DIR); \
 			colcon build \
 			--packages-ignore-regex=.*_cpp \
-			--metas colcon.meta $(APPDIR)/uros/rmw_config.meta \
+			--metas $(UROS_DIR)/colcon.meta $(APPDIR)/uros/rmw_config.meta \
 			--cmake-args \
 			-DBUILD_SHARED_LIBS=OFF \
 			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \

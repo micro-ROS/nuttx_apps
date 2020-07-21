@@ -57,7 +57,6 @@
 // for time ??? #include "builtin_interfaces/msg/time__struct.h"
 
 // strings in imu message : frame_id
-#include "rosidl_generator_c/string.h"
 
 #include "kobuki_robot.h"
 

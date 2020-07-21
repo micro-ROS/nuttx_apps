@@ -1,5 +1,4 @@
 #include "pong_server.h"
-#include "rosidl_generator_c/string_functions.h"
 #include <sstream>
 
 using namespace kobuki;

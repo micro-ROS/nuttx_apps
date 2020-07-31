@@ -1,0 +1,20 @@
+config UCS_HIH6130_EXAMPLE
+	bool "UCS - microROS HIH6130 Publisher over 6LoWPAN"
+	default n
+	depends on UROS
+	---help---
+		Enable the uROS HIH6130 humidity publisher over 6LoWPAN radio communication
+
+if UCS_HIH6130_EXAMPLE
+
+config UCS_HIH6130_EXAMPLE_PROGNAME
+	string "Program name"
+	default "ucs_hih6130"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+endif
+
+

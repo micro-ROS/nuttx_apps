@@ -1,0 +1,25 @@
+-include $(TOPDIR)/Make.defs
+
+# uROS-subscriber built-in application info
+
+CONFIG_UCS_SUB_EXAMPLE_PRIORITY ?= SCHED_PRIORITY_DEFAULT
+CONFIG_UCS_SUB_EXAMPLE_STACKSIZE ?= 65000
+
+APPNAME = ucs_sub
+PRIORITY = $(CONFIG_UCS_SUB_EXAMPLE_PRIORITY)
+STACKSIZE = $(CONFIG_UCS_SUB_EXAMPLE_STACKSIZE)
+
+# uROS-subscriber Example
+
+ASRCS =
+CSRCS = init_sub_6lowpan.c
+MAINSRC = ucs_sub_main.c
+
+CONFIG_UCS_SUB_EXAMPLE_PROGNAME ?= ucs_sub$(EXEEXT)
+PROGNAME = $(CONFIG_UCS_SUB_EXAMPLE_PROGNAME)
+UCS_SUB_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UCS_SUB_INCLUDES)"} -std=c99
+
+MODULE = CONFIG_UCS_SUB_EXAMPLE
+
+include $(APPDIR)/Application.mk

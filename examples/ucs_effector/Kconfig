@@ -1,0 +1,20 @@
+config UCS_EFFECTOR_EXAMPLE
+	bool "UCS - microROS EFFECTOR Subscriber over 6LoWPAN"
+	default n
+	depends on UROS
+	---help---
+		Enable the uROS finala effector subscriber over 6LoWPAN radio communication
+
+if UCS_EFFECTOR_EXAMPLE
+
+config UCS_EFFECTOR_EXAMPLE_PROGNAME
+	string "Program name"
+	default "ucs_effector"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+endif
+
+

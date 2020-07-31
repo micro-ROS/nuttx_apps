@@ -1,0 +1,19 @@
+config UCS_DISTANC_EXAMPLE
+	bool "UCS - microROS TFMINI Publisher over 6LoWPAN"
+	default n
+	depends on UROS
+	---help---
+		Enable the uROS TFMini distance publisher over 6LoWPAN radio communication
+
+if UCS_DISTANC_EXAMPLE
+
+config UCS_DISTANC_EXAMPLE_PROGNAME
+	string "Program name"
+	default "ucs_distance"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+endif
+

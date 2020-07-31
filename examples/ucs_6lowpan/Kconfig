@@ -1,0 +1,21 @@
+config UCS_6LOWPAN_EXAMPLE
+	bool "ucs - microROS Publisher/Subscriber 6LoWPAN"
+	default n
+	depends on UROS
+	---help---
+		Enable the uROS test publisher/subscriber example over 6LoWPAN radio communication
+
+if UCS_6LOWPAN_EXAMPLE
+
+config UCS_6LOWPAN_EXAMPLE_PROGNAME
+	string "Program name"
+	default "ucs_6lowpan"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+
+endif
+
+

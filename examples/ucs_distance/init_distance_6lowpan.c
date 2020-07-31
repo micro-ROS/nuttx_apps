@@ -5,7 +5,6 @@
 #include "init_distance_6lowpan.h"
 
 
-
 int init_distance_6lowpan(void)
 {
 // When running on nsh prompt
@@ -36,12 +35,13 @@ int init_distance_6lowpan(void)
     sprintf(buffer, "i8sak set eaddr 00:fa:de:00:de:ad:be:%02x", DISTANCE_DEVICE_ID); // TODO: This won't work on the lastest version of NuttX
     system(buffer);
 
-    // system("i8sak acceptassoc");
+    system("i8sak acceptassoc");
     system("ifup wpan0"); // Bring up the network.
 
     system("mount -t procfs /proc");// Mount the proc file system to check the connection data.
     printf("Connection data\r\n");
     system("cat proc/net/wpan0");
+    usleep(1000000);
 #endif
 
     return 0;

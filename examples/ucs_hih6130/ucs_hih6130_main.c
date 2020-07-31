@@ -10,12 +10,12 @@
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rmw_uros/options.h>
-// #include <demo_msgs/msg/demo_hih6130.h>
 #include <std_msgs/msg/int32.h>
 
 #include "init_hih_6lowpan.h"
 #include "hih6130.h"
 
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
 #define LED_HEARTBEAT					(0x00)
 
 static void led_toggle(void) {
@@ -81,61 +81,35 @@ int ucs_hih6130_main(int argc, char* argv[])
     rcl_ret_t rv;
 
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
+    RCCHECK(rcl_init_options_init(&options, rcl_get_default_allocator()));
 
-    rv = rcl_init_options_init(&options, rcl_get_default_allocator());
-    if (RCL_RET_OK != rv) {
-        printf("rcl init options error: %s\n", rcl_get_error_string().str);
-        return 1;
-    }
     // Set the IP and the port of the Agent
     rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&options);
     rmw_uros_options_set_udp_address(inet6_address, udp_port, rmw_options);
-
     rcl_context_t context = rcl_get_zero_initialized_context();
-    rv = rcl_init(0, NULL, &options, &context);
-    if (RCL_RET_OK != rv) {
-        printf("rcl initialization error: %s\n", rcl_get_error_string().str);
-        return 1;
-    }
-
-    printf("micro-ROS Publisher\r\n");
+    RCCHECK(rcl_init(0, NULL, &options, &context));
 
     rcl_node_options_t node_ops = rcl_node_get_default_options();
     rcl_node_t node = rcl_get_zero_initialized_node();
-    rv = rcl_node_init(&node, node_name, "", &context, &node_ops);
-    if (RCL_RET_OK != rv) {
-        printf("Node initialization error: %s\n", rcl_get_error_string().str);
-        return 1;
-    }
+    RCCHECK(rcl_node_init(&node, node_name, "", &context, &node_ops));
+
+    printf("micro-ROS Publisher\r\n");
+
     rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
     rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
-    // rv = rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(demo_msgs, msg, DemoHih6130), topic_name, &publisher_ops);
-    rv = rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), topic_name, &publisher_ops);
-    if (RCL_RET_OK != rv) {
-        printf("Publisher initialization error: %s\n", rcl_get_error_string().str);
-        return 1;
-    }
+    RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), topic_name, &publisher_ops));
+
     rcl_publisher_t publisher2 = rcl_get_zero_initialized_publisher();
-    // rv = rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(demo_msgs, msg, DemoHih6130), topic_name, &publisher_ops);
-    rv = rcl_publisher_init(&publisher2, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), topic_name2, &publisher_ops);
-    if (RCL_RET_OK != rv) {
-        printf("Publisher initialization error: %s\n", rcl_get_error_string().str);
-        return 1;
-    }
+    RCCHECK(rcl_publisher_init(&publisher2, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), topic_name2, &publisher_ops));
 
 
     printf(" HIH6130 pub_main \n");
-	// demo_msgs__msg__DemoHih6130 msg;
-	// msg.heartbeats = 0;
     std_msgs__msg__Int32 msg;
     do {
 		int num = 10;
 
         //Read sensor sampl
         read(fd_temp, &sample, sizeof(uint32_t));
-        // msg.temp = sample.temp;                
-        // msg.hum = sample.hum;  
-        // msg.heartbeats++;              
 		msg.data = sample.temp;
         rv = rcl_publish(&publisher, (const void*)&msg, NULL);
         if (RCL_RET_OK == rv )

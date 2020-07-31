@@ -39,6 +39,7 @@ int init_opener_6lowpan(void)
     system("mount -t procfs /proc");// Mount the proc file system to check the connection data.
     printf("Connection data\r\n");
     system("cat proc/net/wpan0");
+    usleep(1000000);
 
     return 0;
 }

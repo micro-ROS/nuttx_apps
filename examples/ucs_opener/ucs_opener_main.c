@@ -22,8 +22,11 @@
 
 struct relay_ctl_stat {
     int timer;
-    bool open;
-    bool close;
+    bool cmd_en;
+    bool open_cmd;
+    bool close_cmd;
+    bool open_stat;
+    bool close_stat;
     char* pstr;
 };
 
@@ -35,46 +38,60 @@ int find_opener_command(int cmd, struct relay_ctl_stat* st)
 {
     int delay = OPENER_DELAY * 1000 / SUBSCRIBER_PERIOD_MS + 1;
     if(cmd == OPEN_CMD) {
-        st->open = ON;
-        st->close = OFF;
+        st->open_cmd = ON;
+        st->close_cmd = OFF;
         st->timer = delay;
         st->pstr = open_str;
     }
     else if(cmd == CLOSE_CMD) {
-        st->open = OFF;
-        st->close = ON;
+        st->open_cmd = OFF;
+        st->close_cmd = ON;
         st->timer = delay;
         st->pstr = close_str;
     }
     else {
         st->pstr = invalid_str;
     }
+    st->cmd_en = true;
     return 0;
 }
 
-int opener_status(struct relay_ctl_stat* st)
+int opener_status(int fr0, int fr1, struct relay_ctl_stat* st)
 {
-    return ((int)st->open | (int)st->close << 1);
+    int ret = ioctl(fr0, GPIOC_READ, (unsigned long)((uintptr_t)&st->open_stat));
+    ret |= ioctl(fr1, GPIOC_READ, (unsigned long)((uintptr_t)&st->close_stat));
+    if (ret < 0) {
+        printf("ERROR: Failed to read status \n");
+        return 0x80;
+    }    
+    return ((int)st->open_stat | (int)st->close_stat << 1);
 }
 
 int opener_ctl(int fr0, int fr1, struct relay_ctl_stat* st)
 {
-    if(fr0 < 0 || fr1 < 0) {
-        printf("Failed to open gpio dev \n");
-        return -1;
-    }
+    int ret;
+
     if(st->timer > 0) {
         st->timer--;
+        if(!st->timer) {
+            st->open_cmd = OFF;
+            st->close_cmd = OFF;        
+            st->cmd_en = true;
+        }
+    }
+    if(!st->cmd_en) {
+        return 0;
+    }
+    ret = ioctl(fr0, GPIOC_WRITE, (unsigned long)st->open_cmd);
+    ret |= ioctl(fr1, GPIOC_WRITE, (unsigned long)st->close_cmd);
+    if(ret) {
+        printf("ERROR: Failed to write the open/close command \n");
     }
     else {
-        st->open = OFF;
-        st->close = OFF;        
+        printf(" Write %s %s \n", st->close_cmd == ON ? "ON" : "OFF", \
+                                        st->open_cmd == ON ? "ON" : "OFF");
     }
-    ioctl(fr0, GPIOC_WRITE, (unsigned long)st->open);
-    ioctl(fr1, GPIOC_WRITE, (unsigned long)st->close);
-    printf(" Write %s %s, timer %d \n", st->close == ON ? "ON" : "OFF", \
-                                        st->open == ON ? "ON" : "OFF", \
-                                        st->timer);
+    st->cmd_en = false;
     return 0;    
 }
 
@@ -136,8 +153,11 @@ int ucs_opener_main(int argc, char* argv[])
     }
 
     // Initialize relay control 
-    ctl_st.open = OFF;
-    ctl_st.close = OFF;
+    ctl_st.cmd_en = false;
+    ctl_st.open_cmd = OFF;
+    ctl_st.close_cmd = OFF;
+    ctl_st.open_stat = OFF;
+    ctl_st.close_stat = OFF;
     ctl_st.timer = 0;
     ctl_st.pstr = invalid_str;
     // ioctl(fr0, GPIOC_WRITE, (unsigned long)ON);
@@ -199,10 +219,10 @@ int ucs_opener_main(int argc, char* argv[])
     	led_toggle();
         opener_ctl( fr0, fr1, &ctl_st);
 	    if (RCL_RET_OK == rv) {
-            msg.data = opener_status(&ctl_st);    
+            msg.data = opener_status(fr0, fr1, &ctl_st);    
             rv = rcl_publish(&publisher, (const void*)&msg, NULL);
             if (RCL_RET_OK == rv ) {
-                printf("Sent: '%i'\n", msg.data);
+                printf("Sent status '%i', timer '%i' \n", msg.data, ctl_st.timer);
             }
         }
 

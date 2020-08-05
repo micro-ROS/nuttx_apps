@@ -12,17 +12,13 @@
 #include <rmw_uros/options.h>
 #include <std_msgs/msg/int8.h>
 
-
-
 #include "init_opener_6lowpan.h"
 #include "opener.h"
-
-#define SEND_PERIOD_MS      1000
-#define LED_HEARTBEAT		(0x00)
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
 
+#define LED_HEARTBEAT		(0x00)
 
 struct relay_ctl_stat {
     int timer;
@@ -37,20 +33,21 @@ char invalid_str[] = {"INVALID"};
 
 int find_opener_command(int cmd, struct relay_ctl_stat* st)
 {
+    int delay = OPENER_DELAY * 1000 / SUBSCRIBER_PERIOD_MS + 1;
     if(cmd == OPEN_CMD) {
         st->open = ON;
         st->close = OFF;
-        st->timer = OPENER_DELAY;
-        st->pstr = &open_str;
+        st->timer = delay;
+        st->pstr = open_str;
     }
     else if(cmd == CLOSE_CMD) {
         st->open = OFF;
         st->close = ON;
-        st->timer = OPENER_DELAY;
-        st->pstr = &close_str;
+        st->timer = delay;
+        st->pstr = close_str;
     }
     else {
-        st->pstr = &invalid_str;
+        st->pstr = invalid_str;
     }
     return 0;
 }
@@ -115,9 +112,7 @@ int ucs_opener_main(int argc, char* argv[])
     struct relay_ctl_stat ctl_st;       // relay control status
     size_t index;
     std_msgs__msg__Int8 msg;
-    std_msgs__msg__Int8 msg2;
     msg.data = 0;
-    msg2.data = 0;
 
     // Opening the relays with read/write permission
     fr0 = open("/dev/gpout0", O_RDWR);
@@ -144,10 +139,10 @@ int ucs_opener_main(int argc, char* argv[])
     ctl_st.open = OFF;
     ctl_st.close = OFF;
     ctl_st.timer = 0;
-    ctl_st.pstr = &invalid_str;
-    ioctl(fr0, GPIOC_WRITE, (unsigned long)ON);
-    usleep(1000000);    
-    ioctl(fr0, GPIOC_WRITE, (unsigned long)OFF);
+    ctl_st.pstr = invalid_str;
+    // ioctl(fr0, GPIOC_WRITE, (unsigned long)ON);
+    // usleep(1000000);    
+    // ioctl(fr0, GPIOC_WRITE, (unsigned long)OFF);
 
     // Initialize 6lowpan
     init_opener_6lowpan();
@@ -177,11 +172,10 @@ int ucs_opener_main(int argc, char* argv[])
 
     printf("micro-ROS Opener Subscriber \r\n");
 
-// ===== publisher
+    // Status publisher
     rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
     rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
     RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int8), topic_name2, &publisher_ops));
-// ===========================
 
     rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
     rcl_subscription_t subscription = rcl_get_zero_initialized_subscription();
@@ -193,7 +187,8 @@ int ucs_opener_main(int argc, char* argv[])
 	do {
 	    RCSOFTCHECK(rcl_wait_set_clear(&wait_set));
 	    RCSOFTCHECK(rcl_wait_set_add_subscription(&wait_set, &subscription, &index));
-	    RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SEND_PERIOD_MS)));
+	    // RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_PERIOD_MS)));
+	    rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_PERIOD_MS));
 	    if (wait_set.subscriptions[index]) {
 	        rcl_ret_t rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
 	        if (RCL_RET_OK == rv) {

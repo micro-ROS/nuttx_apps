@@ -7,7 +7,7 @@
 #define HIH_AGENT_UDP_PORT      "9999"                              // UDP port agent is listening on; below 10000
 #define HIH_NODE                "use_case_hih6130"                  // node name max 39 char
 // #define HIH_TOPIC               "temp_humidity"                     // topic name max 39 char
-#define HIH_TOPIC               "temperature"                     // topic name max 39 char
+#define HIH_TOPIC               "temperature"                       // topic name max 39 char
 #define HIH_TOPIC2              "humidity"                          // topic name max 39 char
 
 

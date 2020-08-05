@@ -21,7 +21,9 @@
 #define LED_HEARTBEAT		(0x00)
 
 struct effector_ctl_stat {
-    bool lamp;
+    bool cmd_en;
+    bool lamp_cmd;
+    bool lamp_stat;
     char* pstr;
 };
 
@@ -32,32 +34,42 @@ char invalid_str[] = {"INVALID"};
 int find_effector_command(int cmd, struct effector_ctl_stat* st)
 {
     if(cmd == LAMP_ON_CMD) {
-        st->lamp = ON;
+        st->lamp_cmd = ON;
         st->pstr = turn_on_str;
     }
     else if(cmd == LAMP_OFF_CMD) {
-        st->lamp = OFF;
+        st->lamp_cmd = OFF;
         st->pstr = turn_off_str;
     }
     else {
         st->pstr = invalid_str;
     }
+    st->cmd_en = true;
     return 0;
 }
 
-int effector_status(struct effector_ctl_stat* st)
+int effector_status(int fd, struct effector_ctl_stat* st)
 {
-    return (int)st->lamp;
+    int ret = ioctl(fd, GPIOC_READ, (unsigned long)((uintptr_t)&st->lamp_stat));
+    if (ret < 0) {
+        printf("ERROR: Failed to read lamp status \n");
+        return 0x80;
+    }  
+    return (int)st->lamp_stat;
 }
-
-int effector_ctl(int fr0, struct effector_ctl_stat* st)
+int effector_ctl(int fd, struct effector_ctl_stat* st)
 {
-    if(fr0 < 0) {
-        printf("Failed to open gpio dev \n");
-        return -1;
+    if(!st->cmd_en) {
+        return 0;
     }
-    ioctl(fr0, GPIOC_WRITE, (unsigned long)st->lamp);
-    printf(" Write %s \n", st->lamp == ON ? "ON" : "OFF");
+    int ret = ioctl(fd, GPIOC_WRITE, (unsigned long)st->lamp_cmd);
+    if(ret < 0) {
+        printf("ERROR: Failed to write the lamp command \n");
+    }
+    else {
+        printf(" Write %s \n", st->lamp_cmd == ON ? "ON" : "OFF");
+    }
+    st->cmd_en = false;
     return 0;    
 }
 
@@ -90,14 +102,14 @@ int ucs_effector_main(int argc, char* argv[])
     char node_name[40];
     char topic_name[40];
     char topic_name2[40];
-    int fr0;                            // effector device descriptor
-    struct effector_ctl_stat ctl_st;    // effector control status
+    int fr0;                            // device descriptor
+    struct effector_ctl_stat ctl_st;    // control status
     size_t index;
     std_msgs__msg__Int8 msg;
     msg.data = 0;
 
-    // Opening the dout device with write only permission
-    fr0 = open("/dev/gpout0", O_WRONLY);
+    // Opening the dout device 
+    fr0 = open("/dev/gpout0", O_RDWR);
     if (fr0 < 0) {
         printf("Error opening device %d \n", fr0);
         return 0;
@@ -113,7 +125,9 @@ int ucs_effector_main(int argc, char* argv[])
     }
 
     // Initialize effector control structure
-    ctl_st.lamp = OFF;
+    ctl_st.cmd_en = false;
+    ctl_st.lamp_cmd = OFF;
+    ctl_st.lamp_stat = OFF;
     ctl_st.pstr = invalid_str;
     // ioctl(fr0, GPIOC_WRITE, (unsigned long)ON);
     // usleep(1000000);    
@@ -176,10 +190,11 @@ int ucs_effector_main(int argc, char* argv[])
     	led_toggle();
         effector_ctl( fr0, &ctl_st);
 	    if (RCL_RET_OK == rv) {
-            msg.data = effector_status(&ctl_st);    
+            // msg.data = effector_status(&ctl_st);    
+            msg.data = effector_status(fr0, &ctl_st);    
             rv = rcl_publish(&publisher, (const void*)&msg, NULL);
             if (RCL_RET_OK == rv ) {
-                printf("Sent: '%i'\n", msg.data);
+                printf("Sent status: '%i'\n", msg.data);
             }
         }
 

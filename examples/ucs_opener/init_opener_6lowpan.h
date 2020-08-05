@@ -4,7 +4,7 @@
 
 
 #define OPENER_CHANNEL     11          // 6lowpan radio channel in range 11-26
-#define OPENER_DEVICE_ID   1           // in range 0-255
+#define OPENER_DEVICE_ID   3           // in range 0-255
 #define OPENER_PAN_ID      0xabcd      // 6lowpan PAN_ID
 
 int init_opener_6lowpan(void);

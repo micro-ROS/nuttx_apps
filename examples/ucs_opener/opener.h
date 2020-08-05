@@ -12,7 +12,8 @@
 #define CLOSE_CMD                   2                               // command 'close the door'
 #define ON                          1                               // output logic level in state ON
 #define OFF                         0                               // output logic level in state OFF
-#define OPENER_DELAY                10                              // switching OFF delay in seconds; based on number of programme loops
+#define SUBSCRIBER_PERIOD_MS        200                             // wait period for a command in milliseconds
+#define OPENER_DELAY                22                              // switching OFF/ON delay in seconds
 
 
 #endif /* __UCS_OPENER_OPENER_H__ */

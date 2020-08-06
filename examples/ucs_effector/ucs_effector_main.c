@@ -178,8 +178,8 @@ int ucs_effector_main(int argc, char* argv[])
 	do {
 	    RCSOFTCHECK(rcl_wait_set_clear(&wait_set));
 	    RCSOFTCHECK(rcl_wait_set_add_subscription(&wait_set, &subscription, &index));
-	    // RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_PERIOD_MS)));
-	    rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_PERIOD_MS));
+	    // RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS)));
+	    rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS));
 	    if (wait_set.subscriptions[index]) {
 	        rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
 	        if (RCL_RET_OK == rv) {

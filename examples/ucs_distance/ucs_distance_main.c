@@ -193,8 +193,6 @@ int ucs_distance_main(int argc, char* argv[])
     printf(" Distance pub_main \n");
     std_msgs__msg__Int32 msg;
     do {
-    	int num = 100;
-
     	while (synchronize(fd, &tmf)) {
 			printf("Error during synchro \n");
     	}
@@ -208,9 +206,7 @@ int ucs_distance_main(int argc, char* argv[])
             printf("TFMINI sent: '%i'\n", msg.data);
         }
     	led_toggle();
-		// num millisec
-		usleep(1000 * num);
-
+		usleep(1000 * PUBLISHER_LOOP_DELAY_MS);
     } while (RCL_RET_OK == rv);
     printf("[rcl_publish]rv %d \n", rv);
 

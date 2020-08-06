@@ -1,4 +1,5 @@
 #include <nuttx/config.h>
+#include <nuttx/clock.h>
 #include <nuttx/ioexpander/gpio.h>
 #include <fcntl.h>
 
@@ -21,12 +22,13 @@
 #define LED_HEARTBEAT		(0x00)
 
 struct relay_ctl_stat {
-    int timer;
     bool cmd_en;
     bool open_cmd;
     bool close_cmd;
     bool open_stat;
     bool close_stat;
+    bool timer_en;
+    uint cmd_tick;
     char* pstr;
 };
 
@@ -34,20 +36,39 @@ char open_str[] = {"OPEN"};
 char close_str[] = {"CLOSE"};
 char invalid_str[] = {"INVALID"};
 
+int check_timer(uint tick)
+{
+    uint c_tick = clock_systimer();
+    if(tick > c_tick) {
+        tick = 0xffff - tick + c_tick;
+    }
+    else {
+        tick = c_tick - tick;
+    }
+    if(tick < TICK_PER_SEC * OPENER_DELAY) {
+        printf("  timer: %i s;  ", tick / TICK_PER_SEC);
+        return 0;
+    }
+    return 1;
+    
+}
+
 int find_opener_command(int cmd, struct relay_ctl_stat* st)
 {
-    int delay = OPENER_DELAY * 1000 / SUBSCRIBER_PERIOD_MS + 1;
+    int delay = OPENER_DELAY * 1000 / SUBSCRIBER_LOOP_DELAY_MS + 1;
     if(cmd == OPEN_CMD) {
         st->open_cmd = ON;
         st->close_cmd = OFF;
-        st->timer = delay;
         st->pstr = open_str;
+        st->cmd_tick = clock_systimer();
+        st->timer_en = true;
     }
     else if(cmd == CLOSE_CMD) {
         st->open_cmd = OFF;
         st->close_cmd = ON;
-        st->timer = delay;
         st->pstr = close_str;
+        st->cmd_tick = clock_systimer();
+        st->timer_en = true;
     }
     else {
         st->pstr = invalid_str;
@@ -71,27 +92,26 @@ int opener_ctl(int fr0, int fr1, struct relay_ctl_stat* st)
 {
     int ret;
 
-    if(st->timer > 0) {
-        st->timer--;
-        if(!st->timer) {
+    if(st->cmd_en) {
+        ret = ioctl(fr0, GPIOC_WRITE, (unsigned long)st->open_cmd);
+        ret |= ioctl(fr1, GPIOC_WRITE, (unsigned long)st->close_cmd);
+        if(ret) {
+            printf("ERROR: Failed to write the open/close command \n");
+        }
+        else {
+            printf(" Write %s %s \n", st->close_cmd == ON ? "ON" : "OFF", \
+                                            st->open_cmd == ON ? "ON" : "OFF");
+        }
+        st->cmd_en = false;
+    }
+
+    if(st->timer_en && check_timer(st->cmd_tick)) { 
             st->open_cmd = OFF;
             st->close_cmd = OFF;        
             st->cmd_en = true;
-        }
-    }
-    if(!st->cmd_en) {
-        return 0;
-    }
-    ret = ioctl(fr0, GPIOC_WRITE, (unsigned long)st->open_cmd);
-    ret |= ioctl(fr1, GPIOC_WRITE, (unsigned long)st->close_cmd);
-    if(ret) {
-        printf("ERROR: Failed to write the open/close command \n");
-    }
-    else {
-        printf(" Write %s %s \n", st->close_cmd == ON ? "ON" : "OFF", \
-                                        st->open_cmd == ON ? "ON" : "OFF");
-    }
-    st->cmd_en = false;
+            st->timer_en = false;
+            st->cmd_tick = 0;
+    }    
     return 0;    
 }
 
@@ -158,7 +178,8 @@ int ucs_opener_main(int argc, char* argv[])
     ctl_st.close_cmd = OFF;
     ctl_st.open_stat = OFF;
     ctl_st.close_stat = OFF;
-    ctl_st.timer = 0;
+    ctl_st.timer_en = false;
+    ctl_st.cmd_tick = 0;
     ctl_st.pstr = invalid_str;
     // ioctl(fr0, GPIOC_WRITE, (unsigned long)ON);
     // usleep(1000000);    
@@ -207,10 +228,10 @@ int ucs_opener_main(int argc, char* argv[])
 	do {
 	    RCSOFTCHECK(rcl_wait_set_clear(&wait_set));
 	    RCSOFTCHECK(rcl_wait_set_add_subscription(&wait_set, &subscription, &index));
-	    // RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_PERIOD_MS)));
-	    rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_PERIOD_MS));
+	    // RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS)));
+	    rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS));
 	    if (wait_set.subscriptions[index]) {
-	        rcl_ret_t rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
+	        rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
 	        if (RCL_RET_OK == rv) {
                 find_opener_command(msg.data, &ctl_st);
                 printf("Received: Command %s  \n", ctl_st.pstr);
@@ -222,10 +243,9 @@ int ucs_opener_main(int argc, char* argv[])
             msg.data = opener_status(fr0, fr1, &ctl_st);    
             rv = rcl_publish(&publisher, (const void*)&msg, NULL);
             if (RCL_RET_OK == rv ) {
-                printf("Sent status '%i', timer '%i' \n", msg.data, ctl_st.timer);
+                printf("Sent status '%i' \n", msg.data);
             }
         }
-
 	} while ( RCL_RET_OK == rv );
     
     printf("Error [rcl_take, rcl_publish]: rv = %d \n", rv);

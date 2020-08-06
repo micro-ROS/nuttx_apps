@@ -106,8 +106,6 @@ int ucs_hih6130_main(int argc, char* argv[])
     printf(" HIH6130 pub_main \n");
     std_msgs__msg__Int32 msg;
     do {
-		int num = 10;
-
         //Read sensor sampl
         read(fd_temp, &sample, sizeof(uint32_t));
 		msg.data = sample.temp;
@@ -124,8 +122,7 @@ int ucs_hih6130_main(int argc, char* argv[])
                 {
                     printf("Sent: Humidity %d  \n", msg.data);
                     led_toggle();
-    		        // num millisec
-	    	        usleep(1000 * num);
+	    	        usleep(1000 * PUBLISHER_LOOP_DELAY_MS);
                 }
             }
         }

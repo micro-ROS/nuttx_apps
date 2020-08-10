@@ -11,6 +11,7 @@
 #define LAMP_ON_CMD                 1                               // command 'turn ON the final effector' 
 #define LAMP_OFF_CMD                0                               // command 'turn OFF the final effector' 
 #define SUBSCRIBER_LOOP_DELAY_MS    180                             // loop delay in milliseconds
+#define WATCHDOG_TIME_SEC           5                               // watchdog expired time in seconds
 #define ON                          1                               // output logic level in state ON
 #define OFF                         0                               // output logic level in state OFF
 

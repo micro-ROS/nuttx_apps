@@ -10,6 +10,7 @@
 #define HIH_TOPIC                   "temperature"                       // topic name max 39 char
 #define HIH_TOPIC2                  "humidity"                          // topic name max 39 char
 #define PUBLISHER_LOOP_DELAY_MS     10                                 // loop delay in milliseconds
+#define WATCHDOG_TIME_SEC           5                               // watchdog expired time in seconds
 
 
 #endif /*  __UCS_HIH6130_HIH6130_H__ */

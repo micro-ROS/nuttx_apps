@@ -8,6 +8,7 @@
 #define DISTANCE_NODE               "user_case_distance"            // node name max 39 char
 #define DISTANCE_TOPIC              "distance"                      // topic name max 39 char
 #define PUBLISHER_LOOP_DELAY_MS     180                             // loop delay in milliseconds
+#define WATCHDOG_TIME_SEC           5                               // watchdog expired time in seconds
 
 
 #endif /* __UCS_DISTANCE_DISTANCE_H__ */

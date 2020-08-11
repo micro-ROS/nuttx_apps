@@ -1,4 +1,5 @@
 #include <nuttx/config.h>
+#include <nuttx/wdog.h>
 #include <nuttx/board.h>
 #include <fcntl.h>
 
@@ -16,7 +17,8 @@
 #include "init_distance_6lowpan.h"
 #include "distance.h"
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
+void soft_reset(void);
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); soft_reset();}}
 
 #define OLIMEX_TFMINI "/dev/ttyS1"
 #define TFMINI_FRAME_HEADER_BYTE        (0x59)
@@ -38,7 +40,7 @@ static void led_toggle(void) {
 	static int status = 0;
 	static int half_seconds = 0;
 
-	if (half_seconds == 12) {
+	if (half_seconds == 5) {
 		half_seconds = 0;
 		if (status) {
 			status = 0;
@@ -112,9 +114,21 @@ static int synchronize(int fd, struct tfmini_frame *tmf)
         return 0;
 }
 
+void soft_reset(void)
+{
+#if defined(CONFIG_NSH_ROMFSETC) && defined(CONFIG_BOARDCTL_RESET) 
+    fflush(stdout);
+    usleep(100000);
+    board_reset(0);
+#endif
+}
 
+void wdog_handler(void) 
+{
+    printf("Watchdog reboots \r\n\n");
+    soft_reset();
+}
 
-// -------------------
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -130,29 +144,32 @@ int ucs_distance_main(int argc, char* argv[])
     struct tfmini_frame tmf;
 	unsigned int value;
 
-
-  if(strlen(DISTANCE_AGENT_INET6_ADDR) > 39 || strlen(DISTANCE_AGENT_UDP_PORT) > 4) {
-        printf("Error: IP or port size incorrect \r\n");
-		goto end;
-    }
-    if(strlen(DISTANCE_NODE) > 39 || strlen(DISTANCE_TOPIC) > 39) {
-        printf("Error: Node or topic size incorrect \r\n");
-		goto end;
+    // Create watchdog
+    WDOG_ID wdog = wd_create ();
+    if( wdog != NULL) {
+        printf(" Watchdog created \n");
+        wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
     }
 
-	
+    // Opening the TFMini device
 	fd = open(OLIMEX_TFMINI, O_RDONLY);
 	printf("Starting distance publisher application\n");
 	if (fd < 0) {
 		printf("Could not open %s\n", OLIMEX_TFMINI);
-		goto end;
+        return 0;
 	}
      if (synchronize(fd, &tmf)) {
 		printf("Could not synchronize %s\n", OLIMEX_TFMINI);
-		goto end;
+        return 0;
     }
-	// param.sched_priority = 100;
-	// (void)sched_setparam(0, &param);
+    if(strlen(DISTANCE_AGENT_INET6_ADDR) > 39 || strlen(DISTANCE_AGENT_UDP_PORT) > 4) {
+        printf("Error: IP or port size incorrect \r\n");
+        return 0;
+    }
+    if(strlen(DISTANCE_NODE) > 39 || strlen(DISTANCE_TOPIC) > 39) {
+        printf("Error: Node or topic size incorrect \r\n");
+        return 0;
+    }
 
     // Define agent's udp port and IPv6 address, then uros node and topic names. 
     strcpy(udp_port, DISTANCE_AGENT_UDP_PORT);
@@ -165,7 +182,6 @@ int ucs_distance_main(int argc, char* argv[])
     // Initialize 6lowpan when running on nsh prompt
     init_distance_6lowpan();
 #endif
-
 
     rcl_ret_t rv;
 
@@ -189,7 +205,6 @@ int ucs_distance_main(int argc, char* argv[])
     rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
     RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), topic_name, &publisher_ops));
 
-
     printf(" Distance pub_main \n");
     std_msgs__msg__Int32 msg;
     do {
@@ -207,14 +222,16 @@ int ucs_distance_main(int argc, char* argv[])
         }
     	led_toggle();
 		usleep(1000 * PUBLISHER_LOOP_DELAY_MS);
+        if( wdog != NULL) {
+            wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+        }        
     } while (RCL_RET_OK == rv);
     printf("[rcl_publish]rv %d \n", rv);
 
     rv = rcl_publisher_fini(&publisher, &node);
     rv = rcl_node_fini(&node);
 
-end:
-
-    printf("Closing Micro-ROS 6lowpan app\r\n");
+    printf("\r\nClosing Micro-ROS 6lowpan app\r\n");
+    soft_reset();
     return 0;
 }

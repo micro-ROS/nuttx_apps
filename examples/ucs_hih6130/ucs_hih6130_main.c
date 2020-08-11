@@ -1,4 +1,5 @@
 #include <nuttx/config.h>
+#include <nuttx/wdog.h>
 #include <nuttx/sensors/hih6130.h>
 #include <fcntl.h>
 
@@ -15,14 +16,15 @@
 #include "init_hih_6lowpan.h"
 #include "hih6130.h"
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
+void soft_reset(void);
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); soft_reset();}}
 #define LED_HEARTBEAT					(0x00)
 
 static void led_toggle(void) {
 	static int status = 0;
 	static int half_seconds = 0;
 
-	if (half_seconds == 1) {
+	if (half_seconds == 2) {
 		half_seconds = 0;
 		if (status) {
 			status = 0;
@@ -36,6 +38,20 @@ static void led_toggle(void) {
 	half_seconds++;
 }
 
+void soft_reset(void)
+{
+#if defined(CONFIG_NSH_ROMFSETC) && defined(CONFIG_BOARDCTL_RESET) 
+    fflush(stdout);
+    usleep(100000);
+    board_reset(0);
+#endif
+}
+
+void wdog_handler(void) 
+{
+    printf("Watchdog reboots \r\n\n");
+    soft_reset();
+}
 
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
@@ -51,7 +67,14 @@ int ucs_hih6130_main(int argc, char* argv[])
     int fd_temp;                //HIH6130 file descriptor
     struct hih6130_s sample;    //Data structure of the sensor
 
-    // Opening the hih6130sensor with read only permission
+    // Create watchdog
+    WDOG_ID wdog = wd_create ();
+    if( wdog != NULL) {
+        printf(" Watchdog created \n");
+        wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+    }
+
+    // Opening the hih6130 sensor device with read only permission
     fd_temp=open("/dev/hih6130", O_RDONLY);
     if(fd_temp<0){
         printf("Error opening HIH6130 sensor %d\n",fd_temp);
@@ -126,12 +149,15 @@ int ucs_hih6130_main(int argc, char* argv[])
                 }
             }
         }
+        if( wdog != NULL) {
+            wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+        }        
     } while (RCL_RET_OK == rv);
 
     rv = rcl_publisher_fini(&publisher, &node);
     rv = rcl_node_fini(&node);
 
-
-    printf("Closing Micro-ROS 6lowpan app\r\n");
+    printf("\r\nClosing Micro-ROS 6lowpan app\r\n");
+    soft_reset();
     return 0;
 }

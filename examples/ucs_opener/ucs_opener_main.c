@@ -243,7 +243,7 @@ int ucs_opener_main(int argc, char* argv[])
             msg.data = opener_status(fr0, fr1, &ctl_st);    
             rv = rcl_publish(&publisher, (const void*)&msg, NULL);
             if (RCL_RET_OK == rv ) {
-                printf("Sent status '%i' \n", msg.data);
+                printf("Opener status '%i' \n", msg.data);
             }
         }
 	} while ( RCL_RET_OK == rv );

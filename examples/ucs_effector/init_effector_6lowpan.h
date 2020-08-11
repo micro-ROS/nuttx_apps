@@ -5,7 +5,7 @@
 // When running on nsh prompt
 #if (!defined(CONFIG_FS_ROMFS) || !defined(CONFIG_NSH_ROMFSETC))
     #define EFFECTOR_CHANNEL     11          // 6lowpan channel in range 11-26
-    #define EFFECTOR_DEVICE_ID   4           // in range 0-255
+    #define EFFECTOR_DEVICE_ID   1           // in range 0-255
     #define EFFECTOR_PAN_ID      0xabcd      // 6lowpan PAN_ID
 #endif
 

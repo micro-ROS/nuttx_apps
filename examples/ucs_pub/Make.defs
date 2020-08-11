@@ -1,3 +1,0 @@
-ifeq ($(CONFIG_UCS_PUB_EXAMPLE),y)
-    CONFIGURED_APPS += examples/ucs_pub
-endif

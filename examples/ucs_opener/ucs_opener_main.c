@@ -1,4 +1,5 @@
 #include <nuttx/config.h>
+#include <nuttx/wdog.h>
 #include <nuttx/clock.h>
 #include <nuttx/ioexpander/gpio.h>
 #include <fcntl.h>
@@ -16,7 +17,8 @@
 #include "init_opener_6lowpan.h"
 #include "opener.h"
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
+void soft_reset(void);
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); soft_reset();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
 
 #define LED_HEARTBEAT		(0x00)
@@ -133,6 +135,21 @@ static void led_toggle(void) {
 	half_seconds++;
 }
 
+void soft_reset(void)
+{
+#if defined(CONFIG_NSH_ROMFSETC) && defined(CONFIG_BOARDCTL_RESET) 
+    fflush(stdout);
+    usleep(100000);
+    board_reset(0);
+#endif
+}
+
+void wdog_handler(void) 
+{
+    printf("Watchdog reboots \r\n\n");
+    soft_reset();
+}
+
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -150,6 +167,13 @@ int ucs_opener_main(int argc, char* argv[])
     size_t index;
     std_msgs__msg__Int8 msg;
     msg.data = 0;
+
+    // Create watchdog
+    WDOG_ID wdog = wd_create ();
+    if( wdog != NULL) {
+        printf(" Watchdog created \n");
+        wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+    }
 
     // Opening the relays with read/write permission
     fr0 = open("/dev/gpout0", O_RDWR);
@@ -181,9 +205,6 @@ int ucs_opener_main(int argc, char* argv[])
     ctl_st.timer_en = false;
     ctl_st.cmd_tick = 0;
     ctl_st.pstr = invalid_str;
-    // ioctl(fr0, GPIOC_WRITE, (unsigned long)ON);
-    // usleep(1000000);    
-    // ioctl(fr0, GPIOC_WRITE, (unsigned long)OFF);
 
     // Initialize 6lowpan
     init_opener_6lowpan();
@@ -246,6 +267,9 @@ int ucs_opener_main(int argc, char* argv[])
                 printf("Opener status '%i' \n", msg.data);
             }
         }
+        if( wdog != NULL) {
+            wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+        }
 	} while ( RCL_RET_OK == rv );
     
     printf("Error [rcl_take, rcl_publish]: rv = %d \n", rv);
@@ -255,7 +279,8 @@ int ucs_opener_main(int argc, char* argv[])
     rv = rcl_subscription_fini(&subscription, &node);
     rv = rcl_node_fini(&node);   
 
-    printf("Closing Micro-ROS 6lowpan app\r\n");
+    printf("\r\nClosing Micro-ROS 6lowpan app\r\n");
+    soft_reset();
     return 0;
 }
 

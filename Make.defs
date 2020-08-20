@@ -123,6 +123,25 @@ endif
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(APPDIR)$(DELIM)include"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(APPDIR)$(DELIM)include"}
 
+
+ifeq ($(CONFIG_TRACE_CTF_FUNCTIONS_USAGE),y)
+  CFLAGS += -finstrument-functions
+  CXXFLAGS += -finstrument-functions
+#  CXXFLAGS += -finstrument-functions-exclude-file-list=$(TRACE_CTF_FUNCTIONS_USAGE_EXCL_PATH)
+#  CFLAGS += -finstrument-functions-exclude-file-list=$(TRACE_CTF_FUNCTIONS_USAGE_EXCL_PATH)
+endif
+
+ifeq ($(CONFIG_TRACE_CTF_APPLICATION),y)
+  CXXFLAGS += -finstrument-functions
+  CFLAGS += -finstrument-functions
+endif
+
+ifeq ($(CONFIG_TRACE_CTF_FUNCTIONS_USAGE_APPLICATION),y)
+  CXXFLAGS += -finstrument-functions
+  CFLAGS += -finstrument-functions
+endif
+
+
 ifneq ($(CONFIG_BUILD_KERNEL),y)
   LDLIBS = $(APPDIR)/libapps.a
 endif

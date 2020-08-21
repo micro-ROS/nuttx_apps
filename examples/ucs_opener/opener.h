@@ -14,7 +14,7 @@
 #define OFF                         0                               // output logic level in state OFF
 #define SUBSCRIBER_LOOP_DELAY_MS    180                             // loop delay in milliseconds
 #define OPENER_DELAY                22                              // switching OFF/ON delay in seconds
-#define WATCHDOG_TIME_SEC           5                               // watchdog expired time in seconds
+#define WATCHDOG_TIME_SEC           10                               // watchdog expired time in seconds
 
 
 #endif /* __UCS_OPENER_OPENER_H__ */

@@ -35,11 +35,6 @@ config UROS_TRANSPORT_SERIAL
 
 endchoice
 
-config UROS_IP_VERSION
-	string "The IP version either ipv4 or ipv6"
-	default "ipv6"
-
-
 if UROS_TRANSPORT_UDP
   config UROS_AGENT_IP
     string "IP address of the agent"

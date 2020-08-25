@@ -12,8 +12,7 @@
                 "-DRMW_UXRCE_MAX_SERVICES_X_NODE=@MAX_SERVICES@",
                 "-DRMW_UXRCE_MAX_CLIENTS_X_NODE=@MAX_CLIENTS@",
                 "-DRMW_UXRCE_MAX_HISTORY=@MAX_HISTORY@",
-                "-DRMW_UXRCE_XML_BUFFER_LENGTH=400",
-                "-DRMW_UXRCE_IPV=@IP_VERSION@"
+                "-DRMW_UXRCE_XML_BUFFER_LENGTH=400"
             ]
         }
     }

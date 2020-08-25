@@ -50,7 +50,6 @@ rmw_config.meta: $(TOPDIR)/.config rmw_config.meta.in
 		sed "s/@AGENT_IP@/$(AGENT_IP)/g" | \
 		sed "s/@AGENT_PORT@/$(CONFIG_UROS_AGENT_PORT)/g" |\
 		sed 's#@SERIAL_PORT@#$(RMW_UXRCE_SERIAL_DEVICE)#g' \
-		sed 's#@IP_VERSION@#$(UROS_IP_VERSION)#g' \
 		> rmw_config.meta
 
 ifeq (${UROS_FAST_BUILD},y)

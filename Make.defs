@@ -69,6 +69,8 @@ endif
 # the apps/tools directory are used.
 
 DELIM ?= $(strip /)
+UROS_INST_FLAG =
+
 ifneq (,$(wildcard $(TOPDIR)$(DELIM)tools))
   TOOLDIR = $(TOPDIR)$(DELIM)tools
 else
@@ -134,11 +136,13 @@ endif
 ifeq ($(CONFIG_TRACE_CTF_APPLICATION),y)
   CXXFLAGS += -finstrument-functions
   CFLAGS += -finstrument-functions
+  UROS_INST_FLAG += -finstrument-functions
 endif
 
 ifeq ($(CONFIG_TRACE_CTF_FUNCTIONS_USAGE_APPLICATION),y)
   CXXFLAGS += -finstrument-functions
   CFLAGS += -finstrument-functions
+  UROS_INST_FLAG += -finstrument-functions
 endif
 
 

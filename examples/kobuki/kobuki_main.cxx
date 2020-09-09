@@ -33,8 +33,11 @@
 
 #include <rcl/error_handling.h>
 #include <rcl/rcl.h>
+#include <rclc/executor.h>
 
 #include <std_msgs/msg/int32.h>
+#include <drive_base_msgs/msg/trv_command.h>
+#include <rcutils/time.h> 
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -97,37 +100,55 @@ display_mallinfo(void)
 KobukiRobot *r;
 
 void commandVelCallback(const void * msgin) {
-    const geometry_msgs__msg__Twist * twist = (const geometry_msgs__msg__Twist *)msgin;
+    const drive_base_msgs__msg__TRVCommand * cmd = (const drive_base_msgs__msg__TRVCommand *)msgin;
+    if(cmd == nullptr)
+        return;
+
     numberMsgCmdVel++;
 
-    if ( twist != NULL ) {
-        ROS_DEBUG("Received speed cmd %f/%f\n", (float)twist->linear.x, (float)twist->angular.z);
-        r->setSpeed((float)twist->linear.x, (float)twist->angular.z);
-        r->sendControls();
-    } else {
-        ROS_ERROR("Error in callback commandVelCallback Twist message expected but got %p!\n", msgin);
+    // check message age
+    rcutils_time_point_value_t msgtime = RCUTILS_S_TO_NS(cmd->header.stamp.sec) + cmd->header.stamp.nanosec;
+    rcutils_time_point_value_t curtime;
+    rcutils_system_time_now(&curtime);
+    rcutils_duration_value_t duration_ns = curtime - msgtime;
+    long duration_ms = RCUTILS_NS_TO_MS(duration_ns);
+    //fprintf(stdout, "Cur time ns %llu, msg time ns %llu, difference %lld / %ld\n",
+    //    curtime, msgtime, duration_ns, duration_ms);
+    
+    const unsigned int period = cmd->header.expected_period != 0 ? cmd->header.expected_period : 100;
+    if(labs(duration_ms) > period/2) {
+        fprintf(stderr, "WARN: Ignoring outdated message (age %ld ms > %d ms [period/2])\n", duration_ms, period/2);
+        return;
     }
+ 
+    ROS_DEBUG("Received speed cmd %f/%f\n", cmd->translational_velocity, cmd->rotational_velocity);
+    r->setSpeed(cmd->translational_velocity, cmd->rotational_velocity);
+    r->sendControls();
 }
 
 void* kobuki_run(void *np) {
     KobukiRobot robot;
     r = &robot;
     KobukiNode *node = (KobukiNode*)np;
-    robot.connect("/dev/ttyS1");
+    try {
+        robot.connect("/dev/ttyS1");
 
-    struct pollfd pf = { .fd = robot._serial_fd, .events = POLLIN, .revents = 0 };
-    int32_t packetCount = 0, count = 0;
-    while(true) {
-        struct timespec ts;        
-        poll(&pf, 1, 0);
-        robot.receiveData(ts);        
-        if(packetCount != robot.packetCount()) {
-            packetCount = robot.packetCount();
-            ++count;
-            if((count % 5) == 0) {
-                node->update_state(ts, robot);
-            }
-        }                
+        struct pollfd pf = robot.getPollFD();
+        int32_t packetCount = 0, count = 0;
+        while(true) {
+            struct timespec ts;        
+            poll(&pf, 1, 0);
+            robot.receiveData(ts);        
+            if(packetCount != robot.packetCount()) {
+                packetCount = robot.packetCount();
+                ++count;
+                if((count % 5) == 0) {
+                    node->update_state(ts, robot);
+                }
+            }                
+        }
+    } catch(const std::exception& ex) {
+        fprintf(stderr, "Error on reading from robot %s\n", ex.what());
     }
 }
 
@@ -156,22 +177,8 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             fprintf(stderr, "Failed to create kobuki thread: %d.\n", result);
         }
 
-        //create publisher
-        const char* pose_topic = "robot_pose";
-
-        rcl_publisher_t pub_odom        = rcl_get_zero_initialized_publisher();
-        const rosidl_message_type_support_t * pub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3);
-        rcl_publisher_options_t pub_opt = rcl_publisher_get_default_options();
-
-        CHECK_RET(rcl_publisher_init(
-            &pub_odom,
-            &(node.node),
-            pub_type_support,
-            pose_topic,
-            &pub_opt))
-
         //create subscription
-        const char * cmd_vel_topic_name = "cmd_vel";
+        const char * cmd_vel_topic_name = "drive_cmd";
         rcl_subscription_t sub_cmd_vel = rcl_get_zero_initialized_subscription();
         rcl_subscription_options_t subscription_ops = rcl_subscription_get_default_options();
         
@@ -182,7 +189,7 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
                     RMW_QOS_POLICY_DURABILITY_VOLATILE,
                     false
         };
-        const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist);
+        const rosidl_message_type_support_t * sub_type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(drive_base_msgs, msg, TRVCommand);
         
         CHECK_RET(rcl_subscription_init(
             &sub_cmd_vel,
@@ -191,49 +198,29 @@ int kobuki_main(int argc, char* argv[]) // name must match '$APPNAME_main' in Ma
             cmd_vel_topic_name,
             &subscription_ops))
 
-        // get empty wait set
-        rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-        CHECK_RET(rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &(node.context), rcl_get_default_allocator()))
 
-        while(true) {
-            node.publish_status_info();     
-            // set rmw fields to NULL
-            CHECK_RET(rcl_wait_set_clear(&wait_set));
+        // initialize and configure executor
+        rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
+        rcl_allocator_t allocator = rcl_get_default_allocator();
+        CHECK_RET(rclc_executor_init(
+            &executor,
+            &node.context,
+            1,
+            &allocator))
 
-            size_t index = 0; // is never used - denotes the index of the subscription in the storage container
-            CHECK_RET(rcl_wait_set_add_subscription(&wait_set, &sub_cmd_vel, &index));
+        // add subscription for topic 'cmd_vel'
+        drive_base_msgs__msg__TRVCommand msg;
+        CHECK_RET(rclc_executor_add_subscription(
+            &executor,
+            &sub_cmd_vel,
+            &msg,
+            commandVelCallback,
+            ON_NEW_DATA))
 
-            rc = rcl_wait(&wait_set, RCL_MS_TO_NS(timeout_ms));
-            if (rc == RCL_RET_TIMEOUT) {
-                continue;
-            }
-
-            if (rc != RCL_RET_OK && rc != RCL_RET_TIMEOUT) {
-                PRINT_RCL_ERROR(rcl_wait);
-                continue;
-            }
-            
-            if (wait_set.subscriptions[0] ){
-                geometry_msgs__msg__Twist msg;
-                rmw_message_info_t        messageInfo;
-                rc = rcl_take(&sub_cmd_vel, &msg, &messageInfo, NULL);
-                if(rc != RCL_RET_OK) {
-                    if(rc != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
-                        fprintf(stderr, "error return on rcl_take: %d\n", rc);
-                        PRINT_RCL_ERROR(rcl_take);
-                    }
-                    continue;
-                }
-
-                commandVelCallback( &msg );
-            } else {
-                //sanity check
-                fprintf(stderr, "[spin_node_once] wait_set returned empty.\n");
-            }
-
-            
+        while (true) {
+            node.publish_status_info();
+            CHECK_RET(rclc_executor_spin_some(&executor,RCL_MS_TO_NS(timeout_ms)))
         }
-        WARN_RET(rcl_wait_set_fini(&wait_set));
 	} catch(const std::exception& ex) {
         printf("%s\n", ex.what());
 	} catch(...) {

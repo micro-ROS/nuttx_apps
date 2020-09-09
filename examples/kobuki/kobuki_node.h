@@ -62,6 +62,9 @@ namespace kobuki {
         bool dirty;
 
         pthread_mutex_t update_mutex;
+
+        unsigned int sequential_communication_errors_ { 0 };
+        unsigned long total_communication_errors_ { 0 };
     };
 }
 

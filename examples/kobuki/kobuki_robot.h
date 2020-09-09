@@ -33,8 +33,12 @@
 #include <string>
 #include <istream>
 #include <pthread.h>
+#include <poll.h>
 #include "kobuki_protocol.h"
 
+static const float LOW_SPEED_TV = 0.1f;   // -> 0.1m/s
+static const float MAX_SPEED_TV = 0.5f;   
+static const float LOW_SPEED_RV = 0.78f;  // ~45°/s
 
 class Packet;
 class PacketSyncFinder;
@@ -87,8 +91,20 @@ public:
   float voltage() const;
   float battery() const;   //percentage
   bool overcurrent(Side s) const ;
+  bool overcurrentAny() const {
+    return _overcurrent_flags != 0;
+  }
+  bool inCollision() const {
+    return _bumper != 0;
+  }
   float current(Side s) const ;   //ampere
   int cliffData(Side s) const ;
+  bool atCliff() const {
+    return _cliff != 0;
+  }
+  uint16_t getHWTime() const {
+    return _timestamp;
+  }
 
   /**
     Flag will be setted when signal is detected
@@ -109,7 +125,43 @@ public:
   inline float gyroRate();
   */
 
-public:
+  struct pollfd getPollFD() {
+    struct pollfd pf = { .fd = _serial_fd, .events = POLLIN, .revents = 0 };
+    return pf;
+  }
+
+  // return current state as bitfield according to drive_base_msgs::BaseInfo constants
+  int getSafetyState() const {
+    return _safety_state;
+  }
+
+private:
+  /*** 
+   * These are bits that can be OR'red together
+   *   OPERATIONAL  -> operations generally allowed, possibly restricted
+   *   LOW_SPEED    -> max .1m/s
+   *   NO_TRANSLATE -> no translation allowed (only rotation)
+   *   NO_FORWARD   -> forward motion is prohibited
+   *   NO_ROTATE    -> rotation is prohibited
+   */
+  enum SafetyState { 
+    OPERATIONAL  = 1, 
+    LOW_SPEED    = 2, 
+    NO_FORWARD   = 4,
+    NO_BACKWARD   = 8,
+    NO_ROTATE    = 16
+  };  
+  /*** Modify speeds according to safey constraints */
+  void applySafetyConstraints(float& tv, float &rv) const;
+
+  /*** 
+   * Inspect currently stored sensor data to derive safety state. 
+   * If necessary, this will send an appropriate speed command to the robot.
+  */
+  void updateSafetyState();
+
+protected:
+  uint16_t _safety_state { 0 };
   uint16_t _timestamp;
   uint8_t _bumper;
   uint8_t _wheel_drop;
@@ -130,11 +182,13 @@ public:
   uint16_t _digital_input;
   uint32_t _udid[3];
   uint32_t _P,_I,_D;
+  float cmd_tv { 0 }, cmd_rv { 0 };
   float _x, _y, _theta;
   float _velocity_x, _velocity_theta;
   float _initial_heading, _heading;
   float _baseline, _left_ticks_per_m, _right_ticks_per_m;
   bool _first_round;
+  bool _safety_enabled { true };
   int _packet_count;
 
   void processOdometry(uint16_t left_encoder_, uint16_t right_encoder_,

@@ -101,7 +101,7 @@ namespace kobuki
     void KobukiNode::update_state(const struct timespec &ts, const KobukiRobot& robot)
     {
         pthread_mutex_lock(&update_mutex);
-        msg_base_info.hw_timestamp = robot._timestamp;
+        msg_base_info.hw_timestamp = robot.getHWTime();
         msg_base_info.stamp.sec = ts.tv_sec;
         msg_base_info.stamp.nanosec = ts.tv_nsec;
 
@@ -112,10 +112,11 @@ namespace kobuki
         msg_base_info.power_supply = drive_base_msgs__msg__BaseInfo__POWER_SUPPLY_STATUS_CHARGING ?
             robot.charger() : drive_base_msgs__msg__BaseInfo__POWER_SUPPLY_STATUS_DISCHARGING;
         // diagnostics info
-        msg_base_info.overcurrent = robot._overcurrent_flags;
+        msg_base_info.overcurrent = robot.overcurrentAny();
         msg_base_info.blocked = false;  // TODO: read out from laser
-        msg_base_info.in_collision = robot._bumper;
-        msg_base_info.at_cliff = robot._cliff;
+        msg_base_info.in_collision = robot.inCollision();
+        msg_base_info.at_cliff = robot.atCliff();
+        msg_base_info.safety_state = robot.getSafetyState();
 
         dirty = true;
         pthread_mutex_unlock(&update_mutex);
@@ -123,16 +124,23 @@ namespace kobuki
 
     void KobukiNode::publish_status_info()
     {
+        drive_base_msgs__msg__BaseInfo msg_copy;
         pthread_mutex_lock(&update_mutex);
         if(!dirty) {
             pthread_mutex_unlock(&update_mutex);
             return;
         }
-        rcl_ret_t rc = rcl_publish(&pub_base_info, &msg_base_info, NULL);
+        msg_copy = msg_base_info;
+        pthread_mutex_unlock(&update_mutex);
+
+        rcl_ret_t rc = rcl_publish(&pub_base_info, &msg_copy, NULL);
         if(rc != RCL_RET_OK) {
+            ++sequential_communication_errors_;
+            ++total_communication_errors_;
             fprintf(stderr, "Error publishing BaseInfo: %s\n", rcutils_get_error_string().str);
+        } else {
+            sequential_communication_errors_ = 0;
         }
         dirty = false;        
-        pthread_mutex_unlock(&update_mutex);
     }
 }

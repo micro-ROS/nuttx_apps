@@ -94,7 +94,71 @@ void KobukiRobot::playSound(uint8_t duration, uint16_t note) {
   _control_packet->_payloads.push_back(sp);
 }
 
+void KobukiRobot::applySafetyConstraints(float& tv, float &rv) const
+{
+  if(!_safety_enabled)
+    return;
+
+  if(!(_safety_state & OPERATIONAL)) {
+    tv = 0;
+    rv = 0;
+    return;
+  }
+  if((_safety_state & LOW_SPEED)) {
+    tv = copysign(std::max(LOW_SPEED_TV, (float)fabs(tv)), tv);
+    rv = copysign(std::max(LOW_SPEED_RV, (float)fabs(rv)), rv);
+  } else {
+    tv = copysign(std::min(MAX_SPEED_TV, (float)fabs(tv)), tv);
+  }
+  if((_safety_state & NO_BACKWARD) && tv < 0) {
+    tv = 0;
+  } else if((_safety_state & NO_FORWARD) && tv > 0) {
+    tv = 0;
+  }
+  if((_safety_state & NO_ROTATE)) {
+    rv = 0;
+  }
+}
+
+namespace {
+  void update_bits(uint16_t& state, int bits, bool condition) {
+    if(condition) {
+      state |= bits;
+    } else {
+      state &= ~bits;
+    }
+  }
+}
+
+void KobukiRobot::updateSafetyState() {
+  const int old_state = _safety_state;
+
+  // we can operate as long as no wheel drop is detected
+  update_bits(_safety_state, OPERATIONAL, _wheel_drop == 0);
+  // if the cliff sensors are triggered, we can only drive backwards
+  // and if the front bumper is pressed, we can only rotate or drive back
+  if(atCliff()) {
+    update_bits(_safety_state, NO_FORWARD | NO_ROTATE, atCliff());
+  } else if(inCollision()) {
+    update_bits(_safety_state, NO_FORWARD, inCollision());
+  } else {
+    update_bits(_safety_state, NO_FORWARD | NO_ROTATE, false);
+  }
+  
+  // if safety state has changed, update speed accordingly
+  if(_safety_enabled && (old_state != _safety_state)) {
+    setSpeed(cmd_tv, cmd_rv);
+    sendControls();
+  }
+}    
+
 void KobukiRobot::setSpeed(float tv, float rv) {
+  // store commanded velocities
+  cmd_tv = tv;
+  cmd_rv = rv;
+
+  applySafetyConstraints(tv, rv);
+
   BaseControlPayload* bp = new BaseControlPayload;
   // convert to mm;
   tv *=1000;
@@ -123,8 +187,6 @@ void KobukiRobot::setSpeed(float tv, float rv) {
     _control_packet->_payloads.size());
 }
 
-//TODO time
-//void KobukiRobot::receiveData(ros::Time& timestamp) {
 void KobukiRobot::receiveData(struct timespec& timestamp) {  
   if (_serial_fd < 0)
     throw std::runtime_error("robot not connected");
@@ -134,6 +196,7 @@ void KobukiRobot::receiveData(struct timespec& timestamp) {
   if(n > 0) {
     clock_gettime(CLOCK_REALTIME, &timestamp);
   }
+
   for (int i = 0; i<n; i++){
     _sync_finder.putChar(buf[i]);
     if (_sync_finder.packetReady()){
@@ -146,6 +209,8 @@ void KobukiRobot::receiveData(struct timespec& timestamp) {
       }
     }
   }
+
+  updateSafetyState();
 }
 
 void KobukiRobot::sendControls() {
@@ -268,6 +333,7 @@ bool KobukiRobot::charger() const {
 float KobukiRobot::battery() const {
   return 10.0f*_battery/16.7;
 }
+
 float KobukiRobot::voltage() const {
   return _battery/10.0f;
 }

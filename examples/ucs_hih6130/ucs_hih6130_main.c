@@ -109,6 +109,10 @@ int ucs_hih6130_main(int argc, char* argv[])
     // Set the IP and the port of the Agent
     rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&options);
     rmw_uros_options_set_udp_address(inet6_address, udp_port, rmw_options);
+
+    // Set RMW client key
+    rmw_uros_options_set_client_key(RMW_CLIENT_KEY, rmw_options);
+
     rcl_context_t context = rcl_get_zero_initialized_context();
     RCCHECK(rcl_init(0, NULL, &options, &context));
 

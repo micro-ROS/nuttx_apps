@@ -273,10 +273,10 @@ int ucs_opener_main(int argc, char* argv[])
                 printf("Opener status '%i' \n", msg.data);
             }
         }
-        if( wdog != NULL) {
-            wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+        if( wdog != NULL) { 
+           wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
         }
-	} while ( RCL_RET_OK == rv );
+	} while ( RCL_RET_OK == rv || ctl_st.timer_en );
     
     printf("Error [rcl_take, rcl_publish]: rv = %d \n", rv);
 

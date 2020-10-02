@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_UCS_DISTANC_EXAMPLE),)
+CONFIGURED_APPS += examples/ucs_distance
+endif

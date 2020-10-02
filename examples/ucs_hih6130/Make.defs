@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_UCS_HIH6130_EXAMPLE),y)
+    CONFIGURED_APPS += examples/ucs_hih6130
+endif

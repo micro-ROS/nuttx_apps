@@ -1,0 +1,21 @@
+config UCS_OPENER_EXAMPLE
+	bool "UCS - microROS OPENER Subcriber over 6LoWPAN"
+	default n
+	depends on UROS
+	---help---
+		Enable the uROS door opener subscriber over 6LoWPAN radio communication
+
+if UCS_OPENER_EXAMPLE
+
+config UCS_OPENER_EXAMPLE_PROGNAME
+	string "Program name"
+	default "ucs_opener"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+
+endif
+
+

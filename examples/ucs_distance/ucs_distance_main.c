@@ -20,7 +20,7 @@
 void soft_reset(void);
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); soft_reset();}}
 
-#define OLIMEX_TFMINI "/dev/ttyS1"
+#define OLIMEX_TFMINI                   "/dev/ttyS1"        // on USART6
 #define TFMINI_FRAME_HEADER_BYTE        (0x59)
 #define TFMINI_FRAME_SPARE_BYTE         (0x00)
 #define LED_HEARTBEAT					(0x00)

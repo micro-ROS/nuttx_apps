@@ -1,0 +1,26 @@
+config UROS_EXAMPLES_DEMO_DISTANCE_PUBLISHER
+	bool "uROS demo Distance publisher"
+	default n
+	depends on UROS
+	---help---
+		Enable the demonstration demo publisher uROS example
+
+if UROS_EXAMPLES_DEMO_DISTANCE_PUBLISHER
+
+config UROS_EXAMPLES_DEMO_DISTANCE_PUBLISHER_PROGNAME
+	string "Program name"
+	default "demo distance publisher"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+#config UROS_EXAMPLES_PUBLISHER_PRIORITY
+#	int "Publisher task priority"
+#	default 100
+#
+#config UROS_EXAMPLES_PUBLISHER_STACKSIZE
+#	int "Publisher stack size"
+#	default 2048
+
+endif

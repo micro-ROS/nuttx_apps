@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_UROS_EXAMPLES_DEMO_DISTANCE_PUBLISHER),)
+CONFIGURED_APPS += examples/demo_distance
+endif

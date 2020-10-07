@@ -206,19 +206,21 @@ int ucs_opener_main(int argc, char* argv[])
     ctl_st.cmd_tick = 0;
     ctl_st.pstr = invalid_str;
 
-    // Initialize 6lowpan
-    init_opener_6lowpan();
-
     // Define agent's udp port and IPv6 address, then uros node and topic names. 
     strcpy(udp_port, OPENER_AGENT_UDP_PORT);
     strcpy(inet6_address, OPENER_AGENT_INET6_ADDR);
     strcpy(node_name, OPENER_NODE);
     strcpy(topic_name, OPENER_TOPIC);
     strcpy(topic_name2, OPENER_TOPIC2);
-    printf("device ID - %d, nOde - %s, topic - %s \n", OPENER_DEVICE_ID, node_name, topic_name );
 
+#if (!defined(CONFIG_FS_ROMFS) || !defined(CONFIG_NSH_ROMFSETC))
+    printf("device ID - %d, nOde - %s, topic - %s \n", OPENER_DEVICE_ID, node_name, topic_name );
+    // Initialize 6lowpan when running on nsh prompt
+    init_opener_6lowpan();
+#endif
+    
     rcl_ret_t rv;
-    rcl_ret_t rv2;
+
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
     RCCHECK(rcl_init_options_init(&options, rcl_get_default_allocator()));
 

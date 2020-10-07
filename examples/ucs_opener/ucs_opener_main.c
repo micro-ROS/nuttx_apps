@@ -268,13 +268,9 @@ int ucs_opener_main(int argc, char* argv[])
 	    }
     	led_toggle();
         opener_ctl( fr0, fr1, &ctl_st);
-	    if (RCL_RET_OK == rv) {
-            msg.data = opener_status(fr0, fr1, &ctl_st);    
-            rv = rcl_publish(&publisher, (const void*)&msg, NULL);
-            if (RCL_RET_OK == rv ) {
-                printf("Opener status '%i' \n", msg.data);
-            }
-        }
+        msg.data = opener_status(fr0, fr1, &ctl_st);    
+        rv = rcl_publish(&publisher, (const void*)&msg, NULL);
+        printf("Opener status '%i', timer_en '%i' \n", msg.data, ctl_st.timer_en);
         if( wdog != NULL) { 
            wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
         }

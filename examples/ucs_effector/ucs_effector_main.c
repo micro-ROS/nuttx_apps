@@ -217,14 +217,10 @@ int ucs_effector_main(int argc, char* argv[])
 	    }
     	led_toggle();
         effector_ctl( fr0, &ctl_st);
-	    if (RCL_RET_OK == rv) {
-            // msg.data = effector_status(&ctl_st);    
-            msg.data = effector_status(fr0, &ctl_st);    
-            rv = rcl_publish(&publisher, (const void*)&msg, NULL);
-            if (RCL_RET_OK == rv ) {
-                printf("Effector status: '%i'\n", msg.data);
-            }
-        }
+        msg.data = effector_status(fr0, &ctl_st);    
+        rv = rcl_publish(&publisher, (const void*)&msg, NULL);
+        printf("Effector status: '%i'\n", msg.data);
+
         if( wdog != NULL) {
             wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
         }

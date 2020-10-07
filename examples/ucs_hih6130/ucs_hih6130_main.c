@@ -90,16 +90,19 @@ int ucs_hih6130_main(int argc, char* argv[])
         return 0;
     }
 
-    // Initialize 6lowpan
-    init_hih_6lowpan();
-
     // Define agent's udp port and IPv6 address, then uros node and topic names. 
     strcpy(udp_port, HIH_AGENT_UDP_PORT);
     strcpy(inet6_address, HIH_AGENT_INET6_ADDR);
     strcpy(node_name, HIH_NODE);
     strcpy(topic_name, HIH_TOPIC);
     strcpy(topic_name2, HIH_TOPIC2);
+    
+#if (!defined(CONFIG_FS_ROMFS) || !defined(CONFIG_NSH_ROMFSETC))
     printf("device ID - %d, nOde - %s, topic - %s \n", HIH_DEVICE_ID, node_name, topic_name );
+    // Initialize 6lowpan when running on nsh prompt
+    init_opener_6lowpan();
+#endif
+    
 
     rcl_ret_t rv;
 

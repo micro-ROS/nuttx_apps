@@ -18,14 +18,20 @@
 #include "distance.h"
 
 void soft_reset(void);
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); soft_reset();}}
 
-// #define OLIMEX_TFMINI "/dev/ttyS1"   // UART6
-#define OLIMEX_TFMINI "/dev/ttyS0"      // UART3
+#define CONFIG_TFMINI_USART3         1              // If true, then the TFMINI sensor is expected on USART3, the console on USART6
+                                                    // If false, then the TFMINI sensor is expected on USART6, the console on USART3
+#if(CONFIG_TFMINI_USART3)
+    #define OLIMEX_TFMINI       "/dev/ttyS0"        // USART3
+    #define LED_HEARTBEAT		(0x09)              // Panel led
+#else
+    #define OLIMEX_TFMINI       "/dev/ttyS1"        // USART6
+    #define LED_HEARTBEAT		(0x00)              // LED STARTED on a board
+#endif
+
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); soft_reset();}}
 #define TFMINI_FRAME_HEADER_BYTE        (0x59)
 #define TFMINI_FRAME_SPARE_BYTE         (0x00)
-// #define LED_HEARTBEAT					(0x00)      //on board LED STARTED
-#define LED_HEARTBEAT					(0x09)
 
 struct tfmini_frame {
         uint8_t headers[2];

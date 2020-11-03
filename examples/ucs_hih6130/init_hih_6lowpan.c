@@ -10,11 +10,12 @@ int init_hih_6lowpan(void)
 {
     // //6lowpan configuration process
     char buffer[256]; 
+    system("mount -t procfs /proc");// Mount the proc file system to check the connection data.
     system("ifdown wpan0"); // Is necessary to bring down the network to configure.
 
     // system("i8sak wpan0 startpan cd:ab"); //Set the radio as an endpoint.
-    sprintf(buffer,"i8sak wpan0 startpan %02x:%02x", HIH_PAN_ID & 0xff, HIH_PAN_ID >> 8); //Set the radio as an endpoint.  
-    system(buffer);
+    //sprintf(buffer,"i8sak wpan0 startpan %02x:%02x", HIH_PAN_ID & 0xff, HIH_PAN_ID >> 8); //Set the radio as an endpoint.  
+    //system(buffer);
 
     // system("i8sak set chan 11"); //Set the radio channel.
     sprintf(buffer,"i8sak set chan %d",HIH_CHANNEL); //Set the radio channel.   
@@ -36,7 +37,6 @@ int init_hih_6lowpan(void)
     // system("i8sak acceptassoc");
     system("ifup wpan0"); // Bring up the network.
 
-    system("mount -t procfs /proc");// Mount the proc file system to check the connection data.
     printf("Connection data\r\n");
     system("cat proc/net/wpan0");
     usleep(1000000);

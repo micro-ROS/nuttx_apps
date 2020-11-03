@@ -252,41 +252,46 @@ int ucs_opener_main(int argc, char* argv[])
 	rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
 	RCCHECK(rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, 0, &context, rcl_get_default_allocator()));
 
+	int rvp = RCL_RET_OK;
 	do {
-	    RCSOFTCHECK(rcl_wait_set_clear(&wait_set));
-	    RCSOFTCHECK(rcl_wait_set_add_subscription(&wait_set, &subscription, &index));
-	    // RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS)));
-	    rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS));
-	    if (wait_set.subscriptions[index]) {
-	        rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
-	        if (RCL_RET_OK == rv) {
-                find_opener_command(msg.data, &ctl_st);
-                printf("Received: Command %s  \n", ctl_st.pstr);
-	        }
-	    }
-    	led_toggle();
-        opener_ctl( fr0, fr1, &ctl_st);
-	    if (RCL_RET_OK == rv) {
-            msg.data = opener_status(fr0, fr1, &ctl_st);    
-            rv = rcl_publish(&publisher, (const void*)&msg, NULL);
-            if (RCL_RET_OK == rv ) {
-                printf("Opener status '%i' \n", msg.data);
-            }
-        }
-        if( wdog != NULL) { 
-           wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
-        }
-	} while ( RCL_RET_OK == rv || ctl_st.timer_en );
+		RCSOFTCHECK(rcl_wait_set_clear(&wait_set));
+		RCSOFTCHECK(rcl_wait_set_add_subscription(&wait_set, &subscription, &index));
+		// RCSOFTCHECK(rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS)));
+		usleep(SUBSCRIBER_LOOP_DELAY_MS);
+		rcl_wait(&wait_set, RCL_MS_TO_NS(SUBSCRIBER_LOOP_DELAY_MS));
+		if (wait_set.subscriptions[index]) {
+			rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
+			if (RCL_RET_OK == rv) {
+				find_opener_command(msg.data, &ctl_st);
+				printf("Received: Command %s  \n", ctl_st.pstr);
+			}
+		}
+		led_toggle();
+		opener_ctl( fr0, fr1, &ctl_st);
+		if (RCL_RET_OK == rv) {
+			msg.data = opener_status(fr0, fr1, &ctl_st);    
+			rvp = rcl_publish(&publisher, (const void*)&msg, NULL);
+    			printf("Error : rvs = %d, rvp = %d \n", rv, rvp);
+			if (RCL_RET_OK == rvp ) {
+				printf("Opener status '%i' \n", msg.data);
+			}
+		}
+		if( wdog != NULL) { 
+			wd_start( wdog, WATCHDOG_TIME_SEC * TICK_PER_SEC, &wdog_handler, 0);
+		}
+	} while ( (RCL_RET_OK == rvp && RCL_RET_OK == rv) || ctl_st.timer_en );
     
     printf("Error [rcl_take, rcl_publish]: rv = %d \n", rv);
 
+    soft_reset();
+#if 0
     RCSOFTCHECK(rcl_publisher_fini(&publisher, &node));
     // RCSOFTCHECK(rcl_subscriber_fini(&subscription, &node));
     rv = rcl_subscription_fini(&subscription, &node);
     rv = rcl_node_fini(&node);   
 
     printf("\r\nClosing Micro-ROS 6lowpan app\r\n");
-    soft_reset();
+#endif
     return 0;
 }
 

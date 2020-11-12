@@ -110,11 +110,11 @@ int demo_power_main(int argc, char* argv[])
 
     // Opening a sensor device 
 	if ((fd_rpi = try_open(RPI_INA219)) < 0 ) {
-		// return 0;
+		return 0;
 	}
 
 	if ((fd_olimex = try_open(OLIMEX_INA219)) < 0 ) {
-		// return 0;
+		return 0;
 	}
 
     rcl_ret_t rv;
@@ -152,7 +152,7 @@ usleep(1000000);
 	demo_msgs__msg__DemoPower msg2;
 
     do {
-
+        rv = -1;
 		memset(&ina, 0, sizeof(ina));
 		ret = read(fd_olimex, &ina, sizeof(ina));
 		if (ret == sizeof(ina)) {
@@ -160,13 +160,10 @@ usleep(1000000);
 			if (powermw < 0.0f) {
 				powermw = 0;
 			}
+        		printf("Sending OLI power: %d\n", (int)powermw);
+	    	msg.power = powermw;
+            rv = rcl_publish(&publisher, (const void*)&msg, NULL);
 		}
-		else {
-			powermw = 0;
-		}
-		printf("Sending OLI power: %f\n", powermw);
-		msg.power = powermw;
-        rv = rcl_publish(&publisher, (const void*)&msg, NULL);
 
         if (RCL_RET_OK == rv ) {
 			memset(&ina, 0, sizeof(ina));
@@ -176,13 +173,10 @@ usleep(1000000);
 				if (powermw < 0.0f) {
 					powermw = 0;
 				}
+			    printf("Sending RPI power: %d\n", (int)powermw);
+			    msg2.power = powermw;
+                rv = rcl_publish(&publisher2, (const void*)&msg2, NULL);
 			}
-			else {
-				powermw = 0;
-			}
-			printf("Sending RPI power: %f\n", powermw);
-			msg2.power = powermw;
-            rv = rcl_publish(&publisher2, (const void*)&msg2, NULL);
         }
     		
 		led_toggle();

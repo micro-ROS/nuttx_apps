@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_EXAMPLES_MOTOR_JOYSTICK),)
+CONFIGURED_APPS += examples/jsmotor
+endif

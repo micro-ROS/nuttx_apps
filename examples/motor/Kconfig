@@ -1,0 +1,29 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_MOTOR
+	tristate "Tupec demo - Motor driver test"
+	default n
+	---help---
+		Enable the Motor example
+
+if EXAMPLES_MOTOR
+
+config EXAMPLES_MOTOR_PROGNAME
+	string "Program name"
+	default "motor"
+	depends on BUILD_LOADABLE
+	---help---
+		This is the name of the program that will be use when the motor
+
+config EXAMPLES_MOTOR_PRIORITY
+	int "Motor task priority"
+	default 100
+
+config EXAMPLES_MOTOR_STACKSIZE
+	int "Motor stack size"
+	default 2048
+
+endif

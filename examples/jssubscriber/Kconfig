@@ -1,0 +1,26 @@
+config UROS_EXAMPLES_JSSUBSCRIBER
+	bool "TUPEK demo - uROS 6lowpan Motor Subscriber"
+	default n
+	depends on UROS
+	---help---
+		Enable the uROS motor subscriber over 6lowpan 
+
+if UROS_EXAMPLES_JSSUBSCRIBER
+
+config UROS_EXAMPLES_JSSUBSCRIBER_PROGNAME
+	string "Program name"
+	default "jssubscriber"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+#config UROS_EXAMPLES_SUBSCRIBER_PRIORITY
+#	int "Subscriber task priority"
+#	default 100
+#
+#config UROS_EXAMPLES_SUBSCRIBER_STACKSIZE
+#	int "Subscriber stack size"
+#	default 2048
+
+endif

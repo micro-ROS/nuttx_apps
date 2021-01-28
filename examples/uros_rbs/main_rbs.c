@@ -27,6 +27,7 @@ int device_id;
 int seq_no;
 int pong_count;
 
+static
 void ping_timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
 	(void) last_call_time;
@@ -50,6 +51,7 @@ void ping_timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 	}
 }
 
+static
 void ping_subscription_callback(const void * msgin)
 {
 	const std_msgs__msg__Header * msg = (const std_msgs__msg__Header *)msgin;
@@ -61,7 +63,7 @@ void ping_subscription_callback(const void * msgin)
 	}
 }
 
-
+static
 void pong_subscription_callback(const void * msgin)
 {
 	const std_msgs__msg__Header * msg = (const std_msgs__msg__Header *)msgin;

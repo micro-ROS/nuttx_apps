@@ -86,6 +86,18 @@ void low_ping_received(const void * pong_msg)
   RCUNUSED(rcl_publish(&low_pong_publisher_, pong_msg, NULL));
 }
 
+void * thread_run(void * arg)
+{
+  int * value = (int *) arg;
+  printf("thread_run 1 %d\n",(*value));
+}
+
+void * thread_run2(void * arg)
+{
+  int * value = (int *) arg;
+  printf("thread_run 2 %d\n",(*value));
+}
+
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -95,6 +107,85 @@ int uros_rbs_main(int argc, char* argv[])
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rclc_support_t support;
   printf("Welcome to RBS Demo!\n");
+/*
+  struct sched_param param, param2;
+  pthread_attr_t attr, attr2;
+  pthread_t worker_thread, worker_thread2;
+  int ret;
+
+  // Set the executor thread priority 
+  param.sched_priority = SCHED_PRIORITY_DEFAULT;
+  ret = sched_setparam(0, &param);
+  if (ret < 0)
+    {
+      printf("uros_rbs: sched_setparam failed: %d\n" , ret);
+      return 1;
+    }
+  (void)pthread_attr_init(&attr);
+  (void)pthread_attr_setschedparam(&attr, &param);
+  // (void)pthread_attr_setstacksize(&attr, CONFIG_UROS_RBS_EXAMPLE_STACKSIZE);
+  int value = param.sched_priority;
+  ret = pthread_create(&worker_thread, &attr, &thread_run, &value);
+  if (ret != 0)
+    {
+      printf("uros_rbs: pthread_create failed: %d\n", ret);
+      return 1;
+    }
+   // second worker thread 
+   param2.sched_priority = SCHED_PRIORITY_DEFAULT + 10;
+  (void)pthread_attr_init(&attr2);
+  (void)pthread_attr_setschedparam(&attr2, &param2);
+  // (void)pthread_attr_setstacksize(&attr, CONFIG_UROS_RBS_EXAMPLE_STACKSIZE);
+  int value2 = param2.sched_priority;
+  ret = pthread_create(&worker_thread2, &attr, thread_run2, &value2);
+  if (ret != 0)
+    {
+      printf("uros_rbs: pthread_create worker_thread2 failed: %d\n", ret);
+      return 1;
+    }
+
+
+  int i=0;
+  while(i<3){
+    printf("sleeping\n");
+    sleep(1);
+    i++;
+  }
+
+
+  ret = pthread_join(worker_thread, NULL);
+  if (ret != 0)
+    {
+      fprintf(stderr, "uros_rbs: pthread_join failed\n");
+    }
+  else
+    {
+      printf("uros_rbs: worker_thread returned.\n");
+    }
+
+  ret = pthread_join(worker_thread2, NULL);
+  if (ret != 0)
+    {
+      fprintf(stderr, "uros_rbs: pthread_join worker_thread2 failed\n");
+    }
+  else
+    {
+      printf("uros_rbs: worker_thread2 returned.\n");
+    }
+*/
+
+  struct sched_param exe_param;
+  int ret;
+
+  // Set the executor thread priority 
+  exe_param.sched_priority = 130;
+  ret = sched_setparam(0, &exe_param);
+  if (ret < 0)
+  {
+    printf("uros_rbs: sched_setparam failed: %d\n" , ret);
+    return 1;
+  }
+
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
   rcl_node_t node = rcl_get_zero_initialized_node();
@@ -110,13 +201,11 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rclc_executor_init(&high_executor, &support.context, 2, &allocator));
   
   rclc_executor_sched_param_t sparam_high, sparam_low;
-  sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
-  sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
+  //sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
+  //sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
   printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN);
-  printf("high prio %d low prio %d\n", sparam_high.priority, sparam_low.priority);
-
-  sparam_high.priority = 20;
-  sparam_low.priority = 10;
+  sparam_high.priority = 120;
+  sparam_low.priority = 100;
   printf("high prio %d low prio %d\n", sparam_high.priority, sparam_low.priority);
 
   printf("subscription high ping \n");
@@ -125,6 +214,7 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rclc_executor_add_subscription_sched(&high_executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA, &sparam_low));
     printf("start executor \n");
   RCCHECK(rclc_executor_start_multi_threading_for_nuttx(&high_executor));
+
   printf("clean up \n");
   RCCHECK(rclc_executor_fini(&high_executor));
   RCCHECK(rcl_subscription_fini(&high_ping_subscription_, &node));
@@ -133,6 +223,8 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rcl_publisher_fini(&low_pong_publisher_, &node));
 
   RCCHECK(rcl_node_fini(&node));
+  
+ return 0;
 }
 /*
 Error message missing library rt for clock_getcpuclockid(pthread_self(), &clockId);

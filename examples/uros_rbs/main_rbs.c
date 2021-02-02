@@ -73,7 +73,7 @@ void burn_cpu_cycles(long duration)
 
 void high_ping_received(const void * pong_msg)
 {
-  burn_cpu_cycles(100000000);  // TODO: Get this value from parameter 'high_busyloop'.
+  // burn_cpu_cycles(100000000);  // TODO: Get this value from parameter 'high_busyloop'.
   printf("high ping received.\n");
   RCUNUSED(rcl_publish(&high_pong_publisher_, pong_msg, NULL));
 }
@@ -81,7 +81,7 @@ void high_ping_received(const void * pong_msg)
 
 void low_ping_received(const void * pong_msg)
 {
-  burn_cpu_cycles(100000000);  // TODO: Get this value from parameter 'low_busyloop'.
+  // burn_cpu_cycles(100000000);  // TODO: Get this value from parameter 'low_busyloop'.
   printf("low ping received.\n");
   RCUNUSED(rcl_publish(&low_pong_publisher_, pong_msg, NULL));
 }
@@ -108,15 +108,24 @@ int uros_rbs_main(int argc, char* argv[])
 
   rclc_executor_t high_executor = rclc_executor_get_zero_initialized_executor();
   RCCHECK(rclc_executor_init(&high_executor, &support.context, 2, &allocator));
-  RCCHECK(rclc_executor_add_subscription(&high_executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA));
-  RCCHECK(rclc_executor_add_subscription(&high_executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA));
-  // rclc_executor_t low_executor = rclc_executor_get_zero_initialized_executor();
-  // RCCHECK(rclc_executor_init(&low_executor, &support.context, 1, &allocator));
-  // RCCHECK(rclc_executor_add_subscription(&low_executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA));
+  
+  rclc_executor_sched_param_t sparam_high, sparam_low;
+  sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
+  sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
+  printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN);
+  printf("high prio %d low prio %d\n", sparam_high.priority, sparam_low.priority);
 
-  rclc_executor_spin(&high_executor);
-  // TODO: And in second thread call: rclc_executor_spin(&low_executor);
+  sparam_high.priority = 20;
+  sparam_low.priority = 10;
+  printf("high prio %d low prio %d\n", sparam_high.priority, sparam_low.priority);
 
+  printf("subscription high ping \n");
+  RCCHECK(rclc_executor_add_subscription_sched(&high_executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA, &sparam_high));
+   printf("subscription low ping \n");
+  RCCHECK(rclc_executor_add_subscription_sched(&high_executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA, &sparam_low));
+    printf("start executor \n");
+  RCCHECK(rclc_executor_start_multi_threading_for_nuttx(&high_executor));
+  printf("clean up \n");
   RCCHECK(rclc_executor_fini(&high_executor));
   RCCHECK(rcl_subscription_fini(&high_ping_subscription_, &node));
   RCCHECK(rcl_publisher_fini(&high_pong_publisher_, &node));
@@ -126,6 +135,9 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rcl_node_fini(&node));
 }
 /*
+Error message missing library rt for clock_getcpuclockid(pthread_self(), &clockId);
+but this function is not implemented in NuttX! (01-02-2021)
+
 arm-none-eabi-ld --entry=__start -nostartfiles -nodefaultlibs -g -T/home/jst3si/olimex_ws/firmware/NuttX/configs/olimex-stm32-e407/scripts/ld.script -L"/home/jst3si/olimex_ws/firmware/NuttX/staging" -L"/home/jst3si/olimex_ws/firmware/NuttX/arch/arm/src/board" -L "/usr/lib/gcc/arm-none-eabi/6.3.1/../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard" \
 	-o "/home/jst3si/olimex_ws/firmware/NuttX/nuttx"   \
 	--start-group -lsched -ldrivers -lconfigs -lc -lmm -larch -lxx -lapps -lnet -lfs -lbinfmt -lxx -lboard -lsupc++ "/usr/lib/gcc/arm-none-eabi/6.3.1/thumb/v7e-m/fpv4-sp/hard/libgcc.a" --end-group

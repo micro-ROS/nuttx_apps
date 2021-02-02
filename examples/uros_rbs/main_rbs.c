@@ -107,7 +107,7 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rclc_subscription_init_best_effort(&low_ping_subscription_, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "low_ping"));
 
   rclc_executor_t high_executor = rclc_executor_get_zero_initialized_executor();
-  RCCHECK(rclc_executor_init(&high_executor, &support.context, 1, &allocator));
+  RCCHECK(rclc_executor_init(&high_executor, &support.context, 2, &allocator));
   RCCHECK(rclc_executor_add_subscription(&high_executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA));
   RCCHECK(rclc_executor_add_subscription(&high_executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA));
   // rclc_executor_t low_executor = rclc_executor_get_zero_initialized_executor();
@@ -117,6 +117,7 @@ int uros_rbs_main(int argc, char* argv[])
   rclc_executor_spin(&high_executor);
   // TODO: And in second thread call: rclc_executor_spin(&low_executor);
 
+  RCCHECK(rclc_executor_fini(&high_executor));
   RCCHECK(rcl_subscription_fini(&high_ping_subscription_, &node));
   RCCHECK(rcl_publisher_fini(&high_pong_publisher_, &node));
   RCCHECK(rcl_subscription_fini(&low_ping_subscription_, &node));  

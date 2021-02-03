@@ -86,6 +86,7 @@ void low_ping_received(const void * pong_msg)
   RCUNUSED(rcl_publish(&low_pong_publisher_, pong_msg, NULL));
 }
 
+/*
 void * thread_run(void * arg)
 {
   int * value = (int *) arg;
@@ -97,7 +98,7 @@ void * thread_run2(void * arg)
   int * value = (int *) arg;
   printf("thread_run 2 %d\n",(*value));
 }
-
+*/
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -178,13 +179,15 @@ int uros_rbs_main(int argc, char* argv[])
   int ret;
 
   // Set the executor thread priority 
-  exe_param.sched_priority = 130;
+  /*
+  exe_param.sched_priority = 10;
   ret = sched_setparam(0, &exe_param);
   if (ret < 0)
   {
     printf("uros_rbs: sched_setparam failed: %d\n" , ret);
     return 1;
   }
+  */
 
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
@@ -200,13 +203,13 @@ int uros_rbs_main(int argc, char* argv[])
   rclc_executor_t high_executor = rclc_executor_get_zero_initialized_executor();
   RCCHECK(rclc_executor_init(&high_executor, &support.context, 2, &allocator));
   
-  rclc_executor_sched_param_t sparam_high, sparam_low;
+  struct sched_param sparam_high, sparam_low;
   //sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
   //sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
   printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN);
-  sparam_high.priority = 120;
-  sparam_low.priority = 100;
-  printf("high prio %d low prio %d\n", sparam_high.priority, sparam_low.priority);
+  sparam_high.sched_priority = 20;
+  sparam_low.sched_priority = 10;
+  printf("high prio %d low prio %d\n", sparam_high.sched_priority, sparam_low.sched_priority);
 
   printf("subscription high ping \n");
   RCCHECK(rclc_executor_add_subscription_sched(&high_executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA, &sparam_high));

@@ -208,7 +208,7 @@ int uros_rbs_main(int argc, char* argv[])
   //sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
   printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN);
 
-  bool sporadic_scheduling = false;
+  bool sporadic_scheduling = true;
 
   sparam_high.sched_priority = 30;
 

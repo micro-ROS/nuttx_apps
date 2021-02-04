@@ -3,7 +3,7 @@
 #Set the scheduler priority for the app.
 CONFIG_UROS_RBS_EXAMPLE_PRIORITY ?= SCHED_PRIORITY_DEFAULT
 #Set the stack size to the app. The minimum stack size on NuttX for a micro-ROS App is 65000 bytes
-CONFIG_UROS_RBS_EXAMPLE_STACKSIZE ?= 68000
+CONFIG_UROS_RBS_EXAMPLE_STACKSIZE ?= 68992
 
 #This is the name of the app on the NSH console
 APPNAME = uros_rbs

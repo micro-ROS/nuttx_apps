@@ -207,8 +207,32 @@ int uros_rbs_main(int argc, char* argv[])
   //sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
   //sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
   printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN);
-  sparam_high.sched_priority = 20;
-  sparam_low.sched_priority = 10;
+
+  bool sporadic_scheduling = false;
+
+  sparam_high.sched_priority = 30;
+
+  if(sporadic_scheduling){
+    sparam_high.sched_priority               = 30;
+    sparam_high.sched_ss_low_priority        = 3;
+    sparam_high.sched_ss_repl_period.tv_sec  = 5;
+    sparam_high.sched_ss_repl_period.tv_nsec = 0;
+    sparam_high.sched_ss_init_budget.tv_sec  = 2;
+    sparam_high.sched_ss_init_budget.tv_nsec = 0;
+    sparam_high.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
+  }
+
+  sparam_low.sched_priority = 20;
+  if(sporadic_scheduling){
+    sparam_low.sched_priority               = 20;
+    sparam_low.sched_ss_low_priority        = 2;
+    sparam_low.sched_ss_repl_period.tv_sec  = 5;
+    sparam_low.sched_ss_repl_period.tv_nsec = 0;
+    sparam_low.sched_ss_init_budget.tv_sec  = 1;
+    sparam_low.sched_ss_init_budget.tv_nsec = 0;
+    sparam_low.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
+  }
+
   printf("high prio %d low prio %d\n", sparam_high.sched_priority, sparam_low.sched_priority);
 
   printf("subscription high ping \n");

@@ -44,7 +44,33 @@ std_msgs__msg__Int32 low_ping_msg_;
 rcl_publisher_t low_pong_publisher_;
 
 
-void burn_cpu_cycles(long duration)
+void burn_cpu_cycles_high(long duration)
+{
+  if (duration > 0) {
+    clockid_t clockId;
+    clockId = CLOCK_REALTIME;
+    // clock_getcpuclockid(pthread_self(), &clockId);
+    // NuttX does not implement this function
+    // -lrt  is not available , I did not find this function in 
+    // NuttX subfolders
+    // adding EXTRA_LIBS to the Makefile did not resolve the error.
+    struct timespec startTimeP;
+    clock_gettime(clockId, &startTimeP);
+    int x = 0;
+    bool doAgain = true;
+    while (doAgain) {
+      while (x != rand() && x % 10 != 0) {
+        x++;
+      }
+      struct timespec currentTimeP;
+      clock_gettime(clockId, &currentTimeP);
+      long currentDuration = (currentTimeP.tv_sec - startTimeP.tv_sec) * 1000000000 + (currentTimeP.tv_nsec - startTimeP.tv_nsec);
+      doAgain = (currentDuration < duration);
+    }
+  }
+}
+
+void burn_cpu_cycles_low(long duration)
 {
   if (duration > 0) {
     clockid_t clockId;
@@ -71,9 +97,10 @@ void burn_cpu_cycles(long duration)
 }
 
 
+
 void high_ping_received(const void * pong_msg)
 {
-  // burn_cpu_cycles(100000000);  // TODO: Get this value from parameter 'high_busyloop'.
+  burn_cpu_cycles_high(10000000);  // 10ms TODO: Get this value from parameter 'high_busyloop'.
   printf("high ping received.\n");
   RCUNUSED(rcl_publish(&high_pong_publisher_, pong_msg, NULL));
 }
@@ -81,7 +108,7 @@ void high_ping_received(const void * pong_msg)
 
 void low_ping_received(const void * pong_msg)
 {
-  // burn_cpu_cycles(100000000);  // TODO: Get this value from parameter 'low_busyloop'.
+  burn_cpu_cycles_low(10000000);  // 10ms TODO: Get this value from parameter 'low_busyloop'.
   printf("low ping received.\n");
   RCUNUSED(rcl_publish(&low_pong_publisher_, pong_msg, NULL));
 }
@@ -91,12 +118,58 @@ void * thread_run(void * arg)
 {
   int * value = (int *) arg;
   printf("thread_run 1 %d\n",(*value));
+    int duration = 100000000;  // 100ms
+    while(1) {
+    clockid_t clockId;
+    clockId = CLOCK_REALTIME;
+    // clock_getcpuclockid(pthread_self(), &clockId);
+    // NuttX does not implement this function
+    // -lrt  is not available , I did not find this function in 
+    // NuttX subfolders
+    // adding EXTRA_LIBS to the Makefile did not resolve the error.
+    struct timespec startTimeP;
+    clock_gettime(clockId, &startTimeP);
+    int x = 0;
+    bool doAgain = true;
+    while (doAgain) {
+      while (x != rand() && x % 10 != 0) {
+        x++;
+      }
+      struct timespec currentTimeP;
+      clock_gettime(clockId, &currentTimeP);
+      long currentDuration = (currentTimeP.tv_sec - startTimeP.tv_sec) * 1000000000 + (currentTimeP.tv_nsec - startTimeP.tv_nsec);
+      doAgain = (currentDuration < duration);
+    }
+  }
 }
+*/
 
+/*
 void * thread_run2(void * arg)
 {
-  int * value = (int *) arg;
-  printf("thread_run 2 %d\n",(*value));
+  // int * value = (int *) arg;
+  int ret;
+  struct sched_param p;
+  ret = sched_setparam(0, &p);
+  if (ret < 0)
+  {
+    printf("uros_rbs: sched_getparam failed: %d\n" , ret);
+    return 1;
+  }
+  printf("busy-loop prio: %d\n",p.sched_priority);
+  unsigned int milliseconds = 100;
+  while(1)
+  {
+    volatile unsigned int i;
+    volatile unsigned int j;
+
+    for (i = 0; i < milliseconds; i++)
+      {
+        for (j = 0; j < CONFIG_BOARD_LOOPSPERMSEC; j++)
+          {
+          }
+      }
+  }
 }
 */
 #if defined(BUILD_MODULE)
@@ -107,31 +180,28 @@ int uros_rbs_main(int argc, char* argv[])
 {
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rclc_support_t support;
+  int ret;
   printf("Welcome to RBS Demo!\n");
+
 /*
+  // busy thread
   struct sched_param param, param2;
   pthread_attr_t attr, attr2;
   pthread_t worker_thread, worker_thread2;
-  int ret;
 
-  // Set the executor thread priority 
-  param.sched_priority = SCHED_PRIORITY_DEFAULT;
-  ret = sched_setparam(0, &param);
-  if (ret < 0)
-    {
-      printf("uros_rbs: sched_setparam failed: %d\n" , ret);
-      return 1;
-    }
+
   (void)pthread_attr_init(&attr);
   (void)pthread_attr_setschedparam(&attr, &param);
-  // (void)pthread_attr_setstacksize(&attr, CONFIG_UROS_RBS_EXAMPLE_STACKSIZE);
+  param.sched_priority = 10; 
   int value = param.sched_priority;
-  ret = pthread_create(&worker_thread, &attr, &thread_run, &value);
+  ret = pthread_create(&worker_thread, &attr, &thread_run2, &value);
   if (ret != 0)
-    {
-      printf("uros_rbs: pthread_create failed: %d\n", ret);
-      return 1;
-    }
+  {
+    printf("uros_rbs: pthread_create failed: %d\n", ret);
+    return 1;
+  }
+*/
+    /*
    // second worker thread 
    param2.sched_priority = SCHED_PRIORITY_DEFAULT + 10;
   (void)pthread_attr_init(&attr2);
@@ -175,19 +245,18 @@ int uros_rbs_main(int argc, char* argv[])
     }
 */
 
-  struct sched_param exe_param;
-  int ret;
+
 
   // Set the executor thread priority 
-  /*
-  exe_param.sched_priority = 10;
+  struct sched_param exe_param;
+  exe_param.sched_priority = 100;
   ret = sched_setparam(0, &exe_param);
   if (ret < 0)
   {
     printf("uros_rbs: sched_setparam failed: %d\n" , ret);
     return 1;
   }
-  */
+
 
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
@@ -200,50 +269,44 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rclc_publisher_init_best_effort(&low_pong_publisher_, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "low_pong"));
   RCCHECK(rclc_subscription_init_best_effort(&low_ping_subscription_, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "low_ping"));
 
-  rclc_executor_t high_executor = rclc_executor_get_zero_initialized_executor();
-  RCCHECK(rclc_executor_init(&high_executor, &support.context, 2, &allocator));
+  rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
+  RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
   
   struct sched_param sparam_high, sparam_low;
   //sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
   //sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
   printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN);
 
-  bool sporadic_scheduling = true;
-
-  sparam_high.sched_priority = 30;
-
-  if(sporadic_scheduling){
-    sparam_high.sched_priority               = 30;
-    sparam_high.sched_ss_low_priority        = 3;
-    sparam_high.sched_ss_repl_period.tv_sec  = 5;
-    sparam_high.sched_ss_repl_period.tv_nsec = 0;
-    sparam_high.sched_ss_init_budget.tv_sec  = 2;
-    sparam_high.sched_ss_init_budget.tv_nsec = 0;
-    sparam_high.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
-  }
-
-  sparam_low.sched_priority = 20;
-  if(sporadic_scheduling){
-    sparam_low.sched_priority               = 20;
-    sparam_low.sched_ss_low_priority        = 2;
-    sparam_low.sched_ss_repl_period.tv_sec  = 5;
-    sparam_low.sched_ss_repl_period.tv_nsec = 0;
-    sparam_low.sched_ss_init_budget.tv_sec  = 1;
-    sparam_low.sched_ss_init_budget.tv_nsec = 0;
-    sparam_low.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
-  }
-
+  sparam_high.sched_priority               = 60;
+  sparam_high.sched_ss_low_priority        = 3;
+  sparam_high.sched_ss_repl_period.tv_sec  = 0;
+  sparam_high.sched_ss_repl_period.tv_nsec = 10000000;  // 10ms
+  sparam_high.sched_ss_init_budget.tv_sec  = 1;
+  sparam_high.sched_ss_init_budget.tv_nsec = 6000000;   // 6ms
+  sparam_high.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
+  
+  sparam_low.sched_priority               = 50;
+  sparam_low.sched_ss_low_priority        = 2;
+  sparam_low.sched_ss_repl_period.tv_sec  = 0;
+  sparam_low.sched_ss_repl_period.tv_nsec = 10000000;   // 10ms
+  sparam_low.sched_ss_init_budget.tv_sec  = 1;
+  sparam_low.sched_ss_init_budget.tv_nsec = 4000000;    // 4ms
+  sparam_low.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
   printf("high prio %d low prio %d\n", sparam_high.sched_priority, sparam_low.sched_priority);
 
   printf("subscription high ping \n");
-  RCCHECK(rclc_executor_add_subscription_sched(&high_executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA, &sparam_high));
-   printf("subscription low ping \n");
-  RCCHECK(rclc_executor_add_subscription_sched(&high_executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA, &sparam_low));
-    printf("start executor \n");
-  RCCHECK(rclc_executor_start_multi_threading_for_nuttx(&high_executor));
+  RCCHECK(rclc_executor_add_subscription_sched(&executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA, &sparam_high));
+
+  printf("subscription low ping \n");
+  RCCHECK(rclc_executor_add_subscription_sched(&executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA, &sparam_low));
+ 
+  // int sched_policy = SCHED_SPORADIC;
+  int sched_policy = SCHED_FIFO;
+
+  RCCHECK(rclc_executor_start_multi_threading_for_nuttx(&executor, sched_policy));
 
   printf("clean up \n");
-  RCCHECK(rclc_executor_fini(&high_executor));
+  RCCHECK(rclc_executor_fini(&executor));
   RCCHECK(rcl_subscription_fini(&high_ping_subscription_, &node));
   RCCHECK(rcl_publisher_fini(&high_pong_publisher_, &node));
   RCCHECK(rcl_subscription_fini(&low_ping_subscription_, &node));  

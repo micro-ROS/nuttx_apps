@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <pthread.h>
+#include <sched.h>
 
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
@@ -30,9 +31,10 @@
 #define STRING_BUFFER_LEN 100
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){\
-   printf("Failed status on line %d: %d. Message: %s, Aborting.\n",__LINE__,(int)temp_rc, rcl_get_error_string().str);\
-  rcutils_reset_error(); return 1;}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
+   printf("Failed status on line %d: %d: %s. Aborting.\n",__LINE__,(int)temp_rc, rcl_get_error_string().str);\
+   rcutils_reset_error(); return 1;}}
+#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d:\
+   %s. Continuing.\n",__LINE__,(int)temp_rc, rcl_get_error_string().str);rcutils_reset_error();}}
 #define RCUNUSED(fn) { rcl_ret_t temp_rc __attribute__((unused)); temp_rc = fn; }
 
 
@@ -43,7 +45,7 @@ rcl_subscription_t low_ping_subscription_;
 std_msgs__msg__Int32 low_ping_msg_;
 rcl_publisher_t low_pong_publisher_;
 
-
+/*
 void burn_cpu_cycles_high(long duration)
 {
   if (duration > 0) {
@@ -112,7 +114,7 @@ void low_ping_received(const void * pong_msg)
   printf("low ping received.\n");
   RCUNUSED(rcl_publish(&low_pong_publisher_, pong_msg, NULL));
 }
-
+*/
 /*
 void * thread_run(void * arg)
 {
@@ -143,35 +145,161 @@ void * thread_run(void * arg)
   }
 }
 */
+unsigned int thread_1_cnt =0, thread_2_cnt = 0;
 
-/*
-void * thread_run2(void * arg)
+static
+void * worker_thread_run(void * arg)
 {
-  // int * value = (int *) arg;
   int ret;
+  int * thread_id = (int *) arg;
   struct sched_param p;
-  ret = sched_setparam(0, &p);
-  if (ret < 0)
+
+#ifdef CONFIG_SCHED_SPORADIC
+  printf ("CONFIG_SCHED_SPORADIC defined.\n");
+#endif
+
+  ret = sched_getparam(pthread_self(), &p);
+  if (ret != 0)
   {
-    printf("uros_rbs: sched_getparam failed: %d\n" , ret);
-    return 1;
+    printf("worker thread %d: sched_getparam failed: %d\n" , (*thread_id), ret);
+    return;
   }
-  printf("busy-loop prio: %d\n",p.sched_priority);
-  unsigned int milliseconds = 100;
+    printf("running worker-thread %d: prio %d budget %d ns period %d ns\n",(*thread_id), p.sched_priority, 
+    p.sched_ss_init_budget.tv_nsec,p.sched_ss_repl_period.tv_nsec);
+
+  printf("running worker-thread %d: prio %d budget %lf ms period %lf ms\n",(*thread_id), p.sched_priority, 
+    (double) p.sched_ss_init_budget.tv_nsec/(double)1000000,(double)p.sched_ss_repl_period.tv_nsec/(double)1000000);
+  
+  unsigned int milliseconds = 1000;
+  sleep(1);
   while(1)
   {
     volatile unsigned int i;
     volatile unsigned int j;
-
+    printf("thread %d\n", (*thread_id));
     for (i = 0; i < milliseconds; i++)
       {
+        
         for (j = 0; j < CONFIG_BOARD_LOOPSPERMSEC; j++)
           {
+          }
+          if ((*thread_id)== 1)
+          {
+            thread_1_cnt++; // count progress in milliseconds
+          }
+          if ((*thread_id)== 2)
+          {
+            thread_2_cnt++; // count progress in milliseconds
           }
       }
   }
 }
-*/
+
+void test_sporadic_scheduling(int thr1_prio_high, int thr1_prio_low, int thr1_budget_ns, int thr1_period_ns, 
+                              int thr2_prio_high, int thr2_prio_low, int thr2_budget_ns, int thr2_period_ns 
+) 
+{
+  struct sched_param sparam_high, sparam_low;
+  int ret;
+
+  sparam_high.sched_priority               = thr1_prio_high;
+  sparam_high.sched_ss_low_priority        = thr1_prio_low;
+  sparam_high.sched_ss_repl_period.tv_sec  = 0;
+  sparam_high.sched_ss_repl_period.tv_nsec = thr1_period_ns;
+  sparam_high.sched_ss_init_budget.tv_sec  = 0;
+  sparam_high.sched_ss_init_budget.tv_nsec = thr1_budget_ns;
+  sparam_high.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
+  
+  sparam_low.sched_priority               = thr2_prio_high;
+  sparam_low.sched_ss_low_priority        = thr2_prio_low;
+  sparam_low.sched_ss_repl_period.tv_sec  = 0;
+  sparam_low.sched_ss_repl_period.tv_nsec = thr2_period_ns;
+  sparam_low.sched_ss_init_budget.tv_sec  = 0;
+  sparam_low.sched_ss_init_budget.tv_nsec = thr2_budget_ns;
+  sparam_low.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
+
+  printf("thread 1: high prio %d low prio %d budget %d ms  period %d ms \n", 
+    sparam_high.sched_priority, sparam_high.sched_ss_low_priority, 
+    sparam_high.sched_ss_init_budget.tv_nsec/1000000, sparam_high.sched_ss_repl_period.tv_nsec / 1000000);
+  printf("thread 2: high prio %d low prio %d budget %d ms  period %d ms \n", 
+  sparam_low.sched_priority, sparam_low.sched_ss_low_priority, 
+  sparam_low.sched_ss_init_budget.tv_nsec/1000000, sparam_low.sched_ss_repl_period.tv_nsec / 1000000);
+
+ // first worker thread
+  pthread_attr_t attr_high, attr_low;
+  pthread_t worker_thread_high, worker_thread_low;
+  int id_high=1, id_low=2;
+
+  (void)pthread_attr_init(&attr_high);
+  (void)pthread_attr_setschedparam(&attr_high, &sparam_high);
+  ret = pthread_attr_setschedpolicy(&attr_high, SCHED_SPORADIC);
+  if (ret != OK)
+    {
+      printf("sporadic_test: ERROR: pthread_attr_setschedpolicy failed, ret=%d\n",
+             ret);
+    }
+  printf("param low_prio %d budget %d period %d\n", 
+      attr_high.low_priority,
+      attr_high.budget.tv_nsec,
+      attr_high.repl_period.tv_nsec);
+
+  ret = pthread_create(&worker_thread_high, &attr_high, &worker_thread_run, &id_high);
+  if (ret != 0)
+  {
+    printf("uros_rbs: pthread_create worker_thread_high failed: %d\n", ret);
+    return 1;
+    } else {
+      printf("uros_rbs: started worker_thread_high\n");
+    }
+
+   // second worker thread 
+  (void)pthread_attr_init(&attr_low);
+  (void)pthread_attr_setschedparam(&attr_low, &sparam_low);
+  ret = pthread_attr_setschedpolicy(&attr_low, SCHED_SPORADIC);
+  if (ret != OK)
+    {
+      printf("sporadic_test: ERROR: pthread_attr_setschedpolicy failed, ret=%d\n",
+             ret);
+    }
+  ret = pthread_create(&worker_thread_low, &attr_low, &worker_thread_run, &id_low);
+  if (ret != 0)
+    {
+      printf("uros_rbs: pthread_create worker_thread_low failed: %d\n", ret);
+      return 1;
+    } else {
+      printf("uros_rbs: started worker_thread_low\n");
+    }
+
+  for(unsigned int i=0;i<10;i++)
+  {
+    printf("sleeping\n");
+    sleep(1);
+  }
+
+  ret = pthread_cancel(worker_thread_high);
+  if (ret != 0)
+    {
+      fprintf(stderr, "uros_rbs: pthread_cancel worker_thread_high failed\n");
+    }
+  else
+    {
+      printf("uros_rbs: worker_thread_high returned.\n");
+    }
+
+  ret = pthread_cancel(worker_thread_low);
+  if (ret != 0)
+    {
+      fprintf(stderr, "uros_rbs: pthread_cancel worker_thread_low failed\n");
+    }
+  else
+    {
+      printf("uros_rbs: worker_thread_low returned.\n");
+    }
+
+    printf("progress high %d ms progress low %d ms\n", thread_1_cnt, thread_2_cnt);
+}
+
+
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -183,69 +311,12 @@ int uros_rbs_main(int argc, char* argv[])
   int ret;
   printf("Welcome to RBS Demo!\n");
 
+  test_sporadic_scheduling(50, 5, 7000000, 10000000,
+                           40, 4, 3000000, 10000000);
+ 
+
+
 /*
-  // busy thread
-  struct sched_param param, param2;
-  pthread_attr_t attr, attr2;
-  pthread_t worker_thread, worker_thread2;
-
-
-  (void)pthread_attr_init(&attr);
-  (void)pthread_attr_setschedparam(&attr, &param);
-  param.sched_priority = 10; 
-  int value = param.sched_priority;
-  ret = pthread_create(&worker_thread, &attr, &thread_run2, &value);
-  if (ret != 0)
-  {
-    printf("uros_rbs: pthread_create failed: %d\n", ret);
-    return 1;
-  }
-*/
-    /*
-   // second worker thread 
-   param2.sched_priority = SCHED_PRIORITY_DEFAULT + 10;
-  (void)pthread_attr_init(&attr2);
-  (void)pthread_attr_setschedparam(&attr2, &param2);
-  // (void)pthread_attr_setstacksize(&attr, CONFIG_UROS_RBS_EXAMPLE_STACKSIZE);
-  int value2 = param2.sched_priority;
-  ret = pthread_create(&worker_thread2, &attr, thread_run2, &value2);
-  if (ret != 0)
-    {
-      printf("uros_rbs: pthread_create worker_thread2 failed: %d\n", ret);
-      return 1;
-    }
-
-
-  int i=0;
-  while(i<3){
-    printf("sleeping\n");
-    sleep(1);
-    i++;
-  }
-
-
-  ret = pthread_join(worker_thread, NULL);
-  if (ret != 0)
-    {
-      fprintf(stderr, "uros_rbs: pthread_join failed\n");
-    }
-  else
-    {
-      printf("uros_rbs: worker_thread returned.\n");
-    }
-
-  ret = pthread_join(worker_thread2, NULL);
-  if (ret != 0)
-    {
-      fprintf(stderr, "uros_rbs: pthread_join worker_thread2 failed\n");
-    }
-  else
-    {
-      printf("uros_rbs: worker_thread2 returned.\n");
-    }
-*/
-
-
 
   // Set the executor thread priority 
   struct sched_param exe_param;
@@ -313,7 +384,7 @@ int uros_rbs_main(int argc, char* argv[])
   RCCHECK(rcl_publisher_fini(&low_pong_publisher_, &node));
 
   RCCHECK(rcl_node_fini(&node));
-  
+  */
  return 0;
 }
 /*

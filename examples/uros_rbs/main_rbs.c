@@ -168,7 +168,7 @@ void high_ping_received(const void * pong_msg)
 void low_ping_received(const void * pong_msg)
 {
   my_mdelay(10);
-  usleep(sleep_ms*1000);
+  // usleep(sleep_ms*1000);
   printf("low ping received.\n");
   RCUNUSED(rclc_executor_publish(&low_pong_publisher_, pong_msg, NULL));
 
@@ -191,11 +191,14 @@ int uros_rbs_main(int argc, char* argv[])
   rclc_support_t support;
   int ret;
   int budget_ms = 30;
+  sleep_ms = 0;
+  unsigned int timeout_ms = 100;
 
 
   if (argc ==2){
     // budget_ms = atoi(argv[1]);
-    sleep_ms = atoi(argv[1]);  
+    // sleep_ms = atoi(argv[1]);  
+    timeout_ms = atoi(argv[1]);
   }
   // period_ms
   // low_pong_policy
@@ -203,6 +206,7 @@ int uros_rbs_main(int argc, char* argv[])
   // low_ping_prio
   printf("high_pong budget %d ms\n", budget_ms);
   printf("low_pong sleep %d ms\n", sleep_ms);
+  printf("parameter rcl_wait timeout %d ms\n", timeout_ms);
   // tests
   delay_test();
 
@@ -226,7 +230,8 @@ int uros_rbs_main(int argc, char* argv[])
 
   rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
   RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
-  
+  rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(timeout_ms));
+
   // sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
   // sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
   // printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN); => [0, 255]

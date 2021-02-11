@@ -8,7 +8,7 @@
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <std_msgs/msg/int32.h>
-#include <rmw_uros/options.h>
+#include <rmw_microros/api.h>
 
 #define AGENT_INET6_ADDR   "fe80::12e2:d5ff:ff00:1fa"      // micro-ROS agent IPv6 address
 #define AGENT_UDP_PORT     "9999"                          // UDP port agent is listening on; below 10000

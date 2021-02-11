@@ -10,7 +10,7 @@
 //uROS libraries
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
-#include <rmw_uros/options.h>
+#include <rmw_microros/api.h>
 #include <std_msgs/msg/int32.h>
 
 #include "init_hih_6lowpan.h"

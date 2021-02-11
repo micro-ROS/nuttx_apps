@@ -160,25 +160,17 @@ void burn_cpu_cycles_low(long duration)
 void high_ping_received(const void * pong_msg)
 {
   my_mdelay(10);  // 10ms TODO: Get this value from parameter 'high_busyloop'.
-  printf("high ping received.\n");
-  RCUNUSED(rclc_executor_publish(&high_pong_publisher_, pong_msg, NULL));
+  // printf("high ping received.\n");
+  RCUNUSED(rcl_publish(&high_pong_publisher_, pong_msg, NULL));
 }
 
 
 void low_ping_received(const void * pong_msg)
 {
   my_mdelay(10);
-  usleep(sleep_ms*1000);
-  printf("low ping received.\n");
-  RCUNUSED(rclc_executor_publish(&low_pong_publisher_, pong_msg, NULL));
-
-/*
-  unsigned int seconds = 15;
-  while(seconds>0){
-    my_mdelay2(1000);
-    seconds--; 
-  }
-*/
+  // usleep(sleep_ms*1000);
+  // printf("low ping received.\n");
+  RCUNUSED(rcl_publish(&low_pong_publisher_, pong_msg, NULL));
 }
 
 #if defined(BUILD_MODULE)
@@ -191,20 +183,21 @@ int uros_rbs_main(int argc, char* argv[])
   rclc_support_t support;
   int ret;
   int budget_ms = 30;
+  sleep_ms = 0;
+  unsigned int timeout_ms = 100;
 
 
   if (argc ==2){
     // budget_ms = atoi(argv[1]);
-    sleep_ms = atoi(argv[1]);  
+    // sleep_ms = atoi(argv[1]);
+    timeout_ms = atoi(argv[1]);
   }
-  // period_ms
-  // low_pong_policy
-  // high_ping_prio
-  // low_ping_prio
-  printf("high_pong budget %d ms\n", budget_ms);
-  printf("low_pong sleep %d ms\n", sleep_ms);
+
+  // printf("high_pong budget %d ms\n", budget_ms);
+  // printf("low_pong sleep %d ms\n", sleep_ms);
+  printf("rcl_wait timeout %d ms\n", timeout_ms);
   // tests
-  delay_test();
+  // delay_test();
 
   // Set the executor thread priority 
   struct sched_param exe_param;
@@ -227,35 +220,12 @@ int uros_rbs_main(int argc, char* argv[])
   rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
   RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
   
-  // sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
-  // sparam_low.priority = sched_get_priority_min(SCHED_FIFO);
-  // printf("max prio %d min prio %d\n", SCHED_PRIORITY_MAX, SCHED_PRIORITY_MIN); => [0, 255]
-  rclc_executor_sched_parameter_t sparam_high;
-  sparam_high.policy = SCHED_SPORADIC;
-  sparam_high.param.sched_priority               = 60;
-  sparam_high.param.sched_ss_low_priority        = 6;
-  sparam_high.param.sched_ss_repl_period.tv_sec  = 0;
-  sparam_high.param.sched_ss_repl_period.tv_nsec = 100000000;  // 100ms
-  sparam_high.param.sched_ss_init_budget.tv_sec  = 0;
-  sparam_high.param.sched_ss_init_budget.tv_nsec = budget_ms*1000000;
-  sparam_high.param.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
+  RCCHECK(rclc_executor_add_subscription(&executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA));
+  RCCHECK(rclc_executor_add_subscription(&executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA));
 
-  rclc_executor_sched_parameter_t sparam_low;
-  sparam_low.policy = SCHED_FIFO;
-  sparam_low.param.sched_priority               = 50;
-  /*
-  sparam_low.param.sched_ss_low_priority        = 2;
-  sparam_low.param.sched_ss_repl_period.tv_sec  = 0;
-  sparam_low.param.sched_ss_repl_period.tv_nsec = 10000000;   // 10ms
-  sparam_low.param.sched_ss_init_budget.tv_sec  = 0;
-  sparam_low.param.sched_ss_init_budget.tv_nsec = 4000000;    // 4ms
-  sparam_low.param.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
-  */
-  printf("high_pong prio %d low_pong prio %d\n", sparam_high.param.sched_priority, sparam_low.param.sched_priority);
-  RCCHECK(rclc_executor_add_subscription_sched(&executor, &high_ping_subscription_, &high_ping_msg_, &high_ping_received, ON_NEW_DATA, &sparam_high));
-  RCCHECK(rclc_executor_add_subscription_sched(&executor, &low_ping_subscription_, &low_ping_msg_, &low_ping_received, ON_NEW_DATA, &sparam_low));
-  RCCHECK(rclc_executor_start_multi_threading_for_nuttx(&executor));
-
+  while (1){
+    RCCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(timeout_ms)));
+  }
   printf("clean up \n");
   RCCHECK(rclc_executor_fini(&executor));
   RCCHECK(rcl_subscription_fini(&high_ping_subscription_, &node));

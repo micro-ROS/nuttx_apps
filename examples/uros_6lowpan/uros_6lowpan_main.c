@@ -25,11 +25,12 @@ int main(int argc, char *argv[])
 int uros_6lowpan_main(int argc, char* argv[])
 #endif
 {
-    const int num_msg = 1000;
+    const int num_msg = 50;
     char buffer[256]; // Buffer to save configuration commands.
     size_t index;
     std_msgs__msg__Int32 msg;
     msg.data = 0;
+    sys_trace_ctf_meas_pwr();
 
     if (3 > argc || 0 == atoi(argv[2])) {
         printf("usage: program [-h | --help] | ip port sub/pub [<max_topics>]\n");
@@ -64,6 +65,7 @@ int uros_6lowpan_main(int argc, char* argv[])
         system("i8sak assoc");
    }
 
+    sys_trace_ctf_meas_start();
     system("ifup wpan0"); // Bring up the network.
     system("mount -t procfs /proc");// Mount the proc file system to check the connection data.
     printf("Connection data\r\n");
@@ -73,7 +75,7 @@ int uros_6lowpan_main(int argc, char* argv[])
     printf("Press any key to continue\r\n");
     scanf("%s",buffer);
 
-    rcl_ret_t rv;
+    rcl_ret_t rv = 0;
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
     RCCHECK(rcl_init_options_init(&options, rcl_get_default_allocator()));
 
@@ -92,16 +94,19 @@ int uros_6lowpan_main(int argc, char* argv[])
 
         rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
         rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
+	publisher_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
         RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops));
 
+	sleep(2);
+    	rcl_ret_t rc;
         do {
-            rv = rcl_publish(&publisher, (const void*)&msg, NULL);
-            if (RCL_RET_OK == rv )
+	    sys_trace_ctf_meas_pwr();
+            rc = rcl_publish(&publisher, (const void*)&msg, NULL);
+            if (RCL_RET_OK == rc )
             {
                 printf("Sent: '%i'\n", msg.data++);
-                usleep(SEND_PERIOD_MS * 1000);
             }
-        } while (RCL_RET_OK == rv && msg.data < num_msg);
+        } while (RCL_RET_OK == rc && msg.data < num_msg);
 
         printf("TOTAL sent: %i\n", num_msg);
         RCSOFTCHECK(rcl_publisher_fini(&publisher, &node));
@@ -123,7 +128,7 @@ int uros_6lowpan_main(int argc, char* argv[])
 
 	  if (wait_set.subscriptions[index]) {
 
-	    rcl_ret_t rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
+	    rv = rcl_take(wait_set.subscriptions[index], &msg, NULL, NULL);
 	    if (RCL_RET_OK == rv) {
 	      printf("I received: [%i]\n", msg.data);
 	    }
@@ -131,7 +136,7 @@ int uros_6lowpan_main(int argc, char* argv[])
 
 	} while ( RCL_RET_OK == rv );
 
-        RCSOFTCHECK(rcl_subscriber_fini(&subscription, &node));
+        //RCSOFTCHECK(rcl_subscriber_fini(&subscription, &node));
     }
     else {
         printf("Error. It must be pub (publisher) or sub (subscriber).\r\n");
@@ -144,5 +149,6 @@ int uros_6lowpan_main(int argc, char* argv[])
 
     printf("Closing Micro-ROS 6lowpan app\r\n");
 
+    sys_trace_ctf_meas_stop();
     return 0;
 }

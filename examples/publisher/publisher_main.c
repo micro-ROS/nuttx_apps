@@ -26,6 +26,10 @@ int publisher_main(int argc, char* argv[])
 #endif
 {
     rcl_ret_t rv = RCL_RET_ERROR;
+#ifdef BM_PWR
+    sys_trace_ctf_meas_pwr();
+#endif // BM_PWR
+
 
 #ifdef CONFIG_UROS_TRANSPORT_UDP
     struct in_addr addr;
@@ -69,6 +73,9 @@ int publisher_main(int argc, char* argv[])
 	    if (RCL_RET_OK == rc ) {
 		    printf("Sent: '%i'\n", msg.data++);
 	    }
+#ifdef BM_PWR
+	    sys_trace_ctf_meas_pwr();
+#endif //BM_PWR
     } while (RCL_RET_OK == rc && msg.data < num_msg );
     printf("TOTAL sent: %i\n", num_msg);
 

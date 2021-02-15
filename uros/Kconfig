@@ -55,7 +55,7 @@ endif
 if UROS_TRANSPORT_SERIAL
   config UROS_SERIAL_PORT
     string "Serial port to use"
-    default "/dev/ttyS1"
+    default "/dev/ttyS0"
   
 endif
 
@@ -64,21 +64,21 @@ config UROS_MAX_NODES
   default 2
 
 config UROS_MAX_PUBLISHERS
-  int "Maximum number of publishers per node"
+  int "Maximum number of publishers"
   default 2
 
 config UROS_MAX_SUBSCRIPTIONS
-  int "Maximum number of subscriptions per node"
-  default 1
+  int "Maximum number of subscriptions"
+  default 2
 
 config UROS_MAX_SERVICES
-  int "Maximum number of service handlers per node"
+  int "Maximum number of service handlers"
   default 1
   ---help---
-    This is the maximum number of services per node. Please note that parameter service, if used, needs one of those.
+    This is the maximum number of services. Please note that parameter service, if used, needs one of those.
 
 config UROS_MAX_CLIENTS
-  int "Maximum number of service clients per node"
+  int "Maximum number of service clients"
   default 1
 
 config UROS_MAX_HISTORY

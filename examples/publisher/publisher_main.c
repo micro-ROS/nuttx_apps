@@ -25,11 +25,10 @@ int main(int argc, char *argv[])
 int publisher_main(int argc, char* argv[])
 #endif
 {
-    rcl_ret_t rv = RCL_RET_ERROR;
+    rcl_ret_t rv;
 #ifdef BM_PWR
     sys_trace_ctf_meas_pwr();
 #endif // BM_PWR
-
 
 #ifdef CONFIG_UROS_TRANSPORT_UDP
     struct in_addr addr;
@@ -43,10 +42,22 @@ int publisher_main(int argc, char* argv[])
 #endif //
     sys_trace_ctf_meas_start();
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
-    RCCHECK(rcl_init_options_init(&options, rcl_get_default_allocator()))
+    rv = rcl_init_options_init(&options, rcl_get_default_allocator());
+        printf("rcl_init_options_init\n");
+
+    if (RCL_RET_OK != rv) {
+        printf("rcl init options error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
 
     rcl_context_t context = rcl_get_zero_initialized_context();
-    RCCHECK(rcl_init(argc, argv, &options, &context));
+    rv = rcl_init(argc, argv, &options, &context);
+    printf("rcl_init\n");
+
+    if (RCL_RET_OK != rv) {
+        printf("rcl initialization error: %s\n", rcl_get_error_string().str);
+        return 1;
+    }
 
     rcl_node_options_t node_ops = rcl_node_get_default_options();
 

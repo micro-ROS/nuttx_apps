@@ -38,13 +38,13 @@ int adc_simple_main(int argc, char *argv[])
   }
   size_t readsize = sizeof(struct adc_msg_s);
   while(1){
-   read(fd, &sample[1], readsize);
+   read(fd, &sample[0], readsize);
     if(nbytes<0){
       printf("Error reading");
       break;
     }
     printf("%d: channel: %d value: %d\n",
-           1, sample[1].am_channel, sample[1].am_data);
+           1, sample[0].am_channel, sample[0].am_data);
   }
 
   close(fd);

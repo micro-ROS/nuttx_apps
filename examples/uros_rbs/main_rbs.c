@@ -328,7 +328,7 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
 
 
   printf("sporadic thread 2: at prio high %d low: %d, budget: %d\n",
-         prio_high-1, prio_low-1, budget_2_ns);
+         prio_high, prio_low, budget_2_ns);
 
   ret = pthread_attr_setschedpolicy(&attr, SCHED_SPORADIC);
   if (ret != OK)
@@ -337,8 +337,8 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
              ret);
     }
   struct sched_param sparam2;
-  sparam2.sched_priority               = prio_high-1;
-  sparam2.sched_ss_low_priority        = prio_low-1;
+  sparam2.sched_priority               = prio_high;
+  sparam2.sched_ss_low_priority        = prio_low;
   sparam2.sched_ss_repl_period.tv_sec  = 0;
   sparam2.sched_ss_repl_period.tv_nsec = 100000000;
   sparam2.sched_ss_init_budget.tv_sec  = 0;
@@ -450,13 +450,13 @@ int uros_rbs_main(int argc, char* argv[])
 #endif
 {
   int ret;
-  int budget_1_ms = 30;
-  int budget_2_ms = 10;
+  int budget_1_ms = 10;
+  int budget_2_ms = 30;
 
 
   if (argc ==2){
-    // budget_1_ms = atoi(argv[1]);
-    budget_2_ms = atoi(argv[1]);
+    budget_1_ms = atoi(argv[1]);
+    // budget_2_ms = atoi(argv[1]);
   }
 
   // printf("budget 1: %d ms\n", budget_1_ms);
@@ -563,6 +563,31 @@ budget(ms)  (ms)        (ms)        (ms)
 80          3015          48         6845
 90          3015          91         6802 
 100         3053        4726         2128 
+
+
+
+Exp 4 (two sporadic threads and FIFO thread)
+
+Same as Experiment 1, but both sporadic threads with the same priority settings
+- sporadic 1: high prio 180, low prio 20
+- sporadic 2: high prio 180, low prio 20
+- fifo      : prio 120
+
+config      result      result      result
+sporadic 1  sporadic 1  sporadic 2  fifo
+budget(ms)  (ms)        (ms)        (ms) 
+------------------------------------------
+0          144            981         8784
+10        1073            971         7864
+20        2044             10         7854
+30        3015              0         6892
+40          39           3044         6825   
+50        4957           4950            0
+60        4427           1559         3923
+70        6880           3028            0
+80        7840           2066            0
+90        8802           1105            0
+100       9861             47            0
 
 
 Example raw output:

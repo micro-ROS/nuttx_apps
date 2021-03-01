@@ -450,13 +450,13 @@ int uros_rbs_main(int argc, char* argv[])
 #endif
 {
   int ret;
-  int budget_1_ms = 10;
-  int budget_2_ms = 30;
+  int budget_1_ms = 30;
+  int budget_2_ms = 10;
 
 
   if (argc ==2){
-    budget_1_ms = atoi(argv[1]);
-    // budget_2_ms = atoi(argv[2]);
+    // budget_1_ms = atoi(argv[1]);
+    budget_2_ms = atoi(argv[1]);
   }
 
   // printf("budget 1: %d ms\n", budget_1_ms);
@@ -497,30 +497,35 @@ configuration with
 - thread 1:  sporadic thread with budget = x ms and period=100ms
 - thread 2: low-prio FIFO thread
 
-budget  counter   counter 
- (ms)   sporadic  fifo
----------------------------
-0         96      9815
-10      1074      8837
-20      2043      7868
-30      3014      6896
-40      3985      5925
-50      4956      4953
-60      5920      3990
-70      6899      3010
-80      7870      2039
-90      8804      1105
-100     9910         0
+config      result      result
+sporadic 1  sporadic 1  fifo
+budget(ms)  (ms)        (ms) 
+---------------------------------
+0            96         9815
+10         1074         8837
+20         2043         7868
+30         3014         6896
+40         3985         5925
+50         4956         4953
+60         5920         3990
+70         6899         3010
+80         7870         2039
+90         8804         1105
+100        9910            0
 
-Exp 2(two sporadic threads and FIFO)
+Exp 2 (two sporadic threads and FIFO thread)
+
+Keep sporadic thread 2 with 30/100ms budget/period, vary budget of thread 1 from 0 - 100ms
+
 configuration with 
-- thread 1:  sporadic thread with budget = x ms and period=100ms, prio see above
+- thread 1:  sporadic thread with budget = x ms and  period=100ms, prio see above
 - thread 3:  sporadic thread with budget = 30 ms and period=100ms, prio see above
 - thread 2: low-prio FIFO thread, prio see above
 
-budget(ms)  counter     counter     counter 
+config      result      result      result
 sporadic 1  sporadic 1  sporadic 2  fifo
-----------------------------------------
+budget(ms)  (ms)        (ms)        (ms) 
+------------------------------------------
 0            145         981       8784
 10          1073         971       7864
 20          2044          10       7854
@@ -533,9 +538,34 @@ sporadic 1  sporadic 1  sporadic 2  fifo
 90          9908           0          0
 100         9909           0          0
 
+Exp 3 (two sporadic threads and FIFO thread)
+
+Keep sporadic thread 1 with 30/100ms budget, vary budget of thread 2 from 0 - 100ms
+
+configuration with 
+- thread 1:  sporadic thread with budget = 30 ms and period=100ms, prio see above
+- thread 3:  sporadic thread with budget = x ms and  period=100ms, prio see above
+- thread 2: low-prio FIFO thread, prio see above
 
 
-Raw output:
+config      result      result      result
+sporadic 2  sporadic 1  sporadic 2  fifo
+budget(ms)  (ms)        (ms)        (ms) 
+----------------------------------------
+0           5246        4661            0    
+10          7091        2816            0         
+20          9132        776             0
+30          3015           0         6892
+40          3016           9         6883
+50          3015          49         6844
+60          3016        2311         4581
+70          3065        2484         4359    
+80          3015          48         6845
+90          3015          91         6802 
+100         3053        4726         2128 
+
+
+Example raw output:
 Sporadic thread 1: prio high: 180, low: 20, budget: 10000000
 pthread_create: budget 0 s 10000000 ns ticks: 10 , period 0 s 100000000 ns ticks 100 
 thread id 8

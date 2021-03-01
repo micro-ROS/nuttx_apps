@@ -238,7 +238,7 @@ static void *sporadic_func2(void *parameter)
  * Public Functions
  ****************************************************************************/
 
-void sporadic_test(void)
+void sporadic_test(int budget_1_ns, int budget_2_ns)
 {
   pthread_t nuisance_thread = (pthread_t)0;
   pthread_t sporadic_thread = (pthread_t)0;
@@ -354,8 +354,8 @@ void sporadic_test(void)
 */
   /* Start a sporadic thread, with the following parameters: */
 
-  printf("sporadic_test: Starting sporadic thread at priority %d\n",
-         prio_high, prio_low);
+  printf("sporadic_test: Starting sporadic thread at priority high: %d, low: %d, budget: %d\n",
+         prio_high, prio_low, budget_1_ns);
 
   ret = pthread_attr_setschedpolicy(&attr, SCHED_SPORADIC);
   if (ret != OK)
@@ -369,7 +369,7 @@ void sporadic_test(void)
   sparam.sched_ss_repl_period.tv_sec  = 0;
   sparam.sched_ss_repl_period.tv_nsec = 10000000;
   sparam.sched_ss_init_budget.tv_sec  = 0;
-  sparam.sched_ss_init_budget.tv_nsec = 2000000;
+  sparam.sched_ss_init_budget.tv_nsec = budget_1_ns;
   sparam.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
 
   ret = pthread_attr_setschedparam(&attr, &sparam);
@@ -387,8 +387,8 @@ void sporadic_test(void)
     }
 
 /*
-  printf("sporadic_test: Starting sporadic thread 2 at priority %d\n",
-         prio_high-1, prio_low-1);
+  printf("sporadic_test: Starting sporadic thread 2 at priority high %d low: %d, budget: %d\n",
+         prio_high-1, prio_low-1, budget_2_ns);
 
   ret = pthread_attr_setschedpolicy(&attr, SCHED_SPORADIC);
   if (ret != OK)
@@ -402,7 +402,7 @@ void sporadic_test(void)
   sparam2.sched_ss_repl_period.tv_sec  = 0;
   sparam2.sched_ss_repl_period.tv_nsec = 10000000;
   sparam2.sched_ss_init_budget.tv_sec  = 0;
-  sparam2.sched_ss_init_budget.tv_nsec = 1000000;
+  sparam2.sched_ss_init_budget.tv_nsec = budget_2_ns;
   sparam2.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
 
   ret = pthread_attr_setschedparam(&attr, &sparam2);
@@ -496,7 +496,19 @@ int uros_rbs_main(int argc, char* argv[])
 #endif
 {
   int ret;
-  sporadic_test();
+  int budget_1_ms = 20;
+  int budget_2_ms = 10;
+
+
+  if (argc ==2){
+    budget_1_ms = atoi(argv[1]);
+    // sleep_ms = atoi(argv[1]);  
+    // timeout_ms = atoi(argv[1]);
+  }
+
+  printf("budget 1%d ms\n", budget_1_ms);
+  printf("budget 2%d ms\n", budget_2_ms);
+  sporadic_test(RCL_MS_TO_NS(budget_1_ms), RCL_MS_TO_NS(budget_2_ms));
  return 0;
 }
 

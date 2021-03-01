@@ -39,7 +39,7 @@
    %s. Continuing.\n",__LINE__,(int)temp_rc, rcl_get_error_string().str);rcutils_reset_error();}}
 #define RCUNUSED(fn) { rcl_ret_t temp_rc __attribute__((unused)); temp_rc = fn; }
 
-static unsigned int sleep_ms;
+// static unsigned int sleep_ms;
 
 rcl_subscription_t high_ping_subscription_;
 std_msgs__msg__Int32 high_ping_msg_;
@@ -73,7 +73,7 @@ static void my_mdelay2(unsigned int milliseconds)
         }
     }
 }
-
+/*
 void delay_test(void)
 {
   struct timespec startTimeP;
@@ -103,6 +103,7 @@ void delay_test(void)
   printf("usleep test: %d ms duration %ld\n", sleep_ms, measuredDuration/1000000);
 
 }
+*/
 /*
 void burn_cpu_cycles_high(long duration)
 {
@@ -160,7 +161,7 @@ void burn_cpu_cycles_low(long duration)
 void high_ping_received(const void * pong_msg)
 {
   my_mdelay(10);  // 10ms TODO: Get this value from parameter 'high_busyloop'.
-  printf("high ping received.\n");
+  // printf("high ping received.\n");
   RCUNUSED(rclc_executor_publish(&high_pong_publisher_, pong_msg, NULL));
 }
 
@@ -169,7 +170,7 @@ void low_ping_received(const void * pong_msg)
 {
   my_mdelay(10);
   // usleep(sleep_ms*1000);
-  printf("low ping received.\n");
+  // printf("low ping received.\n");
   RCUNUSED(rclc_executor_publish(&low_pong_publisher_, pong_msg, NULL));
 
 /*
@@ -191,7 +192,7 @@ int uros_rbs_main(int argc, char* argv[])
   rclc_support_t support;
   int ret;
   int budget_ms = 30;
-  sleep_ms = 0;
+  // sleep_ms = 0;
   unsigned int timeout_ms = 100;
 
 
@@ -205,10 +206,10 @@ int uros_rbs_main(int argc, char* argv[])
   // high_ping_prio
   // low_ping_prio
   printf("high_pong budget %d ms\n", budget_ms);
-  printf("low_pong sleep %d ms\n", sleep_ms);
+  // printf("low_pong sleep %d ms\n", sleep_ms);
   printf("parameter rcl_wait timeout %d ms\n", timeout_ms);
   // tests
-  delay_test();
+  // delay_test();
 
   // Set the executor thread priority 
   struct sched_param exe_param;
@@ -230,7 +231,12 @@ int uros_rbs_main(int argc, char* argv[])
 
   rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
   RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
-  rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(timeout_ms));
+  RCCHECK(rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(timeout_ms)));
+  printf("main: executor->timeout_ns %d\n", executor.timeout_ns);
+  RCCHECK(rclc_executor_set_timeout(&executor, timeout_ms));
+  printf("main: executor->timeout_ns %d\n", executor.timeout_ns);
+  RCCHECK(rclc_executor_set_timeout(&executor, 420420420));
+  printf("main: executor->timeout_ns %d\n", executor.timeout_ns);
 
   // sparam_high.priority = sched_get_priority_max(SCHED_FIFO);
   // sparam_low.priority = sched_get_priority_min(SCHED_FIFO);

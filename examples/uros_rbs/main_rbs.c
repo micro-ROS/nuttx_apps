@@ -242,8 +242,7 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
   FAR void *result;
   struct sched_param myparam;
   struct sched_param sparam;
-  int prio_min;
-  int prio_max;
+
   int prio_low;
   int prio_mid;
   int prio_high;
@@ -256,32 +255,24 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
   printf("  -- There will some errors in the replenishment interval\n");
 #endif
 
-  printf("sporadic_test: Initializing semaphore to 0\n");
+  // printf("sporadic_test: Initializing semaphore to 0\n");
   sem_init(&g_sporadic_sem, 0, 0);
 
+  // initilize global worker-thread millisecons-counters
   sporadic_1_ms_cnt = 0;
   sporadic_2_ms_cnt = 0;
   fifo_ms_cnt = 0;
   
-  prio_min  = sched_get_priority_min(SCHED_FIFO);
-  prio_max  = sched_get_priority_max(SCHED_FIFO);
-
-  /*
-  prio_low  = prio_min + ((prio_max - prio_min) >> 2);
-  prio_mid  = (prio_min + prio_max) >> 1;
-  prio_high = prio_max - ((prio_max - prio_min) >> 2);
-  */
   prio_low = 20;
   prio_mid = 120;
   prio_high = 180;
-  /* Temporarily set our priority to prio_high + 2 */
 
   ret = sched_getparam(0, &myparam);
   if (ret != OK)
     {
       printf("sporadic_test: ERROR: sched_getparam failed, ret=%d\n", ret);
     }
-
+  /* Temporarily set our priority to prio_high + 2 */
   sparam.sched_priority = prio_high + 2;
   ret = sched_setparam(0, &sparam);
   if (ret != OK)
@@ -301,52 +292,9 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
   sched_lock();
   sem_init(&g_sporadic_sem, 0, 0);
 
-  /* Start a FIFO thread at the highest priority (prio_max + 1) */
-
-  printf("sporadic_test: Starting FIFO thread at priority %d\n", prio_mid);
-
-  ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-  if (ret != OK)
-    {
-      printf("sporadic_test: ERROR: pthread_attr_setschedpolicy failed, ret=%d\n",
-             ret);
-    }
-
-  sparam.sched_priority = prio_high + 1;
-  ret = pthread_attr_setschedparam(&attr, &sparam);
-  if (ret != OK)
-    {
-      printf("sporadic_test: ERROR: pthread_attr_setschedparam failed, ret=%d\n",
-             ret);
-    }
-/*
-  ret = pthread_create(&nuisance_thread, &attr, nuisance_func, NULL);
-  if (ret != 0)
-    {
-      printf("sporadic_test: ERROR: FIFO thread creation failed: %d\n",
-             ret);
-    }
-*/
-  /* Start a FIFO thread at the middle priority */
-/*
-  sparam.sched_priority = prio_mid;
-  ret = pthread_attr_setschedparam(&attr, &sparam);
-  if (ret != OK)
-    {
-      printf("sporadic_test: ERROR: pthread_attr_setschedparam failed, ret=%d\n",
-             ret);
-    }
-
-  ret = pthread_create(&fifo_thread, &attr, fifo_func, NULL);
-  if (ret != 0)
-    {
-      printf("sporadic_test: ERROR: FIFO thread creation failed: %d\n",
-             ret);
-    }
-*/
   /* Start a sporadic thread, with the following parameters: */
 
-  printf("sporadic_test: Starting sporadic thread at priority high: %d, low: %d, budget: %d\n",
+  printf("Sporadic thread 1: prio high: %d, low: %d, budget: %d\n",
          prio_high, prio_low, budget_1_ns);
 
   ret = pthread_attr_setschedpolicy(&attr, SCHED_SPORADIC);
@@ -378,8 +326,8 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
              ret);
     }
 
-/*
-  printf("sporadic_test: Starting sporadic thread 2 at priority high %d low: %d, budget: %d\n",
+
+  printf("sporadic thread 2: at prio high %d low: %d, budget: %d\n",
          prio_high-1, prio_low-1, budget_2_ns);
 
   ret = pthread_attr_setschedpolicy(&attr, SCHED_SPORADIC);
@@ -410,8 +358,8 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
       printf("sporadic_test: ERROR: sporadic thread creation failed: %d\n",
              ret);
     }
-*/
-  printf("sporadic_test: Starting FIFO thread at priority %d\n", prio_mid);
+
+  printf("FIFO thread: prio %d\n", prio_mid);
 
   ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
   if (ret != OK)
@@ -434,42 +382,56 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
       printf("sporadic_test: ERROR: FIFO thread creation failed: %d\n",
              ret);
     }
+
+  /*
+  ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+  if (ret != OK)
+    {
+      printf("sporadic_test: ERROR: pthread_attr_setschedpolicy failed, ret=%d\n",
+             ret);
+    }
+
+  sparam.sched_priority = prio_high + 1;
+  printf("nuisance thread at priority %d\n", sparam.sched_priority);
+  ret = pthread_attr_setschedparam(&attr, &sparam);
+  if (ret != OK)
+    {
+      printf("sporadic_test: ERROR: pthread_attr_setschedparam failed, ret=%d\n",
+             ret);
+    }
+
+  ret = pthread_create(&nuisance_thread, &attr, nuisance_func, NULL);
+  if (ret != 0)
+    {
+      printf("sporadic_test: ERROR: FIFO thread creation failed: %d\n",
+             ret);
+    }
+*/
+
   g_start_time = time(NULL);
 
   sem_post(&g_sporadic_sem);
   sem_post(&g_sporadic_sem);
   sem_post(&g_sporadic_sem);
-/*
-  // Wait a while then kill the FIFO thread 
 
-  sleep(15);
-  ret = pthread_cancel(fifo_thread);
-  pthread_join(fifo_thread, &result);
-
-  /// Wait a bit longer then kill the nuisance thread 
-
-  sleep(10);
-  ret = pthread_cancel(nuisance_thread);
-  pthread_join(nuisance_thread, &result);
-
-  // Wait a bit longer then kill the sporadic thread 
-*/
   sleep(10);
 
   ret = pthread_cancel(sporadic_thread);
-  //pthread_join(sporadic_thread, &result);
+  pthread_join(sporadic_thread, &result);
 
-  // ret = pthread_cancel(sporadic_thread2);
-  //pthread_join(sporadic_thread, &result);
+  ret = pthread_cancel(sporadic_thread2);
+  pthread_join(sporadic_thread, &result);
   
   ret = pthread_cancel(fifo_thread);
-  //pthread_join(fifo_thread, &result);
+  pthread_join(fifo_thread, &result);
+
+  // ret = pthread_cancel(fifo_thread);
+  // pthread_join(fifo_thread, &result);
   sched_unlock();
 
-  printf("sporadic_test: sporadic 1 %d ms sporadic 2 %d FIFO %d ms\n",sporadic_1_ms_cnt, sporadic_2_ms_cnt, fifo_ms_cnt);
-  printf("sporadic_test: Done\n");
-  sem_destroy(&g_sporadic_sem);
+  printf("Result: sporadic 1 %d ms sporadic 2 %d FIFO %d ms\n",sporadic_1_ms_cnt, sporadic_2_ms_cnt, fifo_ms_cnt);
 
+  sem_destroy(&g_sporadic_sem);
   ret = sched_setparam(0, &myparam);
   if (ret != OK)
     {
@@ -489,7 +451,7 @@ int uros_rbs_main(int argc, char* argv[])
 {
   int ret;
   int budget_1_ms = 10;
-  int budget_2_ms = 20;
+  int budget_2_ms = 30;
 
 
   if (argc ==2){
@@ -497,13 +459,13 @@ int uros_rbs_main(int argc, char* argv[])
     // budget_2_ms = atoi(argv[2]);
   }
 
-  printf("budget 1: %d ms\n", budget_1_ms);
-  printf("budget 2: %d ms\n", budget_2_ms);
+  // printf("budget 1: %d ms\n", budget_1_ms);
+  // printf("budget 2: %d ms\n", budget_2_ms);
   sporadic_test((budget_1_ms*1000000), (budget_2_ms*1000000));
  return 0;
 }
 
-/* Results: 
+/* Experimental Results: 
 Setup 1:
 config:
 thread 1: 
@@ -552,8 +514,36 @@ budget  counter   counter
 
 Exp 2(two sporadic threads and FIFO)
 configuration with 
-- thread 1:  sporadic thread with budget = x ms and period=100ms
-- thread 3:  sporadic thread with budget = 30 ms and period=100ms
-- thread 2: low-prio FIFO thread
+- thread 1:  sporadic thread with budget = x ms and period=100ms, prio see above
+- thread 3:  sporadic thread with budget = 30 ms and period=100ms, prio see above
+- thread 2: low-prio FIFO thread, prio see above
+
+budget(ms)  counter     counter     counter 
+sporadic 1  sporadic 1  sporadic 2  fifo
+----------------------------------------
+0            145         981       8784
+10          1073         971       7864
+20          2044          10       7854
+30          3013           0       6895
+40          9909           0          0
+50          9909           0          0
+60          9909           0          0
+70          9909           0          0       
+80          9908           0          0
+90          9908           0          0
+100         9909           0          0
+
+
+
+Raw output:
+Sporadic thread 1: prio high: 180, low: 20, budget: 10000000
+pthread_create: budget 0 s 10000000 ns ticks: 10 , period 0 s 100000000 ns ticks 100 
+thread id 8
+sporadic thread 2: at prio high 179 low: 19, budget: 30000000
+pthread_create: budget 0 s 30000000 ns ticks: 30 , period 0 s 100000000 ns ticks 100 
+thread id 9
+FIFO thread: prio 120
+thread id 10
+Result: sporadic 1 1074 ms sporadic 2 19 FIFO 8816 ms
 
 */

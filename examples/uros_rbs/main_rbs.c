@@ -23,14 +23,6 @@
 #include <sched.h>
 #include <time.h>
 
-/*
-#include <rcl/rcl.h>
-#include <rcl/error_handling.h>
-#include <rclc/rclc.h>
-#include <rclc/executor.h>
-#include <std_msgs/msg/int32.h>
-*/
-
 /* copied from sporadic.c*/
 /****************************************************************************
  * Included Files
@@ -147,8 +139,8 @@ static void *fifo_func(void *parameter)
       while (now == last);
 
       sched_lock(); /* Just to exercise more logic */
-      printf("%4lu FIFO:     %d\n",
-             (unsigned long)(now-g_start_time), param.sched_priority);
+      // printf("%4lu FIFO:     %d\n",
+      //       (unsigned long)(now-g_start_time), param.sched_priority);
       last = now;
       sched_unlock();
     }
@@ -171,7 +163,7 @@ static void *sporadic_func(void *parameter)
       do
         {
           my_mdelay(1);
-          (sporadic_1_ms_cnt)++;
+          (*counter)++;
           sched_lock(); /* Just to exercise more logic */
           ret = sched_getparam(0, &param);
           if (ret < 0)
@@ -186,8 +178,8 @@ static void *sporadic_func(void *parameter)
       while (now == last && prio == param.sched_priority);
 
       sched_lock(); /* Just to exercise more logic */
-      printf("%4lu SPORADIC 1: %d->%d\n",
-             (unsigned long)(now-g_start_time), prio, param.sched_priority);
+      // printf("%4lu SPORADIC 1: %d->%d\n",
+      //       (unsigned long)(now-g_start_time), prio, param.sched_priority);
       prio = param.sched_priority;
       last = now;
       sched_unlock();
@@ -210,8 +202,8 @@ static void *sporadic_func2(void *parameter)
     {
       do
         {
-          //my_mdelay(1);
-          //(sporadic_2_ms_cnt)++;
+          my_mdelay(1);
+          (*counter)++;
           sched_lock(); /* Just to exercise more logic */
           ret = sched_getparam(0, &param);
           if (ret < 0)
@@ -226,8 +218,8 @@ static void *sporadic_func2(void *parameter)
       while (now == last && prio == param.sched_priority);
 
       sched_lock(); /* Just to exercise more logic */
-      printf("%4lu SPORADIC 2: %d->%d\n",
-             (unsigned long)(now-g_start_time), prio, param.sched_priority);
+      // printf("%4lu SPORADIC 2: %d->%d\n",
+      //        (unsigned long)(now-g_start_time), prio, param.sched_priority);
       prio = param.sched_priority;
       last = now;
       sched_unlock();
@@ -367,7 +359,7 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
   sparam.sched_priority               = prio_high;
   sparam.sched_ss_low_priority        = prio_low;
   sparam.sched_ss_repl_period.tv_sec  = 0;
-  sparam.sched_ss_repl_period.tv_nsec = 10000000;
+  sparam.sched_ss_repl_period.tv_nsec = 100000000;
   sparam.sched_ss_init_budget.tv_sec  = 0;
   sparam.sched_ss_init_budget.tv_nsec = budget_1_ns;
   sparam.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
@@ -400,7 +392,7 @@ void sporadic_test(int budget_1_ns, int budget_2_ns)
   sparam2.sched_priority               = prio_high-1;
   sparam2.sched_ss_low_priority        = prio_low-1;
   sparam2.sched_ss_repl_period.tv_sec  = 0;
-  sparam2.sched_ss_repl_period.tv_nsec = 10000000;
+  sparam2.sched_ss_repl_period.tv_nsec = 100000000;
   sparam2.sched_ss_init_budget.tv_sec  = 0;
   sparam2.sched_ss_init_budget.tv_nsec = budget_2_ns;
   sparam2.sched_ss_max_repl            = CONFIG_SCHED_SPORADIC_MAXREPL;
@@ -496,19 +488,72 @@ int uros_rbs_main(int argc, char* argv[])
 #endif
 {
   int ret;
-  int budget_1_ms = 20;
-  int budget_2_ms = 10;
+  int budget_1_ms = 10;
+  int budget_2_ms = 20;
 
 
   if (argc ==2){
     budget_1_ms = atoi(argv[1]);
-    // sleep_ms = atoi(argv[1]);  
-    // timeout_ms = atoi(argv[1]);
+    // budget_2_ms = atoi(argv[2]);
   }
 
-  printf("budget 1%d ms\n", budget_1_ms);
-  printf("budget 2%d ms\n", budget_2_ms);
-  sporadic_test(RCL_MS_TO_NS(budget_1_ms), RCL_MS_TO_NS(budget_2_ms));
+  printf("budget 1: %d ms\n", budget_1_ms);
+  printf("budget 2: %d ms\n", budget_2_ms);
+  sporadic_test((budget_1_ms*1000000), (budget_2_ms*1000000));
  return 0;
 }
 
+/* Results: 
+Setup 1:
+config:
+thread 1: 
+- SCHED_SPORADIC, 
+- prio high 180, prio low 20,
+- budget 10ms, period 100ms
+- max replenishments = 100
+
+thread 2: 
+- FIFO-thread, 
+- prio: 120
+
+thread 3: 
+- SCHED_SPORADIC, 
+- prio high 179, prio low 19,
+- budget 10ms, period 100ms
+- max replenishments = 100
+
+Hardware: Olimex board (STM32), NuttX OS
+
+Experiment:
+- callback function in each thread has a busy_loop of 1ms and increments a counter
+- experiment runs for 10 seconds
+- at the end the counter values of all threads are reported, e.g. the number of milliseconds
+  the thread could execute in interval of 10 seconds (total 10000 milliseconds)
+
+Exp 1: (one sporadic thread and FIFO thread)
+configuration with 
+- thread 1:  sporadic thread with budget = x ms and period=100ms
+- thread 2: low-prio FIFO thread
+
+budget  counter   counter 
+ (ms)   sporadic  fifo
+---------------------------
+0         96      9815
+10      1074      8837
+20      2043      7868
+30      3014      6896
+40      3985      5925
+50      4956      4953
+60      5920      3990
+70      6899      3010
+80      7870      2039
+90      8804      1105
+100     9910         0
+
+Exp 2(two sporadic threads and FIFO)
+configuration with 
+- thread 1:  sporadic thread with budget = x ms and period=100ms
+- thread 3:  sporadic thread with budget = 30 ms and period=100ms
+- thread 2: low-prio FIFO thread
+
+*/

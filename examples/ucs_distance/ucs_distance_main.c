@@ -11,7 +11,7 @@
 //uROS libraries
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
-#include <rmw_microros/api.h>
+#include <rmw_microros/rmw_microros.h>
 #include <std_msgs/msg/int32.h>
 
 #include "init_distance_6lowpan.h"

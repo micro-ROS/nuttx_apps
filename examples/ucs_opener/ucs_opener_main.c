@@ -11,7 +11,7 @@
 //uROS libraries
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
-#include <rmw_microros/api.h>
+#include <rmw_microros/rmw_microros.h>
 #include <std_msgs/msg/int8.h>
 
 #include "init_opener_6lowpan.h"
@@ -296,4 +296,3 @@ int ucs_opener_main(int argc, char* argv[])
 #endif
     return 0;
 }
-

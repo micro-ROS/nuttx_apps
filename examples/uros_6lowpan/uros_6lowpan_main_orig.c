@@ -47,8 +47,7 @@ int uros_6lowpan_main(int argc, char* argv[])
     system("ifdown wpan0"); // Is necessary to bring down the network to configure.
     if (!strcmp(argv[3],"pub")) {
         system("i8sak wpan0 startpan cd:ab"); //Set the radio as an endpoint.
-        // system("i8sak set chan 26"); //Set the radio channel.
-        system("i8sak set chan 11"); //Set the radio channel.
+        system("i8sak set chan 26"); //Set the radio channel.
         system("i8sak set panid cd:ab"); //Set network PAN ID.
         sprintf(buffer,"i8sak set saddr 42:%02x",CONFIG_UROS_6LOWPAN_EXAMPLE_ID); // Set the short address of the radio
         system(buffer);
@@ -57,12 +56,11 @@ int uros_6lowpan_main(int argc, char* argv[])
         system("i8sak acceptassoc");
         //6lowpan configuration finished
     } else {
-        // system("i8sak wpan0 set chan 26"); //Set the radio channel.
-        system("i8sak wpan0 set chan 11"); //Set the radio channel.
+        system("i8sak wpan0 set chan 26"); //Set the radio channel.
         system("i8sak set panid cd:ab"); //Set network PAN ID.
-        sprintf(buffer,"i8sak set saddr 42:%02x",CONFIG_UROS_6LOWPAN_EXAMPLE_ID + 1); // Set the short address of the radio + 128 to get a different value from the sub/pub
+        sprintf(buffer,"i8sak set saddr 42:%02x",CONFIG_UROS_6LOWPAN_EXAMPLE_ID + 128); // Set the short address of the radio + 128 to get a different value from the sub/pub
         system(buffer);
-        sprintf(buffer, "i8sak set eaddr 00:fa:de:00:de:ad:bf:%02x", CONFIG_UROS_6LOWPAN_EXAMPLE_ID + 1);
+        sprintf(buffer, "i8sak set eaddr 00:fa:de:00:de:ad:bf:%02x", CONFIG_UROS_6LOWPAN_EXAMPLE_ID);
         system(buffer);
         system("i8sak assoc");
    }

@@ -58,10 +58,6 @@ int ucs_6lowpan_main(int argc, char* argv[])
     system("cat proc/net/wpan0");
     //6lowpan configuration finished
     usleep(200000);
-    
-#ifdef CONFIG_ENABLE_TRACING
-    sys_trace_ctf_meas_start();
-#endif
     rcl_ret_t rv;
 
     rcl_init_options_t options = rcl_get_zero_initialized_init_options();
@@ -84,7 +80,7 @@ int ucs_6lowpan_main(int argc, char* argv[])
     }
 
     if(!strcmp(argv[1],"p")) {
-        printf("micro-ROS Publisher ID = %d \r\n", device_id);
+        printf("micro-ROS Publisher ID = %d \r\n, device_id");
 
         rcl_node_options_t node_ops = rcl_node_get_default_options();
         rcl_node_t node = rcl_get_zero_initialized_node();
@@ -95,24 +91,22 @@ int ucs_6lowpan_main(int argc, char* argv[])
         }
         rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
         rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
-	    publisher_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
         rv = rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops);
         if (RCL_RET_OK != rv) {
             printf("Publisher initialization error: %s\n", rcl_get_error_string().str);
             return 1;
         }
+        printf(" pub loop \n");
         std_msgs__msg__Int32 msg;
-        const int num_msg = 50;
+        const int num_msg = 1000;
         msg.data = 0;
         usleep(200000); // As we are sending low number mensajes we need to wait discovery of the subscriber. (Do not have a notification on discovery)
         do {
-#ifdef CONFIG_TRACE_CTF_PWR_MEASUREMENT
-	        sys_trace_ctf_meas_pwr();
-#endif
             rv = rcl_publish(&publisher, (const void*)&msg, NULL);
             if (RCL_RET_OK == rv )
             {
                 printf("Sent: '%i'\n", msg.data++);
+                sleep(1);
             }
         } while (RCL_RET_OK == rv && msg.data < num_msg );
         printf("TOTAL sent: %i\n", num_msg);
@@ -122,7 +116,7 @@ int ucs_6lowpan_main(int argc, char* argv[])
 
     }
     else if(!strcmp(argv[1],"s")) {
-        printf("micro-ROS Subscriber ID = %d \r\n", device_id);
+        printf("micro-ROS Subscriber ID = %d \r\n, device_id");
 
         rcl_node_options_t node_ops = rcl_node_get_default_options();
         rcl_node_t node = rcl_get_zero_initialized_node();
@@ -184,10 +178,6 @@ int ucs_6lowpan_main(int argc, char* argv[])
         printf("Error. It must be pub (publisher) or sub (subscriber).\r\n");
     }
 
-#ifdef CONFIG_ENABLE_TRACING
-    sys_trace_ctf_meas_stop();
-#endif    
     printf("Closing Micro-ROS 6lowpan app\r\n");
-    // usleep(100000);
     return 0;
 }

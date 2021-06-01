@@ -21,4 +21,8 @@ cscope.out
 /romfs.img
 /boot_romfsimg.h
 /*/*/.built
-
+/install
+/build
+/log
+/uros/log
+*.xml

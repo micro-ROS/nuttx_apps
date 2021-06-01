@@ -18,7 +18,6 @@
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
-
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -30,8 +29,9 @@ int uros_6lowpan_main(int argc, char* argv[])
     size_t index;
     std_msgs__msg__Int32 msg;
     msg.data = 0;
+#ifdef CONFIG_TRACE_CTF_PWR_MEASUREMENT
     sys_trace_ctf_meas_pwr();
-
+#endif
     if (3 > argc || 0 == atoi(argv[2])) {
         printf("usage: program [-h | --help] | ip port sub/pub [<max_topics>]\n");
         return 0;
@@ -67,7 +67,9 @@ int uros_6lowpan_main(int argc, char* argv[])
         system("i8sak assoc");
    }
 
+#ifdef CONFIG_ENABLE_TRACING
     sys_trace_ctf_meas_start();
+#endif
     system("ifup wpan0"); // Bring up the network.
     system("mount -t procfs /proc");// Mount the proc file system to check the connection data.
     printf("Connection data\r\n");
@@ -102,7 +104,9 @@ int uros_6lowpan_main(int argc, char* argv[])
 	sleep(2);
     	rcl_ret_t rc;
         do {
+#ifdef CONFIG_TRACE_CTF_PWR_MEASUREMENT
 	    sys_trace_ctf_meas_pwr();
+#endif
             rc = rcl_publish(&publisher, (const void*)&msg, NULL);
             if (RCL_RET_OK == rc )
             {
@@ -150,7 +154,8 @@ int uros_6lowpan_main(int argc, char* argv[])
     }
 
     printf("Closing Micro-ROS 6lowpan app\r\n");
-
+#ifdef CONFIG_ENABLE_TRACING
     sys_trace_ctf_meas_stop();
+#endif    
     return 0;
 }

@@ -2,11 +2,14 @@
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <std_msgs/msg/int32.h>
-#include <rmw_uros/options.h>
+#include <rmw_microros/init_options.h>
+#include <rmw_microros/rmw_microros.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <nuttx/tracing/tracing_probes.h>
+
+extern const char * rosidl_typesupport_c__typesupport_identifier;
 
 #ifdef CONFIG_UROS_TRANSPORT_UDP
 #include <arpa/inet.h>
@@ -68,9 +71,12 @@ int publisher_main(int argc, char* argv[])
 
     rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
     rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
-//    publisher_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
+    publisher_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
 
-    RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops));
+    rosidl_message_type_support_t * type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32);
+    type_support->typesupport_identifier = rosidl_typesupport_c__typesupport_identifier;
+    RCCHECK(rcl_publisher_init(&publisher, &node, type_support, "std_msgs_msg_Int32", &publisher_ops));
+    // RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops));
 
     std_msgs__msg__Int32 msg;
     const int num_msg = 50;

@@ -17,7 +17,8 @@ MAINSRC = uros_6lowpan_main.c
 
 CONFIG_UROS_6LOWPAN_EXAMPLE_PROGNAME ?= uros_6lowpan$(EXEEXT)
 PROGNAME = $(CONFIG_UROS_6LOWPAN_EXAMPLE_PROGNAME)
-UROS_6LOWPAN_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+# UROS_6LOWPAN_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+UROS_6LOWPAN_INCLUDES = $(shell find $(APPDIR)/microros/include -type d -name include)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROS_6LOWPAN_INCLUDES)"} -std=c99
 
 MODULE = CONFIG_UROS_6LOWPAN_EXAMPLE

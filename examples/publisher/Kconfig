@@ -1,7 +1,7 @@
 config UROS_EXAMPLES_PUBLISHER
 	bool "microROS Publisher"
 	default n
-	depends on UROS
+	depends on MICROROSLIB
 	---help---
 		Enable the publisher uROS example
 

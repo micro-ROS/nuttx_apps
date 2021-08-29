@@ -1,0 +1,26 @@
+config UROS_EXAMPLES_MICROROS
+	bool "microros"
+	default n
+	depends on MICROROSLIB
+	---help---
+		Enable the microros example
+
+if UROS_EXAMPLES_MICROROS
+
+config UROS_EXAMPLES_MICROROS_PROGNAME
+	string "Program name"
+	default "microros"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+#config UROS_EXAMPLES_MICROROS_PRIORITY
+#	int "MICROROS task priority"
+#	default 100
+#
+#config UROS_EXAMPLES_MICROROS_STACKSIZE
+#	int "MICROROS stack size"
+#	default 2048
+
+endif

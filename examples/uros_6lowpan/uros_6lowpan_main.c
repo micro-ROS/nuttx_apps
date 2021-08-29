@@ -8,16 +8,21 @@
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <std_msgs/msg/int32.h>
-#include <rmw_uros/options.h>
+// #include <rmw_uros/options.h>
+#include <rmw_microros/init_options.h>
+#include <rmw_microros/rmw_microros.h>
 
 #define IPV6_MAX_SZ	39
 #define IPV6_MIN_SZ	4
 
-#define MAX_NUMBER_MSG	1000
+// #define MAX_NUMBER_MSG	1000
 #define SEND_PERIOD_MS	1000
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc); return 1;}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
+
+extern const char * rosidl_typesupport_c__typesupport_identifier;
+
 #if defined(BUILD_MODULE)
 int main(int argc, char *argv[])
 #else
@@ -98,8 +103,13 @@ int uros_6lowpan_main(int argc, char* argv[])
 
         rcl_publisher_options_t publisher_ops = rcl_publisher_get_default_options();
         rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
-	publisher_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
-        RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops));
+	    publisher_ops.qos.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
+
+        rosidl_message_type_support_t * type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32);
+        type_support->typesupport_identifier = rosidl_typesupport_c__typesupport_identifier;
+        RCCHECK(rcl_publisher_init(&publisher, &node, type_support, "std_msgs_msg_Int32", &publisher_ops));
+
+        // RCCHECK(rcl_publisher_init(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "std_msgs_msg_Int32", &publisher_ops));
 
 	sleep(2);
     	rcl_ret_t rc;

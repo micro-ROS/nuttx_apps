@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_UROS_EXAMPLES_MICROROS),y)
+    CONFIGURED_APPS += examples/microros
+endif

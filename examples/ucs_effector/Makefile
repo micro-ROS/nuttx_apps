@@ -17,7 +17,7 @@ MAINSRC = ucs_effector_main.c
 
 CONFIG_UCS_EFFECTOR_EXAMPLE_PROGNAME ?= ucs_effector$(EXEEXT)
 PROGNAME = $(CONFIG_UCS_EFFECTOR_EXAMPLE_PROGNAME)
-UCS_EFFECTOR_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+UCS_EFFECTOR_INCLUDES = $(shell find $(APPDIR)/microros/micro_ros_lib/include -type d -name include)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UCS_EFFECTOR_INCLUDES)"} -std=c99
 
 MODULE = CONFIG_UCS_EFFECTOR_EXAMPLE

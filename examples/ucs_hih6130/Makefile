@@ -17,7 +17,7 @@ MAINSRC = ucs_hih6130_main.c
 
 CONFIG_UCS_HIH6130_EXAMPLE_PROGNAME ?= ucs_hih6130$(EXEEXT)
 PROGNAME = $(CONFIG_UCS_HIH6130_EXAMPLE_PROGNAME)
-UCS_HIH6130_INCLUDES = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+UCS_HIH6130_INCLUDES = $(shell find $(APPDIR)/microros/micro_ros_lib/include -type d -name include)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UCS_HIH6130_INCLUDES)"} -std=c99
 
 MODULE = CONFIG_UCS_HIH6130_EXAMPLE

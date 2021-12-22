@@ -17,7 +17,7 @@ MAINSRC = ucs_6lowpan_main.c
 
 CONFIG_UCS_6LOWPAN_EXAMPLE_PROGNAME ?= ucs_6lowpan$(EXEEXT)
 PROGNAME = $(CONFIG_UCS_6LOWPAN_EXAMPLE_PROGNAME)
-UROSDIR = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
+UROSDIR = $(shell find $(APPDIR)/microros/micro_ros_lib/include -type d -name include)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROSDIR)"} -std=c99
 
 MODULE = CONFIG_UCS_6LOWPAN_EXAMPLE

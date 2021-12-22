@@ -1,7 +1,7 @@
 config UCS_HIH6130_EXAMPLE
 	bool "UCS - microROS HIH6130 Publisher over 6LoWPAN"
 	default n
-	depends on UROS
+	depends on MICROROSLIB
 	---help---
 		Enable the uROS HIH6130 humidity publisher over 6LoWPAN radio communication
 

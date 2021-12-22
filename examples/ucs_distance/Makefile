@@ -17,9 +17,8 @@ MAINSRC = ucs_distance_main.c
 
 CONFIG_UCS_DISTANC_EXAMPLE_PROGNAME ?= ucs_distance$(EXEEXT)
 PROGNAME = $(CONFIG_UCS_DISTANC_EXAMPLE_PROGNAME)
-
-UROSDIR = $(shell find $(APPDIR)/$(CONFIG_UROS_DIR)/install -type d -name include)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UROSDIR)"} -std=c99
+UCS_DISTANCE_INCLUDES = $(shell find $(APPDIR)/microros/micro_ros_lib/include -type d -name include)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(UCS_DISTANCE_INCLUDES)"} -std=c99
 
 MODULE = CONFIG_UCS_DISTANC_EXAMPLE
 

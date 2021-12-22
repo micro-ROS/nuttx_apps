@@ -1,7 +1,7 @@
 config UCS_DISTANC_EXAMPLE
 	bool "UCS - microROS TFMINI Publisher over 6LoWPAN"
 	default n
-	depends on UROS
+	depends on MICROROSLIB
 	---help---
 		Enable the uROS TFMini distance publisher over 6LoWPAN radio communication
 

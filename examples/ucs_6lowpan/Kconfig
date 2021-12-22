@@ -1,7 +1,7 @@
 config UCS_6LOWPAN_EXAMPLE
 	bool "ucs - microROS Publisher/Subscriber 6LoWPAN"
 	default n
-	depends on UROS
+	depends on MICROROSLIB
 	---help---
 		Enable the uROS test publisher/subscriber example over 6LoWPAN radio communication
 

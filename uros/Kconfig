@@ -37,7 +37,7 @@ endchoice
 
 config UROS_IP_VERSION
 	string "The IP version either ipv4 or ipv6"
-	default "ipv6"
+	default "ipv4"
 
 
 if UROS_TRANSPORT_UDP
